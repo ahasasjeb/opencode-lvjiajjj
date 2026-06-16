@@ -423,6 +423,10 @@ const CommandDescriptions = Object.fromEntries(
   ]),
 ) as Record<string, string>
 
+export function commandDescriptionKey(command: string) {
+  return CommandDescriptions[command]
+}
+
 export type Keybinds = { [K in KeybindName]: BindingValueSchema }
 export type KeybindOverrides = Partial<Keybinds>
 export type BindingLookupView = {

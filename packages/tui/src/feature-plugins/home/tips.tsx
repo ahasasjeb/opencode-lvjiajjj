@@ -11,8 +11,8 @@ function View(props: { api: TuiPluginApi; hidden: boolean; show: boolean; connec
     commands: [
       {
         name: "tips.toggle",
-        title: props.hidden ? "Show tips" : "Hide tips",
-        category: "System",
+        title: props.hidden ? "command.tips.show" : "command.tips.hide",
+        category: "category.system",
         namespace: "palette",
         run() {
           props.api.kv.set("tips_hidden", !props.api.kv.get("tips_hidden", false))

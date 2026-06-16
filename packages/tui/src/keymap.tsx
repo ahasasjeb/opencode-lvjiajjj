@@ -17,7 +17,7 @@ import { createMemo, type Accessor } from "solid-js"
 import { useTuiConfig } from "./config"
 import { TuiKeybind } from "./config/keybind"
 import { useLanguage } from "./context/language"
-import { maybeTranslate } from "./i18n/translate"
+import { resolvePaletteDescription, resolvePaletteTitle } from "./i18n/translate"
 
 export const LEADER_TOKEN = "leader"
 export const OPENCODE_BASE_MODE = "base"
@@ -280,11 +280,17 @@ export function useCommandSlashes(): Accessor<readonly CommandSlashEntry[]> {
       return {
         display: `/${slashName}`,
         description:
-          typeof entry.command.desc === "string"
-            ? maybeTranslate(t, entry.command.desc)
-            : typeof entry.command.title === "string"
-              ? maybeTranslate(t, entry.command.title)
-              : undefined,
+          resolvePaletteDescription(t, {
+            title: typeof entry.command.title === "string" ? entry.command.title : undefined,
+            desc: typeof entry.command.desc === "string" ? entry.command.desc : undefined,
+          }) ??
+          (typeof entry.command.title === "string"
+            ? resolvePaletteTitle(t, {
+                name: entry.command.name,
+                title: entry.command.title,
+                desc: typeof entry.command.desc === "string" ? entry.command.desc : undefined,
+              })
+            : undefined),
         aliases: Array.isArray(slashAliases)
           ? slashAliases.filter((alias): alias is string => typeof alias === "string").map((alias) => `/${alias}`)
           : undefined,

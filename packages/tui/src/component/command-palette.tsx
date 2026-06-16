@@ -10,7 +10,7 @@ import {
 } from "../keymap"
 import { useTuiConfig } from "../config"
 import { useLanguage } from "../context/language"
-import { maybeTranslate } from "../i18n/translate"
+import { resolvePaletteCategory, resolvePaletteDescription, resolvePaletteTitle } from "../i18n/translate"
 
 type PaletteCommandEntry = ReturnType<OpenTuiKeymap["getCommandEntries"]>[number]
 
@@ -52,14 +52,19 @@ export function CommandPaletteDialog() {
     language.locale()
     const t = language.t
     return entries().map((entry) => ({
-      title:
-        typeof entry.command.title === "string"
-          ? maybeTranslate(t, entry.command.title) ?? entry.command.name
-          : entry.command.name,
-      description:
-        typeof entry.command.desc === "string" ? maybeTranslate(t, entry.command.desc) : undefined,
-      category:
-        typeof entry.command.category === "string" ? maybeTranslate(t, entry.command.category) : undefined,
+      title: resolvePaletteTitle(t, {
+        name: entry.command.name,
+        title: typeof entry.command.title === "string" ? entry.command.title : undefined,
+        desc: typeof entry.command.desc === "string" ? entry.command.desc : undefined,
+      }),
+      description: resolvePaletteDescription(t, {
+        title: typeof entry.command.title === "string" ? entry.command.title : undefined,
+        desc: typeof entry.command.desc === "string" ? entry.command.desc : undefined,
+      }),
+      category: resolvePaletteCategory(
+        t,
+        typeof entry.command.category === "string" ? entry.command.category : undefined,
+      ),
       footer: formatKeyBindings(entry.bindings, config),
       value: entry.command.name,
       suggested: isSuggestedPaletteCommand(entry),

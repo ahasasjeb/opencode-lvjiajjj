@@ -328,12 +328,13 @@ export function Prompt(props: PromptProps) {
     }
   })
 
-  const promptCommands = createMemo(() =>
-    [
+  const promptCommands = createMemo(() => {
+    language.locale()
+    return [
       {
-        title: "Clear prompt",
+        title: "keybind.input_clear",
         name: "prompt.clear",
-        category: "Prompt",
+        category: "category.prompt",
         hidden: true,
         run: () => {
           clearPrompt()
@@ -341,9 +342,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Submit prompt",
+        title: "keybind.prompt_submit",
         name: "prompt.submit",
-        category: "Prompt",
+        category: "category.prompt",
         hidden: true,
         run: async () => {
           if (!input.focused) return
@@ -354,9 +355,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Remove editor context",
+        title: "keybind.prompt_editor_context_clear",
         name: "prompt.editor_context.clear",
-        category: "Prompt",
+        category: "category.prompt",
         enabled: Boolean(editorContext()),
         run: () => {
           dismissEditorContext()
@@ -364,9 +365,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Paste",
+        title: "keybind.input_paste",
         name: "prompt.paste",
-        category: "Prompt",
+        category: "category.prompt",
         hidden: true,
         run: async (ctx: CommandContext<Renderable, KeyEvent>) => {
           ctx.event.preventDefault()
@@ -386,9 +387,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Interrupt session",
+        title: "keybind.session_interrupt",
         name: "session.interrupt",
-        category: "Session",
+        category: "category.session",
         hidden: true,
         enabled: status().type !== "idle",
         run: () => {
@@ -417,8 +418,8 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Open editor",
-        category: "Session",
+        title: "keybind.editor_open",
+        category: "category.session",
         name: "prompt.editor",
         slashName: "editor",
         run: async () => {
@@ -509,9 +510,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Skills",
+        title: "keybind.prompt_skills",
         name: "prompt.skills",
-        category: "Prompt",
+        category: "category.prompt",
         slashName: "skills",
         run: () => {
           dialog.replace(() => (
@@ -529,10 +530,10 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Warp",
-        desc: "Change the workspace for the session",
+        title: "command.prompt.warp",
+        desc: "command.prompt.warp_desc",
         name: "workspace.set",
-        category: "Session",
+        category: "category.session",
         enabled: Flag.OPENCODE_EXPERIMENTAL_WORKSPACES,
         slashName: "warp",
         run: () => {
@@ -540,10 +541,10 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Move session",
-        desc: "Move to another project dir",
+        title: "command.prompt.move",
+        desc: "command.prompt.move_desc",
         name: "session.move",
-        category: "Session",
+        category: "category.session",
         slashName: "move",
         run: () => {
           move.open()
@@ -552,8 +553,8 @@ export function Prompt(props: PromptProps) {
     ].map((entry) => ({
       namespace: "palette",
       ...entry,
-    })),
-  )
+    }))
+  })
 
   useBindings(() => ({
     commands: promptCommands(),
@@ -728,12 +729,13 @@ export function Prompt(props: PromptProps) {
     )
   }
 
-  const stashCommands = createMemo(() =>
-    [
+  const stashCommands = createMemo(() => {
+    language.locale()
+    return [
       {
-        title: "Stash prompt",
+        title: "keybind.prompt_stash",
         name: "prompt.stash",
-        category: "Prompt",
+        category: "category.prompt",
         enabled: !!store.prompt.input,
         run: () => {
           if (!store.prompt.input) return
@@ -749,9 +751,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Stash pop",
+        title: "keybind.prompt_stash_pop",
         name: "prompt.stash.pop",
-        category: "Prompt",
+        category: "category.prompt",
         enabled: stash.list().length > 0,
         run: () => {
           const entry = stash.pop()
@@ -765,9 +767,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Stash list",
+        title: "keybind.prompt_stash_list",
         name: "prompt.stash.list",
-        category: "Prompt",
+        category: "category.prompt",
         enabled: stash.list().length > 0,
         run: () => {
           dialog.replace(() => (
@@ -785,8 +787,8 @@ export function Prompt(props: PromptProps) {
     ].map((entry) => ({
       namespace: "palette",
       ...entry,
-    })),
-  )
+    }))
+  })
 
   useBindings(() => ({
     commands: stashCommands(),
@@ -864,8 +866,8 @@ export function Prompt(props: PromptProps) {
       commands: [
         {
           name: "prompt.history.previous",
-          title: "Previous prompt history",
-          category: "Prompt",
+          title: "keybind.history_previous",
+          category: "category.prompt",
           run() {
             if (input.cursorOffset !== 0) {
               if (input.scrollY + input.visualCursor.visualRow === 0) input.cursorOffset = 0
@@ -896,8 +898,8 @@ export function Prompt(props: PromptProps) {
       commands: [
         {
           name: "prompt.history.next",
-          title: "Next prompt history",
-          category: "Prompt",
+          title: "keybind.history_next",
+          category: "category.prompt",
           run() {
             if (input.cursorOffset !== input.plainText.length) {
               if (

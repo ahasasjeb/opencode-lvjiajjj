@@ -298,72 +298,64 @@ function WhichKeyPanel(props: {
     commands: [
       {
         name: command.groupPrevious,
-        title: "Previous key binding group",
-        desc: "Show the previous which-key group",
-        category: "System",
+        title: "keybind.which_key_group_previous",
+        category: "category.system",
         run() {
           moveGroup(-1)
         },
       },
       {
         name: command.groupNext,
-        title: "Next key binding group",
-        desc: "Show the next which-key group",
-        category: "System",
+        title: "keybind.which_key_group_next",
+        category: "category.system",
         run() {
           moveGroup(1)
         },
       },
       {
         name: command.scrollUp,
-        title: "Scroll key bindings up",
-        desc: "Scroll the which-key panel up",
-        category: "System",
+        title: "keybind.which_key_scroll_up",
+        category: "category.system",
         run() {
           scroll(-columns())
         },
       },
       {
         name: command.scrollDown,
-        title: "Scroll key bindings down",
-        desc: "Scroll the which-key panel down",
-        category: "System",
+        title: "keybind.which_key_scroll_down",
+        category: "category.system",
         run() {
           scroll(columns())
         },
       },
       {
         name: command.pageUp,
-        title: "Page key bindings up",
-        desc: "Page the which-key panel up",
-        category: "System",
+        title: "keybind.which_key_page_up",
+        category: "category.system",
         run() {
           scroll(-pageSize())
         },
       },
       {
         name: command.pageDown,
-        title: "Page key bindings down",
-        desc: "Page the which-key panel down",
-        category: "System",
+        title: "keybind.which_key_page_down",
+        category: "category.system",
         run() {
           scroll(pageSize())
         },
       },
       {
         name: command.home,
-        title: "First key binding",
-        desc: "Jump to the first which-key binding",
-        category: "System",
+        title: "keybind.which_key_home",
+        category: "category.system",
         run() {
           setOffset(0)
         },
       },
       {
         name: command.end,
-        title: "Last key binding",
-        desc: "Jump to the last which-key binding",
-        category: "System",
+        title: "keybind.which_key_end",
+        category: "category.system",
         run() {
           setOffset(maxOffset())
         },
@@ -548,18 +540,16 @@ const tui: TuiPlugin = async (api) => {
     commands: [
       {
         name: command.toggle,
-        title: "Show key bindings",
-        desc: "Toggle which-key overlay",
-        category: "System",
+        title: "keybind.which_key_toggle",
+        category: "category.system",
         run() {
           setPinned((value) => !value)
         },
       },
       {
         name: command.toggleLayout,
-        title: "Toggle key bindings layout",
-        desc: "Switch which-key between dock and overlay mode",
-        category: "System",
+        title: "keybind.which_key_layout_toggle",
+        category: "category.system",
         run() {
           setMode((value) => {
             const next = value === "dock" ? "overlay" : "dock"
@@ -570,9 +560,8 @@ const tui: TuiPlugin = async (api) => {
       },
       {
         name: command.togglePending,
-        title: "Toggle pending key preview",
-        desc: "Automatically show which-key for pending key sequences in overlay mode",
-        category: "System",
+        title: "keybind.which_key_pending_toggle",
+        category: "category.system",
         run() {
           setPendingPreview((value) => {
             api.kv.set(KV_PENDING_PREVIEW, !value)
