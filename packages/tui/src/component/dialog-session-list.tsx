@@ -59,7 +59,7 @@ export function DialogSessionList() {
           result = await sdk.client.experimental.workspace.create({ type: selection.workspaceType, branch: null })
         } catch (err) {
           toast.show({
-            title: "Failed to create workspace",
+            title: language.t("toast.workspace.create_failed"),
             message: errorMessage(err),
             variant: "error",
           })
@@ -68,7 +68,7 @@ export function DialogSessionList() {
         const workspace = result?.data
         if (!workspace) {
           toast.show({
-            title: "Failed to create workspace",
+            title: language.t("toast.workspace.create_failed"),
             message: errorMessage(result?.error ?? "no response"),
             variant: "error",
           })
@@ -84,6 +84,7 @@ export function DialogSessionList() {
         sync,
         project,
         toast,
+        t: language.t,
         sourceWorkspaceID: session.workspaceID,
         workspaceID,
         sessionID: session.id,
@@ -103,7 +104,7 @@ export function DialogSessionList() {
           if (result.error) {
             toast.show({
               variant: "error",
-              title: "Failed to delete workspace",
+              title: language.t("toast.workspace.delete_failed"),
               message: errorMessage(result.error),
             })
             return false
@@ -123,6 +124,7 @@ export function DialogSessionList() {
             sync,
             project,
             toast,
+            t: language.t,
             onSelect: (selection) => {
               void warp(selection)
             },
@@ -146,11 +148,13 @@ export function DialogSessionList() {
     const first = quickSwitch1()
     const last = quickSwitch9()
     if (!first || !last) return undefined
-    return quickSwitchRange(first, last)
+    const prefix = first.slice(0, -1)
+    if (first.endsWith("1") && last === `${prefix}9`) return `${prefix}1-9`
+    return language.t("dialog.sessions.quick_switch_range", { first, last })
   })
   const quickSwitchFooterHints = createMemo(() => {
     const hint = quickSwitchHint()
-    return hint && local.session.slots().length > 0 ? [{ title: "switch", label: hint }] : []
+    return hint && local.session.slots().length > 0 ? [{ title: language.t("action.switch"), label: hint }] : []
   })
 
   const options = createMemo(() => {
@@ -189,7 +193,7 @@ export function DialogSessionList() {
           ? () => <text fg={theme.accent}>{slot}</text>
           : undefined
       return {
-        title: isDeleting ? `Press ${deleteHint()} again to confirm` : x.title,
+        title: isDeleting ? language.t("dialog.confirm.delete", { shortcut: deleteHint() }) : x.title,
         bg: isDeleting ? theme.error : undefined,
         value: x.id,
         category,
@@ -238,14 +242,14 @@ export function DialogSessionList() {
       actions={[
         {
           command: "session.pin.toggle",
-          title: "pin/unpin",
+          title: language.t("action.pin_unpin"),
           onTrigger: (option: { value: string }) => {
             local.session.togglePin(option.value)
           },
         },
         {
           command: "session.delete",
-          title: "delete",
+          title: language.t("action.delete"),
           onTrigger: async (option) => {
             if (toDelete() === option.value) {
               const session = sessions().find((item) => item.id === option.value)
@@ -261,7 +265,7 @@ export function DialogSessionList() {
                   } else {
                     toast.show({
                       variant: "error",
-                      title: "Failed to delete session",
+                      title: language.t("dialog.sessions.delete_failed"),
                       message: errorMessage(result.error),
                     })
                   }
@@ -274,7 +278,7 @@ export function DialogSessionList() {
                 } else {
                   toast.show({
                     variant: "error",
-                    title: "Failed to delete session",
+                    title: language.t("dialog.sessions.delete_failed"),
                     message: errorMessage(err),
                   })
                 }
@@ -293,7 +297,7 @@ export function DialogSessionList() {
         },
         {
           command: "session.rename",
-          title: "rename",
+          title: language.t("action.rename"),
           onTrigger: async (option) => {
             dialog.replace(() => <DialogSessionRename session={option.value} />)
           },
@@ -302,10 +306,4 @@ export function DialogSessionList() {
       footerHints={quickSwitchFooterHints()}
     />
   )
-}
-
-function quickSwitchRange(first: string, last: string) {
-  const prefix = first.slice(0, -1)
-  if (first.endsWith("1") && last === `${prefix}9`) return `${prefix}1-9`
-  return `${first} through ${last}`
 }

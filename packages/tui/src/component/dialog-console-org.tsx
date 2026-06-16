@@ -4,6 +4,7 @@ import { useSDK } from "../context/sdk"
 import { useDialog } from "../ui/dialog"
 import { useToast } from "../ui/toast"
 import { useTheme } from "../context/theme"
+import { useLanguage } from "../context/language"
 import type { ExperimentalConsoleListOrgsResponse } from "@opencode-ai/sdk/v2"
 
 type OrgOption = ExperimentalConsoleListOrgsResponse["orgs"][number]
@@ -20,6 +21,7 @@ const accountLabel = (item: Pick<OrgOption, "accountEmail" | "accountUrl">) =>
   `${item.accountEmail}  ${accountHost(item.accountUrl)}`
 
 export function DialogConsoleOrg() {
+  const language = useLanguage()
   const sdk = useSDK()
   const dialog = useDialog()
   const toast = useToast()
@@ -37,7 +39,7 @@ export function DialogConsoleOrg() {
     if (listed === undefined) {
       return [
         {
-          title: "Loading orgs...",
+          title: language.t("dialog.org.loading"),
           value: "loading",
           onSelect: () => {},
         },
@@ -47,7 +49,7 @@ export function DialogConsoleOrg() {
     if (listed.length === 0) {
       return [
         {
-          title: "No orgs found",
+          title: language.t("dialog.org.empty"),
           value: "empty",
           onSelect: () => {},
         },
@@ -91,7 +93,7 @@ export function DialogConsoleOrg() {
 
           await sdk.client.instance.dispose()
           toast.show({
-            message: `Switched to ${item.orgName}`,
+            message: language.t("toast.org.switched", { name: item.orgName }),
             variant: "info",
           })
           dialog.clear()
@@ -99,5 +101,5 @@ export function DialogConsoleOrg() {
       }))
   })
 
-  return <DialogSelect<string | OrgOption> title="Switch org" options={options()} current={current()} />
+  return <DialogSelect<string | OrgOption> title={language.t("dialog.org.title")} options={options()} current={current()} />
 }

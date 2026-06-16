@@ -12,8 +12,10 @@ import {
   type WorkspaceSelection,
 } from "../dialog-workspace-create"
 import type { WorkspaceStatus } from "../workspace-label"
+import { useLanguage } from "../../context/language"
 
 export function usePromptWorkspace(sessionID?: string) {
+  const language = useLanguage()
   const dialog = useDialog()
   const sdk = useSDK()
   const project = useProject()
@@ -32,14 +34,14 @@ export function usePromptWorkspace(sessionID?: string) {
     } catch (err) {
       setSelection(undefined)
       setCreating(false)
-      toast.show({ title: "Creating workspace failed", message: errorMessage(err), variant: "error" })
+      toast.show({ title: language.t("toast.workspace.create_failed"), message: errorMessage(err), variant: "error" })
       return
     }
     if (result.error || !result.data) {
       setSelection(undefined)
       setCreating(false)
       toast.show({
-        title: "Creating workspace failed",
+        title: language.t("toast.workspace.create_failed"),
         message: errorMessage(result.error ?? "no response"),
         variant: "error",
       })
@@ -85,6 +87,7 @@ export function usePromptWorkspace(sessionID?: string) {
       sync,
       project,
       toast,
+      t: language.t,
       sourceWorkspaceID,
       workspaceID: workspace.id,
       sessionID,
@@ -94,7 +97,7 @@ export function usePromptWorkspace(sessionID?: string) {
   }
 
   function showNotice(name: string) {
-    setNotice(`Warped to ${name}`)
+    setNotice(language.t("dialog.workspace.warped_notice", { name }))
     setTimeout(() => setNotice(undefined), 4000)
   }
 
@@ -103,7 +106,7 @@ export function usePromptWorkspace(sessionID?: string) {
   }
 
   function open() {
-    void openWorkspaceSelect({ dialog, sdk, sync, project, toast, onSelect: warp })
+    void openWorkspaceSelect({ dialog, sdk, sync, project, toast, t: language.t, onSelect: warp })
   }
 
   createEffect(() => {

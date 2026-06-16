@@ -2,8 +2,9 @@ import { TextAttributes } from "@opentui/core"
 import { useTheme } from "../context/theme"
 import { useDialog } from "../ui/dialog"
 import { createStore } from "solid-js/store"
-import { For } from "solid-js"
+import { For, createMemo } from "solid-js"
 import { useBindings } from "../keymap"
+import { useLanguage } from "../context/language"
 
 export function DialogSessionDeleteFailed(props: {
   session: string
@@ -12,29 +13,30 @@ export function DialogSessionDeleteFailed(props: {
   onRestore?: () => boolean | void | Promise<boolean | void>
   onDone?: () => void
 }) {
+  const language = useLanguage()
   const dialog = useDialog()
   const { theme } = useTheme()
   const [store, setStore] = createStore({
     active: "delete" as "delete" | "restore",
   })
 
-  const options = [
+  const options = createMemo(() => [
     {
       id: "delete" as const,
-      title: "Delete workspace",
-      description: "Delete the workspace and all sessions attached to it.",
+      title: language.t("dialog.session_delete_failed.delete_workspace"),
+      description: language.t("dialog.session_delete_failed.delete_workspace_desc"),
       run: props.onDelete,
     },
     {
       id: "restore" as const,
-      title: "Restore to new workspace",
-      description: "Try to restore this session into a new workspace.",
+      title: language.t("dialog.session_delete_failed.restore"),
+      description: language.t("dialog.session_delete_failed.restore_desc"),
       run: props.onRestore,
     },
-  ]
+  ])
 
   async function confirm() {
-    const result = await options.find((item) => item.id === store.active)?.run?.()
+    const result = await options().find((item) => item.id === store.active)?.run?.()
     if (result === false) return
     props.onDone?.()
     if (!props.onDone) dialog.clear()
@@ -54,20 +56,20 @@ export function DialogSessionDeleteFailed(props: {
     <box paddingLeft={2} paddingRight={2} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          Failed to Delete Session
+          {language.t("dialog.session_delete_failed.title")}
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc
         </text>
       </box>
       <text fg={theme.textMuted} wrapMode="word">
-        {`The session "${props.session}" could not be deleted because the workspace "${props.workspace}" is not available.`}
+        {language.t("dialog.session_delete_failed.message", { session: props.session, workspace: props.workspace })}
       </text>
       <text fg={theme.textMuted} wrapMode="word">
-        Choose how you want to recover this broken workspace session.
+        {language.t("dialog.session_delete_failed.hint")}
       </text>
       <box flexDirection="column" paddingBottom={1} gap={1}>
-        <For each={options}>
+        <For each={options()}>
           {(item) => (
             <box
               flexDirection="column"

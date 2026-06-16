@@ -18,6 +18,7 @@ import { Spinner } from "./spinner"
 import { DialogWorkspaceFileChanges } from "./dialog-workspace-file-changes"
 import type { ProjectDirectories } from "@opencode-ai/sdk/v2"
 import { useRoute } from "../context/route"
+import { useLanguage } from "../context/language"
 
 export type MoveSessionSelection = { type: "directory"; directory: string; subdirectory: boolean } | { type: "new" }
 type ProjectDirectory = ProjectDirectories[number]
@@ -30,6 +31,7 @@ export function DialogMoveSession(props: {
   initialDirectories?: ProjectDirectory[]
   initialRemoving?: string
 }) {
+  const language = useLanguage()
   const dialog = useDialog()
   const sdk = useSDK()
   const dimensions = useTerminalDimensions()
@@ -76,7 +78,7 @@ export function DialogMoveSession(props: {
       } catch (error) {
         toast.show({
           variant: "error",
-          title: "Failed to load project directories",
+          title: language.t("toast.move_session.load_failed"),
           message: errorMessage(error),
         })
         return []
@@ -103,9 +105,10 @@ export function DialogMoveSession(props: {
   const options = createMemo<DialogSelectOption<MoveSessionSelection | undefined>[]>(() => {
     const data = directories()
     const current = currentRoot()?.directory
-    if (directories.loading && !data && !current) return [{ title: "Loading project directories...", value: undefined }]
+    if (directories.loading && !data && !current)
+      return [{ title: language.t("dialog.move_session.loading"), value: undefined }]
     if (directories.error && !data && !current)
-      return [{ title: "Failed to load project directories", value: undefined }]
+      return [{ title: language.t("dialog.move_session.failed_load"), value: undefined }]
     const roots = [...(data ?? [])]
     if (current && !roots.some((item) => item.directory === current)) roots.unshift({ directory: current })
     roots.sort((a, b) => {
@@ -115,7 +118,7 @@ export function DialogMoveSession(props: {
       if (!a.strategy && !b.strategy) return a.directory.length - b.directory.length
       return 0
     })
-    if (roots.length === 0) return [{ title: "No project directories found", value: undefined }]
+    if (roots.length === 0) return [{ title: language.t("dialog.move_session.no_dirs"), value: undefined }]
 
     const subdirectories = sync.data.session
       .filter((session) => session.projectID === props.projectID && session.path && ![".", "/"].includes(session.path))
@@ -153,9 +156,9 @@ export function DialogMoveSession(props: {
       return {
         title,
         titleView: isRemoving ? (
-          <span style={{ fg: theme.error }}>Deleting {item.location}</span>
+          <span style={{ fg: theme.error }}>{language.t("dialog.move_session.deleting", { path: item.location })}</span>
         ) : deleting ? (
-          <span style={{ fg: theme.text }}>Press {deleteHint()} again to confirm</span>
+          <span style={{ fg: theme.text }}>{language.t("dialog.confirm.delete", { shortcut: deleteHint() })}</span>
         ) : suffix ? (
           <>
             {visible.slice(0, split)}
@@ -168,7 +171,8 @@ export function DialogMoveSession(props: {
           directory: item.location,
           subdirectory: item.location !== item.root.directory,
         } as const,
-        category: item.root.directory === current ? "Current" : "Other",
+        category:
+          item.root.directory === current ? language.t("dialog.move_session.current") : language.t("dialog.move_session.other"),
         titleWidth,
         truncateTitle: "left" as const,
       }
@@ -227,8 +231,8 @@ export function DialogMoveSession(props: {
       if ("data" in result.error && result.error.data.forceRequired) {
         const status = await sdk.client.vcs.status({ directory: selected.directory }).catch(() => undefined)
         const choice = await DialogWorkspaceFileChanges.show(dialog, status?.data ?? [], {
-          title: "Delete working copy?",
-          message: "This working copy has file changes. Do you want to delete it anyway?",
+          title: language.t("dialog.file_changes.delete_title"),
+          message: language.t("dialog.file_changes.delete_message"),
         })
         if (choice !== "yes") {
           reopen()
@@ -246,7 +250,7 @@ export function DialogMoveSession(props: {
         if (forced.error) {
           toast.show({
             variant: "error",
-            title: "Failed to delete project copy",
+            title: language.t("toast.move_session.delete_failed"),
             message: errorMessage(forced.error),
           })
           reopen()
@@ -260,7 +264,7 @@ export function DialogMoveSession(props: {
       }
       toast.show({
         variant: "error",
-        title: "Failed to delete project copy",
+        title: language.t("toast.move_session.delete_failed"),
         message: errorMessage(result.error),
       })
       return
@@ -276,11 +280,11 @@ export function DialogMoveSession(props: {
   return (
     <box minHeight={Math.max(8, Math.min(16, dimensions().height - Math.floor(dimensions().height / 4) - 2))}>
       <DialogSelect
-        title="Move session"
+        title={language.t("dialog.move_session.title")}
         titleView={
           <box flexDirection="row" gap={1}>
             <text fg={theme.text} attributes={TextAttributes.BOLD}>
-              Move session
+              {language.t("dialog.move_session.title")}
             </text>
             <Show when={working()}>
               <Spinner />
@@ -297,12 +301,12 @@ export function DialogMoveSession(props: {
         actions={[
           {
             command: "dialog.move_session.new",
-            title: "new",
+            title: language.t("action.new"),
             onTrigger: () => props.onSelect({ type: "new" }),
           },
           {
             command: "dialog.move_session.delete",
-            title: "delete",
+            title: language.t("action.delete"),
             disabled: (option) => {
               const value = option?.value
               if (!value || value.type !== "directory" || value.subdirectory) return true
@@ -312,7 +316,7 @@ export function DialogMoveSession(props: {
           },
           {
             command: "dialog.move_session.refresh",
-            title: "refresh",
+            title: language.t("action.refresh"),
             onTrigger: () => void refetch(),
           },
         ]}

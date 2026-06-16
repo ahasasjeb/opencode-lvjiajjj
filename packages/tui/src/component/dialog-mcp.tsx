@@ -6,19 +6,22 @@ import { DialogSelect, type DialogSelectRef, type DialogSelectOption } from "../
 import { useTheme } from "../context/theme"
 import { TextAttributes } from "@opentui/core"
 import { useSDK } from "../context/sdk"
+import { useLanguage } from "../context/language"
 
 function Status(props: { enabled: boolean; loading: boolean }) {
   const { theme } = useTheme()
+  const language = useLanguage()
   if (props.loading) {
-    return <span style={{ fg: theme.textMuted }}>⋯ Loading</span>
+    return <span style={{ fg: theme.textMuted }}>{language.t("dialog.mcp.loading")}</span>
   }
   if (props.enabled) {
-    return <span style={{ fg: theme.success, attributes: TextAttributes.BOLD }}>✓ Enabled</span>
+    return <span style={{ fg: theme.success, attributes: TextAttributes.BOLD }}>{language.t("dialog.mcp.enabled")}</span>
   }
-  return <span style={{ fg: theme.textMuted }}>○ Disabled</span>
+  return <span style={{ fg: theme.textMuted }}>{language.t("dialog.mcp.disabled")}</span>
 }
 
 export function DialogMcp() {
+  const language = useLanguage()
   const local = useLocal()
   const sync = useSync()
   const sdk = useSDK()
@@ -26,7 +29,6 @@ export function DialogMcp() {
   const [loading, setLoading] = createSignal<string | null>(null)
 
   const options = createMemo(() => {
-    // Track sync data and loading state to trigger re-render when they change
     const mcpData = sync.data.mcp
     const loadingMcp = loading()
 
@@ -47,15 +49,13 @@ export function DialogMcp() {
   const actions = createMemo(() => [
     {
       command: "dialog.mcp.toggle",
-      title: "toggle",
+      title: language.t("action.toggle"),
       onTrigger: async (option: DialogSelectOption<string>) => {
-        // Prevent toggling while an operation is already in progress
         if (loading() !== null) return
 
         setLoading(option.value)
         try {
           await local.mcp.toggle(option.value)
-          // Refresh MCP status from server
           const status = await sdk.client.mcp.status()
           if (status.data) {
             sync.set("mcp", status.data)
@@ -74,12 +74,10 @@ export function DialogMcp() {
   return (
     <DialogSelect
       ref={setRef}
-      title="MCPs"
+      title={language.t("dialog.mcp.title")}
       options={options()}
       actions={actions()}
-      onSelect={(_option) => {
-        // Don't close on select, only on escape
-      }}
+      onSelect={(_option) => {}}
     />
   )
 }
