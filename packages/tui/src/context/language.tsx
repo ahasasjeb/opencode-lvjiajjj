@@ -3,6 +3,7 @@ import { createMemo, createResource } from "solid-js"
 import { createSimpleContext } from "./helper"
 import { useKV } from "./kv"
 import en from "../i18n/en.json"
+import zh from "../i18n/zh.json"
 import type { I18nKey } from "../i18n/types"
 import type { Translator } from "../i18n/translate"
 
@@ -23,23 +24,13 @@ const LABEL_KEY: Record<TuiLocale, I18nKey> = {
 }
 
 const base = i18n.flatten(en)
-const dicts = new Map<TuiLocale, Dictionary>([["en", base]])
-
-const loaders: Record<Exclude<TuiLocale, "en">, () => Promise<Dictionary>> = {
-  zh: () =>
-    Bun.file(new URL("../i18n/zh.json", import.meta.url))
-      .json()
-      .then((raw) => ({ ...base, ...i18n.flatten(raw as Record<string, string>) }) as Dictionary),
-}
+const dicts = new Map<TuiLocale, Dictionary>([
+  ["en", base],
+  ["zh", { ...base, ...i18n.flatten(zh as Record<string, string>) } as Dictionary],
+])
 
 function loadDict(locale: TuiLocale) {
-  const hit = dicts.get(locale)
-  if (hit) return Promise.resolve(hit)
-  if (locale === "en") return Promise.resolve(base)
-  return loaders[locale]().then((next) => {
-    dicts.set(locale, next)
-    return next
-  })
+  return Promise.resolve(dicts.get(locale) ?? base)
 }
 
 const localeMatchers: Array<{ locale: TuiLocale; match: (language: string) => boolean }> = [
