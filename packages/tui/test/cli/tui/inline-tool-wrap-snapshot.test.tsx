@@ -15,6 +15,11 @@ import {
   parseTodos,
   toolDisplay,
 } from "../../../src/routes/session"
+import * as i18n from "@solid-primitives/i18n"
+import en from "../../../src/i18n/en.json"
+import type { Translator } from "../../../src/i18n/translate"
+
+const t = i18n.translator(() => i18n.flatten(en), i18n.resolveTemplate) as Translator
 
 let testSetup: Awaited<ReturnType<typeof testRender>> | undefined
 
@@ -275,7 +280,9 @@ describe("TUI inline tool wrapping", () => {
   })
 
   test("keeps retry status ahead of wrapping messages", () => {
-    expect(formatSubagentRetry(2, "Rate limited by provider")).toBe("Retrying (attempt 2) · Rate limited by provider")
+    expect(formatSubagentRetry(t, 2, "Rate limited by provider")).toBe(
+      "Retrying (attempt 2) · Rate limited by provider",
+    )
   })
 
   test("snapshots consecutive grep, glob, and read rows at a narrow width", async () => {

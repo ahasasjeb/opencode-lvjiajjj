@@ -39,6 +39,7 @@ import { useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
 import type { AssistantMessage, FilePart, UserMessage } from "@opencode-ai/sdk/v2"
 import { Locale } from "../../util/locale"
 import { useLanguage } from "../../context/language"
+import { formatRetryStatusText, translateRetryMessage } from "../../i18n/retry"
 import { errorMessage } from "../../util/error"
 import { formatDuration } from "../../util/format"
 import { createColors, createFrames } from "../../ui/spinner"
@@ -1526,14 +1527,6 @@ export function Prompt(props: PromptProps) {
                         if (s.type !== "retry") return
                         return s
                       })
-                      const message = createMemo(() => {
-                        const r = retry()
-                        if (!r) return
-                        if (r.message.includes("exceeded your current quota") && r.message.includes("gemini"))
-                          return "gemini is way too hot right now"
-                        if (r.message.length > 80) return r.message.slice(0, 80) + "..."
-                        return r.message
-                      })
                       const isTruncated = createMemo(() => {
                         const r = retry()
                         if (!r) return false
@@ -1554,18 +1547,23 @@ export function Prompt(props: PromptProps) {
                         const r = retry()
                         if (!r) return
                         if (isTruncated()) {
-                          void DialogAlert.show(dialog, "Retry Error", r.message)
+                          void DialogAlert.show(
+                            dialog,
+                            language.t("dialog.retry.title"),
+                            translateRetryMessage(language.t, r.message),
+                          )
                         }
                       }
 
                       const retryText = () => {
                         const r = retry()
                         if (!r) return ""
-                        const baseMessage = message()
-                        const truncatedHint = isTruncated() ? " (click to expand)" : ""
-                        const duration = formatDuration(seconds())
-                        const retryInfo = ` [retrying ${duration ? `in ${duration} ` : ""}attempt #${r.attempt}]`
-                        return baseMessage + truncatedHint + retryInfo
+                        return formatRetryStatusText(language.t, {
+                          message: r.message,
+                          attempt: r.attempt,
+                          seconds: seconds(),
+                          truncated: isTruncated(),
+                        })
                       }
 
                       return (
@@ -1581,7 +1579,9 @@ export function Prompt(props: PromptProps) {
                 <text fg={store.interrupt > 0 ? theme.primary : theme.text}>
                   esc{" "}
                   <span style={{ fg: store.interrupt > 0 ? theme.primary : theme.textMuted }}>
-                    {store.interrupt > 0 ? "again to interrupt" : "interrupt"}
+                    {store.interrupt > 0
+                      ? language.t("retry.interrupt_again")
+                      : language.t("retry.interrupt")}
                   </span>
                 </text>
               </box>

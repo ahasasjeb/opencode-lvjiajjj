@@ -77,6 +77,8 @@ import { getScrollAcceleration } from "../../util/scroll"
 import { collapseToolOutput } from "../../util/collapse-tool-output"
 import { usePluginRuntime } from "../../plugin/runtime"
 import { DialogRetryAction } from "../../component/dialog-retry-action"
+import { formatSubagentRetryLine, translateRetryMessage } from "../../i18n/retry"
+import type { Translator } from "../../i18n/translate"
 import { getRevertDiffFiles } from "../../util/revert-diff"
 import { OPENCODE_BASE_MODE, useBindings, useCommandShortcut, useOpencodeKeymap } from "../../keymap"
 import { PathFormatterProvider, usePathFormatter } from "../../context/path-format"
@@ -430,7 +432,8 @@ export function Session() {
       sessionID,
     })
     const status = sync.data.session_status[sessionID]
-    if (status?.type === "retry") void DialogAlert.show(dialog, language.t("dialog.retry.title"), status.message)
+    if (status?.type === "retry")
+      void DialogAlert.show(dialog, language.t("dialog.retry.title"), translateRetryMessage(language.t, status.message))
   }
 
   function moveFirstChild() {
@@ -2301,7 +2304,9 @@ function Task(props: ToolProps) {
 
     const retrying = retry()
     if (isRunning() && retrying) {
-      content.push(`↳ ${formatSubagentRetry(retrying.attempt, Locale.truncate(retrying.message, 80))}`)
+      content.push(
+        `↳ ${formatSubagentRetry(language.t, retrying.attempt, Locale.truncate(retrying.message, 80))}`,
+      )
     } else if (isRunning() && tools().length > 0) {
       if (current()) {
         const state = current()!.state
@@ -2331,7 +2336,12 @@ function Task(props: ToolProps) {
           navigate({ type: "session", sessionID: sessionID()! })
         }
         const status = retry()
-        if (status) void DialogAlert.show(dialog, language.t("dialog.retry.title"), status.message)
+        if (status)
+          void DialogAlert.show(
+            dialog,
+            language.t("dialog.retry.title"),
+            translateRetryMessage(language.t, status.message),
+          )
       }}
     >
       {content()}
@@ -2347,8 +2357,8 @@ export function formatSubagentTitle(agent: string, description: string, backgrou
   return `${agent} Task${background ? " (background)" : ""} — ${description}`
 }
 
-export function formatSubagentRetry(attempt: number, message: string) {
-  return `Retrying (attempt ${attempt}) · ${message}`
+export function formatSubagentRetry(t: Translator, attempt: number, message: string) {
+  return formatSubagentRetryLine(t, attempt, message)
 }
 
 export function formatCompletedSubagentDetail(toolcalls: number, duration: string) {

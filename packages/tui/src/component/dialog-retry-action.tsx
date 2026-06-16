@@ -1,16 +1,21 @@
 import { RGBA, TextAttributes } from "@opentui/core"
 import open from "open"
-import { createSignal } from "solid-js"
+import { createMemo, createSignal } from "solid-js"
+import type { SessionStatus } from "@opencode-ai/sdk/v2"
 import { selectedForeground, useTheme } from "../context/theme"
 import { useDialog, type DialogContext } from "../ui/dialog"
 import { Link } from "../ui/link"
 import { BgPulse } from "./bg-pulse"
 import { useBindings } from "../keymap"
+import { useLanguage } from "../context/language"
+import { translateRetryAction } from "../i18n/retry"
 
 const GO_URL = "https://opencode.ai/go"
 const PAD_X = 3
 const PAD_TOP_OUTER = 1
 const FOREGROUND_ALPHA = 186
+
+type RetryAction = NonNullable<Extract<SessionStatus, { type: "retry" }>["action"]>
 
 export type DialogRetryActionProps = {
   title: string
@@ -37,6 +42,7 @@ function panelOverlay(color: RGBA) {
 }
 
 export function DialogRetryAction(props: DialogRetryActionProps) {
+  const language = useLanguage()
   const dialog = useDialog()
   const { theme } = useTheme()
   const fg = selectedForeground(theme)
@@ -123,7 +129,7 @@ export function DialogRetryAction(props: DialogRetryActionProps) {
               bg={selected() === "dismiss" ? undefined : textBg()}
               attributes={selected() === "dismiss" ? TextAttributes.BOLD : undefined}
             >
-              don't show again
+              {language.t("retry.dont_show_again")}
             </text>
           </box>
           <box
@@ -147,13 +153,24 @@ export function DialogRetryAction(props: DialogRetryActionProps) {
   )
 }
 
-DialogRetryAction.show = (
-  dialog: DialogContext,
-  props: Pick<DialogRetryActionProps, "title" | "message" | "label" | "link">,
-) => {
+function DialogRetryActionFromAction(props: { action: RetryAction; onClose?: (dontShowAgain?: boolean) => void }) {
+  const language = useLanguage()
+  const translated = createMemo(() => translateRetryAction(language.t, props.action))
+  return (
+    <DialogRetryAction
+      title={translated().title}
+      message={translated().message}
+      label={translated().label}
+      link={translated().link}
+      onClose={props.onClose}
+    />
+  )
+}
+
+DialogRetryAction.show = (dialog: DialogContext, action: RetryAction) => {
   return new Promise<boolean>((resolve) => {
     dialog.replace(
-      () => <DialogRetryAction {...props} onClose={(dontShow) => resolve(dontShow ?? false)} />,
+      () => <DialogRetryActionFromAction action={action} onClose={(dontShow) => resolve(dontShow ?? false)} />,
       () => resolve(false),
     )
   })
