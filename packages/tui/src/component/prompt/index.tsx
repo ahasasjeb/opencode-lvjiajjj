@@ -10,7 +10,6 @@ import {
 } from "@opentui/core"
 import type { CommandContext } from "@opentui/keymap"
 import { createEffect, createMemo, onMount, createSignal, onCleanup, on, Show, Switch, Match } from "solid-js"
-import "opentui-spinner/solid"
 import path from "path"
 import { fileURLToPath } from "url"
 import { useLocal } from "../../context/local"
@@ -19,7 +18,7 @@ import { tint, useTheme } from "../../context/theme"
 import { EmptyBorder, SplitBorder } from "../../ui/border"
 import { useTuiPaths, useTuiTerminalEnvironment } from "../../context/runtime"
 import { useClipboard } from "../../context/clipboard"
-import { Spinner } from "../spinner"
+import { FrameSpinner, Spinner } from "../spinner"
 import { useSDK } from "../../context/sdk"
 import { useRoute } from "../../context/route"
 import { useProject } from "../../context/project"
@@ -39,6 +38,7 @@ import { type AutocompleteRef, Autocomplete } from "./autocomplete"
 import { useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
 import type { AssistantMessage, FilePart, UserMessage } from "@opencode-ai/sdk/v2"
 import { Locale } from "../../util/locale"
+import { useLanguage } from "../../context/language"
 import { errorMessage } from "../../util/error"
 import { formatDuration } from "../../util/format"
 import { createColors, createFrames } from "../../ui/spinner"
@@ -156,6 +156,7 @@ export function Prompt(props: PromptProps) {
   const tuiConfig = useTuiConfig()
   const dialog = useDialog()
   const toast = useToast()
+  const language = useLanguage()
   const status = createMemo(() => sync.data.session_status?.[props.sessionID ?? ""] ?? { type: "idle" })
   const history = usePromptHistory()
   const stash = usePromptStash()
@@ -1303,14 +1304,16 @@ export function Prompt(props: PromptProps) {
   const borderHighlight = createMemo(() => tint(theme.border, highlight(), agentMetaAlpha()))
 
   const placeholderText = createMemo(() => {
+    language.locale()
+    const t = language.t
     if (props.showPlaceholder === false) return undefined
     if (store.mode === "shell") {
       if (!shell().length) return undefined
       const example = shell()[store.placeholder % shell().length]
-      return `Run a command... "${example}"`
+      return t("prompt.placeholder.shell", { example })
     }
     if (!list().length) return undefined
-    return `Ask anything... "${list()[store.placeholder % list().length]}"`
+    return t("prompt.placeholder.normal", { example: list()[store.placeholder % list().length] })
   })
 
   const spinnerDef = createMemo(() => {
@@ -1511,7 +1514,7 @@ export function Prompt(props: PromptProps) {
                 <box flexShrink={0} flexDirection="row" gap={1}>
                   <box marginLeft={1}>
                     <Show when={kv.get("animations_enabled", true)} fallback={<text fg={theme.textMuted}>[⋯]</text>}>
-                      <spinner color={spinnerDef().color} frames={spinnerDef().frames} interval={40} />
+                      <FrameSpinner color={spinnerDef().color} frames={spinnerDef().frames} interval={40} />
                     </Show>
                   </box>
                   <box flexDirection="row" gap={1} flexShrink={0}>
@@ -1652,17 +1655,17 @@ export function Prompt(props: PromptProps) {
                     </Match>
                     <Match when={true}>
                       <text fg={theme.text}>
-                        {agentShortcut()} <span style={{ fg: theme.textMuted }}>agents</span>
+                        {agentShortcut()} <span style={{ fg: theme.textMuted }}>{language.t("prompt.footer.agents")}</span>
                       </text>
                     </Match>
                   </Switch>
                   <text fg={theme.text}>
-                    {paletteShortcut()} <span style={{ fg: theme.textMuted }}>commands</span>
+                    {paletteShortcut()} <span style={{ fg: theme.textMuted }}>{language.t("prompt.footer.commands")}</span>
                   </text>
                 </Match>
                 <Match when={store.mode === "shell"}>
                   <text fg={theme.text}>
-                    esc <span style={{ fg: theme.textMuted }}>exit shell mode</span>
+                    esc <span style={{ fg: theme.textMuted }}>{language.t("prompt.footer.exit_shell")}</span>
                   </text>
                 </Match>
               </Switch>

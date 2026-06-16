@@ -412,10 +412,14 @@ export const CommandMap = {
   which_key_home: "which-key.home",
   which_key_end: "which-key.end",
 } satisfies BindingCommandMap
+export function descriptionKey(name: KeybindName) {
+  return `keybind.${name}`
+}
+
 const CommandDescriptions = Object.fromEntries(
-  Object.entries(Definitions).map(([name, item]) => [
+  Object.entries(Definitions).map(([name]) => [
     CommandMap[name as keyof typeof CommandMap] ?? name,
-    item.description,
+    descriptionKey(name as KeybindName),
   ]),
 ) as Record<string, string>
 

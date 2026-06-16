@@ -143,6 +143,55 @@ export const {
       hydratingSessions.get(sessionID)?.parts.add(partID)
     }
 
+    const pendingDeltas = new Map<
+      string,
+      { sessionID: string; messageID: string; partID: string; field: string; delta: string }
+    >()
+    const deltaFlushMs = 16
+    let deltaFlush: ReturnType<typeof setTimeout> | undefined
+
+    function queuePartDelta(input: {
+      sessionID: string
+      messageID: string
+      partID: string
+      field: string
+      delta: string
+    }) {
+      const key = `${input.messageID}:${input.partID}:${input.field}`
+      const current = pendingDeltas.get(key)
+      if (current) {
+        current.delta += input.delta
+        return
+      }
+      pendingDeltas.set(key, input)
+      if (deltaFlush !== undefined) return
+      deltaFlush = setTimeout(() => {
+        deltaFlush = undefined
+        const items = [...pendingDeltas.values()]
+        pendingDeltas.clear()
+        if (!items.length) return
+        batch(() => {
+          for (const item of items) {
+            touchPart(item.sessionID, item.partID)
+            const parts = store.part[item.messageID]
+            if (!parts) continue
+            const result = search(parts, item.partID, (part) => part.id)
+            if (!result.found) continue
+            setStore(
+              "part",
+              item.messageID,
+              produce((draft) => {
+                const part = draft[result.index]
+                const field = item.field as keyof typeof part
+                const existing = part[field] as string | undefined
+                ;(part[field] as string) = (existing ?? "") + item.delta
+              }),
+            )
+          }
+        })
+      }, deltaFlushMs).unref()
+    }
+
     function sessionListQuery(): { scope?: "project"; path?: string } {
       if (!kv.get("session_directory_filter_enabled", true)) return { scope: "project" }
       if (!project.data.instance.path.worktree || !project.data.instance.path.directory) return { scope: "project" }
@@ -377,17 +426,13 @@ export const {
           if (!parts) break
           const result = search(parts, event.properties.partID, (p) => p.id)
           if (!result.found) break
-          touchPart(event.properties.sessionID, event.properties.partID)
-          setStore(
-            "part",
-            event.properties.messageID,
-            produce((draft) => {
-              const part = draft[result.index]
-              const field = event.properties.field as keyof typeof part
-              const existing = part[field] as string | undefined
-              ;(part[field] as string) = (existing ?? "") + event.properties.delta
-            }),
-          )
+          queuePartDelta({
+            sessionID: event.properties.sessionID,
+            messageID: event.properties.messageID,
+            partID: event.properties.partID,
+            field: event.properties.field,
+            delta: event.properties.delta,
+          })
           break
         }
 

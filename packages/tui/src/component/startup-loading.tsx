@@ -1,14 +1,16 @@
 import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
 import { useTheme } from "../context/theme"
+import { useLanguage } from "../context/language"
 import { Spinner } from "./spinner"
 
 export function StartupLoading(props: { ready: () => boolean }) {
   const theme = useTheme().theme
+  const language = useLanguage()
   const [show, setShow] = createSignal(false)
-  const text = createMemo(() => (props.ready() ? "Finishing startup..." : "Loading plugins..."))
+  const text = createMemo(() =>
+    props.ready() ? language.t("startup.finishing") : language.t("startup.loading"),
+  )
   let wait: NodeJS.Timeout | undefined
-  let hold: NodeJS.Timeout | undefined
-  let stamp = 0
 
   createEffect(() => {
     if (props.ready()) {
@@ -16,39 +18,21 @@ export function StartupLoading(props: { ready: () => boolean }) {
         clearTimeout(wait)
         wait = undefined
       }
-      if (!show()) return
-      if (hold) return
-
-      const left = 3000 - (Date.now() - stamp)
-      if (left <= 0) {
-        setShow(false)
-        return
-      }
-
-      hold = setTimeout(() => {
-        hold = undefined
-        setShow(false)
-      }, left).unref()
+      setShow(false)
       return
     }
 
-    if (hold) {
-      clearTimeout(hold)
-      hold = undefined
-    }
     if (show()) return
     if (wait) return
 
     wait = setTimeout(() => {
       wait = undefined
-      stamp = Date.now()
       setShow(true)
     }, 500).unref()
   })
 
   onCleanup(() => {
     if (wait) clearTimeout(wait)
-    if (hold) clearTimeout(hold)
   })
 
   return (

@@ -3,6 +3,8 @@ import { RGBA, TextAttributes, type KeyEvent, type Renderable } from "@opentui/c
 import { useTerminalDimensions } from "@opentui/solid"
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import { useBindings, useKeymapSelector } from "../../keymap"
+import { useLanguage } from "../../context/language"
+import { maybeTranslate, type Translator } from "../../i18n/translate"
 import type { ActiveKey } from "@opentui/keymap"
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
@@ -46,7 +48,7 @@ const MAX_PANEL_HEIGHT = 16
 const PANEL_TOP_PADDING = 1
 const FOOTER_HEIGHT = 1
 const FOOTER_MARGIN = 1
-const UNKNOWN = "Unknown"
+
 
 type Layout = "dock" | "overlay"
 
@@ -111,19 +113,20 @@ function skin(api: TuiPluginApi): Skin {
   }
 }
 
-function activeKeyLabel(active: ActiveKey<Renderable, KeyEvent>) {
-  if (active.continues) return text(active.tokenName) ?? text(active.display) ?? UNKNOWN
-  return (
-    text(active.commandAttrs?.title) ?? text(active.bindingAttrs?.desc) ?? text(active.commandAttrs?.desc) ?? UNKNOWN
-  )
+function activeKeyLabel(active: ActiveKey<Renderable, KeyEvent>, t: Translator, unknown: string) {
+  if (active.continues) return text(active.tokenName) ?? text(active.display) ?? unknown
+  const raw =
+    text(active.commandAttrs?.title) ?? text(active.bindingAttrs?.desc) ?? text(active.commandAttrs?.desc) ?? unknown
+  return maybeTranslate(t, raw) ?? unknown
 }
 
-function activeKeyGroup(active: ActiveKey<Renderable, KeyEvent>) {
-  if (active.continues) return "System"
-  return text(active.commandAttrs?.category) ?? text(active.bindingAttrs?.group) ?? UNKNOWN
+function activeKeyGroup(active: ActiveKey<Renderable, KeyEvent>, t: Translator, unknown: string) {
+  if (active.continues) return t("category.system")
+  const raw = text(active.commandAttrs?.category) ?? text(active.bindingAttrs?.group) ?? unknown
+  return maybeTranslate(t, raw) ?? unknown
 }
 
-function activeKeyEntry(api: TuiPluginApi, active: ActiveKey<Renderable, KeyEvent>): Entry {
+function activeKeyEntry(api: TuiPluginApi, active: ActiveKey<Renderable, KeyEvent>, t: Translator, unknown: string): Entry {
   const key = api.keys.formatSequence([
     {
       stroke: active.stroke,
@@ -131,12 +134,12 @@ function activeKeyEntry(api: TuiPluginApi, active: ActiveKey<Renderable, KeyEven
       tokenName: active.tokenName,
     },
   ])
-  const label = activeKeyLabel(active)
+  const label = activeKeyLabel(active, t, unknown)
   return {
     type: "entry",
     key,
     label: active.continues ? `+${label}` : label,
-    group: activeKeyGroup(active),
+    group: activeKeyGroup(active, t, unknown),
     continues: active.continues,
   }
 }
@@ -189,6 +192,7 @@ function WhichKeyPanel(props: {
   pinned: () => boolean
 }) {
   const dimensions = useTerminalDimensions()
+  const language = useLanguage()
   const [offset, setOffset] = createSignal(0)
   const [activeGroup, setActiveGroup] = createSignal<string | undefined>()
   const pending = useKeymapSelector((keymap) => keymap.getPendingSequence())
@@ -206,7 +210,12 @@ function WhichKeyPanel(props: {
   const columns = createMemo(() =>
     Math.max(1, Math.min(3, Math.floor((contentWidth() + COLUMN_GAP) / (MAX_COLUMN_WIDTH + COLUMN_GAP)) || 1)),
   )
-  const entries = createMemo(() => active().map((item) => activeKeyEntry(props.api, item)))
+  const entries = createMemo(() => {
+    language.locale()
+    const t = language.t
+    const unknown = t("which_key.unknown")
+    return active().map((item) => activeKeyEntry(props.api, item, t, unknown))
+  })
   const groups = createMemo(() => grouped(entries()))
   const tabsVisible = createMemo(() => !pendingMode() && groups().length > 0)
   const headerVisible = createMemo(() => tabsVisible() || pendingMode())

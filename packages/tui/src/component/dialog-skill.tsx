@@ -2,12 +2,14 @@ import { DialogSelect, type DialogSelectOption } from "../ui/dialog-select"
 import { createResource, createMemo } from "solid-js"
 import { useDialog } from "../ui/dialog"
 import { useSDK } from "../context/sdk"
+import { useLanguage } from "../context/language"
 
 export type DialogSkillProps = {
   onSelect: (skill: string) => void
 }
 
 export function DialogSkill(props: DialogSkillProps) {
+  const language = useLanguage()
   const dialog = useDialog()
   const sdk = useSDK()
   dialog.setSize("large")
@@ -32,5 +34,11 @@ export function DialogSkill(props: DialogSkillProps) {
     }))
   })
 
-  return <DialogSelect title="Skills" placeholder="Search skills..." options={options()} />
+  return (
+    <DialogSelect
+      title={language.t("dialog.skills.title")}
+      placeholder={language.t("dialog.skills.placeholder")}
+      options={options()}
+    />
+  )
 }

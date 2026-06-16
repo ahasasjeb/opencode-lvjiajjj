@@ -205,12 +205,21 @@ function DiffViewer(props: { api: TuiPluginApi }) {
   }
 
   const scrollPatchNodeToTop = (patchNode: BoxRenderable) => {
+    if (!scroll || patchNode.isDestroyed) return
+    const scrollDelta = patchNode.y - scroll.viewport.y
+    const contentY = scroll.scrollTop + scrollDelta
+    const offset = contentY === 0 ? 0 : 1
+    scroll.scrollBy(scrollDelta + offset)
+  }
+
+  const schedulePatchScroll = (fileIndex: number) => {
+    setPendingPatchScrollFileIndex(fileIndex)
     requestAnimationFrame(() => {
-      if (!scroll) return
-      const scrollDelta = patchNode.y - scroll.viewport.y
-      const contentY = scroll.scrollTop + scrollDelta
-      const offset = contentY === 0 ? 0 : 1
-      scroll.scrollBy(scrollDelta + offset)
+      if (pendingPatchScrollFileIndex() !== fileIndex) return
+      const patchNode = patchNodeByFileIndex.get(fileIndex)
+      if (!patchNode || patchNode.isDestroyed) return
+      scrollPatchNodeToTop(patchNode)
+      setPendingPatchScrollFileIndex(undefined)
     })
   }
 
@@ -234,8 +243,7 @@ function DiffViewer(props: { api: TuiPluginApi }) {
   const scrollToFileIndex = (fileIndex: number | undefined) => {
     if (fileIndex === undefined) return
     selectPatchFile(fileIndex)
-    const patchNode = patchNodeByFileIndex.get(fileIndex)
-    if (patchNode) scrollPatchNodeToTop(patchNode)
+    schedulePatchScroll(fileIndex)
   }
 
   const jumpToFileIndex = (fileIndex: number | undefined) => {
@@ -333,24 +341,10 @@ function DiffViewer(props: { api: TuiPluginApi }) {
     selectPatchFile(fileIndex)
   }
 
-  const scrollToPatchFileIndexAfterRender = (fileIndex: number) => {
-    setPendingPatchScrollFileIndex(fileIndex)
-    requestAnimationFrame(() => {
-      const patchNode = patchNodeByFileIndex.get(fileIndex)
-      if (patchNode) scrollPatchNodeToTop(patchNode)
-      requestAnimationFrame(() => {
-        const patchNode = patchNodeByFileIndex.get(fileIndex)
-        if (patchNode) scrollPatchNodeToTop(patchNode)
-        setPendingPatchScrollFileIndex(undefined)
-      })
-    })
-  }
+  const scrollToPatchFileIndexAfterRender = schedulePatchScroll
 
   const scrollSinglePatchToTop = () => {
-    requestAnimationFrame(() => {
-      scroll?.scrollTo(0)
-      requestAnimationFrame(() => scroll?.scrollTo(0))
-    })
+    requestAnimationFrame(() => scroll?.scrollTo(0))
   }
 
   const measurePatchFiller = () => {
@@ -375,11 +369,9 @@ function DiffViewer(props: { api: TuiPluginApi }) {
     measurePatchFiller()
     if (pendingPatchScrollFileIndex() !== fileIndex) return
     requestAnimationFrame(() => {
+      if (pendingPatchScrollFileIndex() !== fileIndex) return
       scrollPatchNodeToTop(element)
-      requestAnimationFrame(() => {
-        scrollPatchNodeToTop(element)
-        setPendingPatchScrollFileIndex(undefined)
-      })
+      setPendingPatchScrollFileIndex(undefined)
     })
   }
 

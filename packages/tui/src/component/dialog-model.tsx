@@ -8,8 +8,10 @@ import { DialogVariant } from "./dialog-variant"
 import * as fuzzysort from "fuzzysort"
 import { useConnected } from "./use-connected"
 import { useSync } from "../context/sync"
+import { useLanguage } from "../context/language"
 
 export function DialogModel(props: { providerID?: string }) {
+  const language = useLanguage()
   const local = useLocal()
   const sync = useSync()
   const dialog = useDialog()
@@ -132,7 +134,7 @@ export function DialogModel(props: { providerID?: string }) {
 
   const title = createMemo(() => {
     const value = provider()
-    if (!value) return "Select model"
+    if (!value) return language.t("dialog.models.title")
     return value.name
   })
 
@@ -157,7 +159,7 @@ export function DialogModel(props: { providerID?: string }) {
       actions={[
         {
           command: "model.dialog.provider",
-          title: connected() ? "Connect provider" : "View all providers",
+          title: connected() ? language.t("dialog.models.connect") : language.t("dialog.models.providers"),
           onTrigger() {
             dialog.replace(() => <DialogProvider />)
           },

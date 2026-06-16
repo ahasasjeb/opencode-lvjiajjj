@@ -9,6 +9,8 @@ import {
   useOpencodeKeymap,
 } from "../keymap"
 import { useTuiConfig } from "../config"
+import { useLanguage } from "../context/language"
+import { maybeTranslate } from "../i18n/translate"
 
 type PaletteCommandEntry = ReturnType<OpenTuiKeymap["getCommandEntries"]>[number]
 
@@ -25,6 +27,7 @@ function isSuggestedPaletteCommand(entry: PaletteCommandEntry) {
 
 export function CommandPaletteDialog() {
   const config = useTuiConfig()
+  const language = useLanguage()
   const keymap = useOpencodeKeymap()
   const entries = useKeymapSelector((keymap: OpenTuiKeymap) => {
     const query = {
@@ -45,11 +48,18 @@ export function CommandPaletteDialog() {
       bindings: registeredBindings.get(entry.command.name) ?? entry.bindings,
     }))
   })
-  const options = createMemo(() =>
-    entries().map((entry) => ({
-      title: typeof entry.command.title === "string" ? entry.command.title : entry.command.name,
-      description: typeof entry.command.desc === "string" ? entry.command.desc : undefined,
-      category: typeof entry.command.category === "string" ? entry.command.category : undefined,
+  const options = createMemo(() => {
+    language.locale()
+    const t = language.t
+    return entries().map((entry) => ({
+      title:
+        typeof entry.command.title === "string"
+          ? maybeTranslate(t, entry.command.title) ?? entry.command.name
+          : entry.command.name,
+      description:
+        typeof entry.command.desc === "string" ? maybeTranslate(t, entry.command.desc) : undefined,
+      category:
+        typeof entry.command.category === "string" ? maybeTranslate(t, entry.command.category) : undefined,
       footer: formatKeyBindings(entry.bindings, config),
       value: entry.command.name,
       suggested: isSuggestedPaletteCommand(entry),
@@ -57,8 +67,8 @@ export function CommandPaletteDialog() {
         dialog.clear()
         keymap.dispatchCommand(entry.command.name)
       },
-    })),
-  )
+    }))
+  })
 
   let ref: DialogSelectRef<string>
   const list = () => {
@@ -69,11 +79,11 @@ export function CommandPaletteDialog() {
         .map((option) => ({
           ...option,
           value: `suggested:${option.value}`,
-          category: "Suggested",
+          category: language.t("category.suggested"),
         })),
       ...options(),
     ]
   }
 
-  return <DialogSelect ref={(value) => (ref = value)} title="Commands" options={list()} />
+  return <DialogSelect ref={(value) => (ref = value)} title={language.t("palette.title")} options={list()} />
 }

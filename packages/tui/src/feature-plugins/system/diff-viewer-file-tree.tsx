@@ -44,9 +44,7 @@ export function DiffViewerFileTree(props: DiffViewerFileTreeProps) {
     if (node === undefined) return
     const selectedIndex = rows().findIndex((row) => row.id === node)
     if (selectedIndex === -1) return
-    const scrollSelectedIntoView = () => scrollFileTreeRowIntoView(scroll, selectedIndex)
-    scrollSelectedIntoView()
-    requestAnimationFrame(scrollSelectedIntoView)
+    requestAnimationFrame(() => scrollFileTreeRowIntoView(scroll, selectedIndex))
   })
 
   const fadedColor = () => tint(props.theme.text, props.theme.background, 0.75)

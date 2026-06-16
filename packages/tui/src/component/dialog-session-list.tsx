@@ -17,8 +17,10 @@ import { Spinner } from "./spinner"
 import { errorMessage } from "../util/error"
 import { DialogSessionDeleteFailed } from "./dialog-session-delete-failed"
 import { useCommandShortcut } from "../keymap"
+import { useLanguage } from "../context/language"
 
 export function DialogSessionList() {
+  const language = useLanguage()
   const dialog = useDialog()
   const route = useRoute()
   const sync = useSync()
@@ -202,11 +204,14 @@ export function DialogSessionList() {
         const x = sessionMap.get(id)
         if (!x) return undefined
         const label = new Date(x.time.updated).toDateString()
-        return buildOption(id, label === today ? "Today" : label)
+        return buildOption(id, label === today ? language.t("label.today") : label)
       })
       .filter((x) => x !== undefined)
 
-    return [...pinned.map((id) => buildOption(id, "Pinned")).filter((x) => x !== undefined), ...remaining]
+    return [
+      ...pinned.map((id) => buildOption(id, language.t("label.pinned"))).filter((x) => x !== undefined),
+      ...remaining,
+    ]
   })
 
   onMount(() => {
@@ -215,7 +220,7 @@ export function DialogSessionList() {
 
   return (
     <DialogSelect
-      title="Sessions"
+      title={language.t("dialog.sessions.title")}
       options={options()}
       skipFilter={true}
       current={currentSessionID()}

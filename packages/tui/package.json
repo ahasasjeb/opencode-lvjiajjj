@@ -17,6 +17,7 @@
     "./context/epilogue": "./src/context/epilogue.tsx",
     "./context/exit": "./src/context/exit.tsx",
     "./context/kv": "./src/context/kv.tsx",
+    "./context/language": "./src/context/language.tsx",
     "./context/project": "./src/context/project.tsx",
     "./context/runtime": "./src/context/runtime.tsx",
     "./context/sdk": "./src/context/sdk.tsx",
@@ -62,7 +63,8 @@
     "opentui-spinner": "catalog:",
     "remeda": "catalog:",
     "strip-ansi": "7.1.2",
-    "solid-js": "catalog:"
+    "solid-js": "catalog:",
+    "@solid-primitives/i18n": "2.2.1"
   },
   "devDependencies": {
     "@tsconfig/bun": "catalog:",

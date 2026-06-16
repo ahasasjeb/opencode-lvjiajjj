@@ -1,6 +1,7 @@
 import { createContext, useContext, type ParentProps, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useTheme } from "../context/theme"
+import { useLanguage } from "../context/language"
 import { useTerminalDimensions } from "@opentui/solid"
 import { SplitBorder } from "./border"
 import { TextAttributes } from "@opentui/core"
@@ -89,8 +90,16 @@ export type ToastContext = ReturnType<typeof init>
 const ctx = createContext<ToastContext>()
 
 export function ToastProvider(props: ParentProps) {
+  const language = useLanguage()
   const value = init()
-  return <ctx.Provider value={value}>{props.children}</ctx.Provider>
+  const toast = {
+    ...value,
+    error(err: unknown) {
+      if (err instanceof Error) return value.show({ variant: "error", message: err.message })
+      value.show({ variant: "error", message: language.t("toast.unknown_error") })
+    },
+  }
+  return <ctx.Provider value={toast}>{props.children}</ctx.Provider>
 }
 
 export function useToast() {

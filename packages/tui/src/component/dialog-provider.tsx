@@ -13,6 +13,7 @@ import { DialogModel } from "./dialog-model"
 import { useToast } from "../ui/toast"
 import { isConsoleManagedProvider } from "../util/provider-origin"
 import { useConnected } from "./use-connected"
+import { useLanguage } from "../context/language"
 import { useBindings } from "../keymap"
 import { useClipboard } from "../context/clipboard"
 
@@ -226,8 +227,9 @@ export function createDialogProviderOptions() {
 }
 
 export function DialogProvider() {
+  const language = useLanguage()
   const options = createDialogProviderOptions()
-  return <DialogSelect title="Connect a provider" options={options()} />
+  return <DialogSelect title={language.t("dialog.providers.title")} options={options()} />
 }
 
 interface AutoMethodProps {
@@ -238,6 +240,7 @@ interface AutoMethodProps {
 }
 function AutoMethod(props: AutoMethodProps) {
   const { theme } = useTheme()
+  const language = useLanguage()
   const sdk = useSDK()
   const dialog = useDialog()
   const sync = useSync()
@@ -255,7 +258,7 @@ function AutoMethod(props: AutoMethodProps) {
             props.authorization.instructions.match(/[A-Z0-9]{4}-[A-Z0-9]{4,5}/)?.[0] ?? props.authorization.url
           clipboard
             .write?.(code)
-            .then(() => toast.show({ message: "Copied to clipboard", variant: "info" }))
+            .then(() => toast.show({ message: language.t("toast.copied_clipboard"), variant: "info" }))
             .catch(toast.error)
         },
       },

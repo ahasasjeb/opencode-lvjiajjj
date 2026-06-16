@@ -16,6 +16,8 @@ import { KeymapProvider, useKeymap, useKeymapSelector, useBindings } from "@open
 import { createMemo, type Accessor } from "solid-js"
 import { useTuiConfig } from "./config"
 import { TuiKeybind } from "./config/keybind"
+import { useLanguage } from "./context/language"
+import { maybeTranslate } from "./i18n/translate"
 
 export const LEADER_TOKEN = "leader"
 export const OPENCODE_BASE_MODE = "base"
@@ -259,6 +261,7 @@ export function useCommandShortcut(command: string): Accessor<string> {
 
 export function useCommandSlashes(): Accessor<readonly CommandSlashEntry[]> {
   const keymap = useOpencodeKeymap()
+  const language = useLanguage()
   const entries = useKeymapSelector((keymap: OpenTuiKeymap) =>
     keymap.getCommandEntries({
       visibility: "reachable",
@@ -267,8 +270,10 @@ export function useCommandSlashes(): Accessor<readonly CommandSlashEntry[]> {
     }),
   )
 
-  return createMemo<CommandSlashEntry[]>(() =>
-    entries().flatMap((entry) => {
+  return createMemo<CommandSlashEntry[]>(() => {
+    language.locale()
+    const t = language.t
+    return entries().flatMap((entry) => {
       const slashName = entry.command.slashName
       if (typeof slashName !== "string" || !slashName) return []
       const slashAliases = entry.command.slashAliases
@@ -276,15 +281,15 @@ export function useCommandSlashes(): Accessor<readonly CommandSlashEntry[]> {
         display: `/${slashName}`,
         description:
           typeof entry.command.desc === "string"
-            ? entry.command.desc
+            ? maybeTranslate(t, entry.command.desc)
             : typeof entry.command.title === "string"
-              ? entry.command.title
+              ? maybeTranslate(t, entry.command.title)
               : undefined,
         aliases: Array.isArray(slashAliases)
           ? slashAliases.filter((alias): alias is string => typeof alias === "string").map((alias) => `/${alias}`)
           : undefined,
         onSelect: () => keymap.dispatchCommand(entry.command.name),
       }
-    }),
-  )
+    })
+  })
 }

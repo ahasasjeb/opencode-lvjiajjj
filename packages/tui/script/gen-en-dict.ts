@@ -1,0 +1,96 @@
+const keybindContent = await Bun.file("src/config/keybind.ts").text()
+const keybindLines = keybindContent.split("\n")
+const keybinds: Record<string, string> = {}
+for (const line of keybindLines) {
+  const match = line.match(/^\s+"?([\w.]+)"?: keybind\((.+),\s*"([^"]+)"\),?\s*$/)
+  if (match) keybinds[`keybind.${match[1]}`] = match[3]
+}
+
+const commands: Record<string, string> = {
+  "command.palette.show": "Show command palette",
+  "command.session.list": "Switch session",
+  "command.session.new": "New session",
+  "command.workspace.copy_path": "Copy worktree path",
+  "command.workspace.list": "Manage workspaces",
+  "command.session.quick_switch": "Switch to session in quick slot {{slot}}",
+  "command.model.list": "Switch model",
+  "command.model.cycle_recent": "Model cycle",
+  "command.model.cycle_recent_reverse": "Model cycle reverse",
+  "command.model.cycle_favorite": "Favorite cycle",
+  "command.model.cycle_favorite_reverse": "Favorite cycle reverse",
+  "command.agent.list": "Switch agent",
+  "command.mcp.list": "Toggle MCPs",
+  "command.agent.cycle": "Agent cycle",
+  "command.variant.cycle": "Variant cycle",
+  "command.variant.list": "Switch model variant",
+  "command.variant.none.title": "No variants available",
+  "command.variant.none.message": "The current model does not support any variants.",
+  "command.agent.cycle_reverse": "Agent cycle reverse",
+  "command.provider.connect": "Connect provider",
+  "command.console.org.switch": "Switch org",
+  "command.status.view": "View status",
+  "command.theme.switch": "Switch theme",
+  "command.theme.switch_light": "Switch to light mode",
+  "command.theme.switch_dark": "Switch to dark mode",
+  "command.theme.unlock": "Unlock theme mode",
+  "command.theme.lock": "Lock theme mode",
+  "command.help.show": "Help",
+  "command.docs.open": "Open docs",
+  "command.app.exit": "Exit the app",
+  "command.app.debug": "Toggle debug panel",
+  "command.app.console": "Toggle console",
+  "command.app.heap_snapshot": "Write heap snapshot",
+  "command.terminal.suspend": "Suspend terminal",
+  "command.terminal.title.disable": "Disable terminal title",
+  "command.terminal.title.enable": "Enable terminal title",
+  "command.animations.disable": "Disable animations",
+  "command.animations.enable": "Enable animations",
+  "command.file_context.disable": "Disable file context",
+  "command.file_context.enable": "Enable file context",
+  "command.diff_wrap.disable": "Disable diff wrapping",
+  "command.diff_wrap.enable": "Enable diff wrapping",
+  "command.paste_summary.disable": "Disable paste summary",
+  "command.paste_summary.enable": "Enable paste summary",
+  "command.session_directory_filter.disable": "Disable session directory filtering",
+  "command.session_directory_filter.enable": "Enable session directory filtering",
+  "command.language.cycle": "Cycle language",
+
+  "category.suggested": "Suggested",
+  "category.system": "System",
+  "category.session": "Session",
+  "category.workspace": "Workspace",
+  "category.agent": "Agent",
+  "category.provider": "Provider",
+  "category.language": "Language",
+
+  "palette.title": "Commands",
+  "startup.loading": "Loading plugins...",
+  "startup.finishing": "Finishing startup...",
+  "help.title": "Help",
+  "help.close": "Close help",
+  "help.hint": "Press {{shortcut}} to see all available actions and commands in any context.",
+  "help.ok": "ok",
+  "toast.copied_clipboard": "Copied to clipboard",
+  "toast.copied_worktree": "Copied worktree path",
+  "toast.invalid_model": "Invalid model format: {{model}}",
+  "toast.fork_failed": "Failed to fork session",
+  "toast.session_deleted": "The current session was deleted",
+  "toast.heap_snapshot": "Heap snapshot written to {{files}}",
+  "update.available.title": "Update Available",
+  "update.available.message": "A new release v{{version}} is available. Would you like to update now?",
+  "update.updating": "Updating to v{{version}}...",
+  "update.failed.title": "Update Failed",
+  "update.failed.message": "Update failed",
+  "update.complete.title": "Update Complete",
+  "update.complete.message": "Successfully updated to OpenCode v{{version}}. Please restart the application.",
+
+  "language.en": "English",
+  "language.zh": "简体中文",
+
+  "which_key.unknown": "Unknown",
+}
+
+const dict = Object.fromEntries(
+  Object.entries({ ...commands, ...keybinds }).sort(([a], [b]) => a.localeCompare(b)),
+)
+await Bun.write("src/i18n/en.json", JSON.stringify(dict, null, 2) + "\n")

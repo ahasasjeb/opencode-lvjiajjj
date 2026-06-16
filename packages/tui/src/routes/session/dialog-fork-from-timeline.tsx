@@ -8,8 +8,10 @@ import { useRoute } from "../../context/route"
 import { useDialog, type DialogContext } from "../../ui/dialog"
 import type { PromptInfo } from "../../component/prompt/history"
 import { stripPromptPartIDs as strip } from "../../prompt/part"
+import { useLanguage } from "../../context/language"
 
 export function DialogForkFromTimeline(props: { sessionID: string; onMove: (messageID?: string) => void }) {
+  const language = useLanguage()
   const sync = useSync()
   const dialog = useDialog()
   const sdk = useSDK()
@@ -72,5 +74,11 @@ export function DialogForkFromTimeline(props: { sessionID: string; onMove: (mess
     return [fullSession, ...result.reverse()]
   })
 
-  return <DialogSelect onMove={(option) => props.onMove(option.value)} title="Fork session" options={options()} />
+  return (
+    <DialogSelect
+      onMove={(option) => props.onMove(option.value)}
+      title={language.t("dialog.fork.title")}
+      options={options()}
+    />
+  )
 }
