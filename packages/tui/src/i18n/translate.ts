@@ -8,7 +8,8 @@ export function maybeTranslate(t: Translator, value: string | undefined) {
     value.startsWith("category.") ||
     value.startsWith("home.") ||
     value.startsWith("prompt.") ||
-    value.startsWith("dialog.")
+    value.startsWith("dialog.") ||
+    value.startsWith("sidebar.")
   )
     return t(value)
   return value

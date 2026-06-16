@@ -22,9 +22,11 @@ export function DialogForkFromTimeline(props: { sessionID: string; onMove: (mess
   })
 
   const options = createMemo((): DialogSelectOption<string | undefined>[] => {
+    language.locale()
+    const t = language.t
     const messages = sync.data.message[props.sessionID] ?? []
     const fullSession = {
-      title: "Full session",
+      title: t("dialog.fork.full_session"),
       value: undefined,
       onSelect: async (dialog: DialogContext) => {
         const forked = await sdk.client.session.fork({ sessionID: props.sessionID })

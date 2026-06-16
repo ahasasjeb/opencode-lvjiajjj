@@ -1,10 +1,12 @@
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { createMemo, For, Match, Show, Switch, createSignal } from "solid-js"
+import { useLanguage } from "../../context/language"
 
 const id = "internal:sidebar-mcp"
 
 function View(props: { api: TuiPluginApi }) {
+  const language = useLanguage()
   const [open, setOpen] = createSignal(true)
   const theme = () => props.api.theme.current
   const list = createMemo(() => props.api.state.mcp())
@@ -38,7 +40,11 @@ function View(props: { api: TuiPluginApi }) {
             <Show when={!open()}>
               <span style={{ fg: theme().textMuted }}>
                 {" "}
-                ({on()} active{bad() > 0 ? `, ${bad()} error${bad() > 1 ? "s" : ""}` : ""})
+                ({language.t("sidebar.mcp.active", { count: on() })}
+                {bad() > 0
+                  ? language.t(bad() > 1 ? "sidebar.mcp.error_many" : "sidebar.mcp.error_one", { count: bad() })
+                  : ""}
+                )
               </span>
             </Show>
           </text>
@@ -59,13 +65,15 @@ function View(props: { api: TuiPluginApi }) {
                   {item.name}{" "}
                   <span style={{ fg: theme().textMuted }}>
                     <Switch fallback={item.status}>
-                      <Match when={item.status === "connected"}>Connected</Match>
+                      <Match when={item.status === "connected"}>{language.t("sidebar.mcp.connected")}</Match>
                       <Match when={item.status === "failed"}>
                         <i>{item.error}</i>
                       </Match>
-                      <Match when={item.status === "disabled"}>Disabled</Match>
-                      <Match when={item.status === "needs_auth"}>Needs auth</Match>
-                      <Match when={item.status === "needs_client_registration"}>Needs client ID</Match>
+                      <Match when={item.status === "disabled"}>{language.t("sidebar.mcp.disabled")}</Match>
+                      <Match when={item.status === "needs_auth"}>{language.t("sidebar.mcp.needs_auth")}</Match>
+                      <Match when={item.status === "needs_client_registration"}>
+                        {language.t("sidebar.mcp.needs_client_id")}
+                      </Match>
                     </Switch>
                   </span>
                 </text>
