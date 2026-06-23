@@ -14,7 +14,7 @@ import {
   untrack,
   useContext,
 } from "solid-js"
-import { Dynamic } from "solid-js/web"
+
 import path from "node:path"
 import { mkdir, writeFile } from "node:fs/promises"
 import { useRoute, useRouteData } from "../../context/route"
@@ -25,7 +25,7 @@ import { SplitBorder } from "../../ui/border"
 import { useTuiPaths, useTuiTerminalEnvironment } from "../../context/runtime"
 import { Spinner } from "../../component/spinner"
 import { createSyntaxStyleMemo, generateSubtleSyntax, selectedForeground, useTheme } from "../../context/theme"
-import { BoxRenderable, ScrollBoxRenderable, addDefaultParsers, TextAttributes, RGBA } from "@opentui/core"
+import { BoxRenderable, ScrollBoxRenderable, addDefaultParsers, TextAttributes, RGBA, type RenderContext } from "@opentui/core"
 import { Prompt, type PromptRef } from "../../component/prompt"
 import type {
   AssistantMessage,
@@ -79,6 +79,7 @@ import { usePluginRuntime } from "../../plugin/runtime"
 import { DialogRetryAction } from "../../component/dialog-retry-action"
 import { formatSubagentRetryLine, translateRetryMessage } from "../../i18n/retry"
 import type { Translator } from "../../i18n/translate"
+import { createMermaidMarkdownRenderer } from "@kitlangton/merman"
 import { getRevertDiffFiles } from "../../util/revert-diff"
 import { OPENCODE_BASE_MODE, useBindings, useCommandShortcut, useOpencodeKeymap } from "../../keymap"
 import { PathFormatterProvider, usePathFormatter } from "../../context/path-format"
@@ -1502,19 +1503,9 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
   return (
     <>
       <For each={props.parts}>
-        {(part, index) => {
-          const component = createMemo(() => PART_MAPPING[part.type as keyof typeof PART_MAPPING])
-          return (
-            <Show when={component()}>
-              <Dynamic
-                last={index() === props.parts.length - 1}
-                component={component()}
-                part={part as any}
-                message={props.message}
-              />
-            </Show>
-          )
-        }}
+        {(part, index) => (
+          <MessagePart last={index() === props.parts.length - 1} part={part} message={props.message} />
+        )}
       </For>
       <Show when={props.parts.some((x) => x.type === "tool" && x.tool === "task")}>
         <box paddingTop={1} paddingLeft={3}>
@@ -1582,10 +1573,17 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
   )
 }
 
-const PART_MAPPING = {
-  text: TextPart,
-  tool: ToolPart,
-  reasoning: ReasoningPart,
+function MessagePart(props: { last: boolean; part: Part; message: AssistantMessage }) {
+  if (props.part.type === "text") {
+    return <TextPart last={props.last} part={props.part} message={props.message} />
+  }
+  if (props.part.type === "tool") {
+    return <ToolPart last={props.last} part={props.part} message={props.message} />
+  }
+  if (props.part.type === "reasoning") {
+    return <ReasoningPart last={props.last} part={props.part} message={props.message} />
+  }
+  return null
 }
 
 const INLINE_TOOL_ICON_WIDTH = 2
@@ -1698,10 +1696,20 @@ function ReasoningHeader(props: {
   )
 }
 
+function mermaidMarkdownRenderNode(renderer: RenderContext) {
+  const renderNode = createMermaidMarkdownRenderer(renderer)
+  Object.assign(renderNode, { codeBlockOnly: true })
+  return renderNode
+}
+
 function TextPart(props: { last: boolean; part: TextPart; message: AssistantMessage }) {
   const ctx = use()
   const { theme, syntax } = useTheme()
+  const renderer = useRenderer()
   const streaming = createMemo(() => !props.message.time.completed && props.last)
+
+  const mermaidRenderNode = createMemo(() => mermaidMarkdownRenderNode(renderer))
+
   return (
     <Show when={props.part.text.trim()}>
       <box id={`text-${props.part.messageID}-${props.part.id}`} paddingLeft={3} marginTop={1} flexShrink={0}>
@@ -1714,6 +1722,7 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
           conceal={ctx.conceal()}
           fg={theme.markdownText}
           bg={theme.background}
+          renderNode={mermaidRenderNode()}
         />
       </box>
     </Show>

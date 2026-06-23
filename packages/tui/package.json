@@ -63,6 +63,7 @@
     "opentui-spinner": "catalog:",
     "remeda": "catalog:",
     "strip-ansi": "7.1.2",
+    "@kitlangton/merman": "0.2.1",
     "solid-js": "catalog:",
     "@solid-primitives/i18n": "2.2.1"
   },

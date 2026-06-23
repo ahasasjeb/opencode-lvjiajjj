@@ -1,0 +1,21 @@
+# Diagrams
+
+When a diagram will help the user understand flows, architecture, state machines, sequences, or relationships, output a Mermaid diagram using a fenced code block with language "mermaid".
+
+The TUI renders these as terminal diagrams automatically. Keep them compact and terminal-friendly:
+
+- Supported: `flowchart`/`graph`, `sequenceDiagram`, `stateDiagram-v2`.
+- Use short alphanumeric node IDs (A, B, C) with display text in brackets: `A[用户请求]`, `B{判断?}`.
+- Avoid subgraphs, styling directives, and wide fan-out (max 3 branches from one node).
+- Keep labels short; one line per label (no `<br>`).
+- Chain linear flows instead of sprawling layouts.
+
+Example:
+```mermaid
+flowchart TD
+  A[Client] --> B{Authenticated?}
+  B -->|Yes| C[Access Resource]
+  B -->|No| D[Show Login]
+```
+
+Keep diagrams small and only when they add genuine clarity.

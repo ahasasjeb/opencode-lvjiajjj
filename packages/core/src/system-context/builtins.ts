@@ -34,6 +34,15 @@ const builtIns = Layer.effectDiscard(
         baseline: (date) => `Today's date: ${date}`,
         update: (_previous, date) => `Today's date is now: ${date}`,
       }),
+      SystemContext.make({
+        key: SystemContext.Key.make("core/mermaid"),
+        codec: Schema.toCodecJson(Schema.String),
+        load: Effect.succeed(
+          "# Diagrams\n\nWhen helpful, use ```mermaid fenced blocks for flowcharts etc. The terminal renders them as ASCII art. Use compact flowchart TD/LR, short node IDs with labels in brackets, no subgraphs.\n```mermaid\nflowchart TD\n  A[Start] --> B[End]\n```",
+        ),
+        baseline: (g) => g,
+        update: (_p, g) => g,
+      }),
     ])
 
     yield* registry.register({ key: SystemContext.Key.make("core/builtins"), load: Effect.succeed(context) })

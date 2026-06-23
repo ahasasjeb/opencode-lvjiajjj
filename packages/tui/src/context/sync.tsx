@@ -147,6 +147,10 @@ export const {
       string,
       { sessionID: string; messageID: string; partID: string; field: string; delta: string }
     >()
+    // Parts for which we have received an authoritative full "part.updated".
+    // Used to ignore any subsequent (late/out-of-order) deltas to prevent duplication
+    // or spurious newlines/whitespace before the final token.
+    const finalizedParts = new Set<string>()
     const deltaFlushMs = 16
     let deltaFlush: ReturnType<typeof setTimeout> | undefined
 
@@ -401,19 +405,30 @@ export const {
         }
         case "message.part.updated": {
           touchPart(event.properties.part.sessionID, event.properties.part.id)
-          const parts = store.part[event.properties.part.messageID]
+          const messageID = event.properties.part.messageID
+          const partID = event.properties.part.id
+          // Clear pending deltas for this part. The updated event provides the authoritative full state
+          // (e.g. after text streaming ends). Any still-queued deltas would otherwise append after the
+          // full text is set, causing the last token(s) to be duplicated (classic streaming bug).
+          for (const [key] of pendingDeltas) {
+            if (key.startsWith(`${messageID}:${partID}:`)) {
+              pendingDeltas.delete(key)
+            }
+          }
+          finalizedParts.add(`${messageID}:${partID}`)
+          const parts = store.part[messageID]
           if (!parts) {
-            setStore("part", event.properties.part.messageID, [event.properties.part])
+            setStore("part", messageID, [event.properties.part])
             break
           }
-          const result = search(parts, event.properties.part.id, (p) => p.id)
+          const result = search(parts, partID, (p) => p.id)
           if (result.found) {
-            setStore("part", event.properties.part.messageID, result.index, reconcile(event.properties.part))
+            setStore("part", messageID, result.index, reconcile(event.properties.part))
             break
           }
           setStore(
             "part",
-            event.properties.part.messageID,
+            messageID,
             produce((draft) => {
               draft.splice(result.index, 0, event.properties.part)
             }),
@@ -422,14 +437,22 @@ export const {
         }
 
         case "message.part.delta": {
-          const parts = store.part[event.properties.messageID]
+          const messageID = event.properties.messageID
+          const partID = event.properties.partID
+          if (finalizedParts.has(`${messageID}:${partID}`)) {
+            // Authoritative full part already received (via part.updated); ignore late delta.
+            // This is the root cause of duplicate tokens and spurious newlines/whitespace
+            // before the final token in streaming output.
+            break
+          }
+          const parts = store.part[messageID]
           if (!parts) break
-          const result = search(parts, event.properties.partID, (p) => p.id)
+          const result = search(parts, partID, (p) => p.id)
           if (!result.found) break
           queuePartDelta({
             sessionID: event.properties.sessionID,
-            messageID: event.properties.messageID,
-            partID: event.properties.partID,
+            messageID,
+            partID,
             field: event.properties.field,
             delta: event.properties.delta,
           })

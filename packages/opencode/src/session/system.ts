@@ -12,6 +12,7 @@ import PROMPT_KIMI from "./prompt/kimi.txt"
 
 import PROMPT_CODEX from "./prompt/codex.txt"
 import PROMPT_TRINITY from "./prompt/trinity.txt"
+import PROMPT_MERMAID from "./prompt/mermaid.txt"
 import type { Provider } from "@/provider/provider"
 import type { Agent } from "@/agent/agent"
 import { Permission } from "@/permission"
@@ -23,19 +24,19 @@ import { PluginBoot } from "@opencode-ai/core/plugin/boot"
 import { Reference } from "@opencode-ai/core/reference"
 
 export function provider(model: Provider.Model) {
-  if (model.api.id.includes("gpt-4") || model.api.id.includes("o1") || model.api.id.includes("o3"))
-    return [PROMPT_BEAST]
-  if (model.api.id.includes("gpt")) {
-    if (model.api.id.includes("codex")) {
-      return [PROMPT_CODEX]
+  const base = (() => {
+    if (model.api.id.includes("gpt-4") || model.api.id.includes("o1") || model.api.id.includes("o3")) return PROMPT_BEAST
+    if (model.api.id.includes("gpt")) {
+      if (model.api.id.includes("codex")) return PROMPT_CODEX
+      return PROMPT_GPT
     }
-    return [PROMPT_GPT]
-  }
-  if (model.api.id.includes("gemini-")) return [PROMPT_GEMINI]
-  if (model.api.id.includes("claude")) return [PROMPT_ANTHROPIC]
-  if (model.api.id.toLowerCase().includes("trinity")) return [PROMPT_TRINITY]
-  if (model.api.id.toLowerCase().includes("kimi")) return [PROMPT_KIMI]
-  return [PROMPT_DEFAULT]
+    if (model.api.id.includes("gemini-")) return PROMPT_GEMINI
+    if (model.api.id.includes("claude")) return PROMPT_ANTHROPIC
+    if (model.api.id.toLowerCase().includes("trinity")) return PROMPT_TRINITY
+    if (model.api.id.toLowerCase().includes("kimi")) return PROMPT_KIMI
+    return PROMPT_DEFAULT
+  })()
+  return [base, PROMPT_MERMAID]
 }
 
 export interface Interface {
