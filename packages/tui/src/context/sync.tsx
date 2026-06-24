@@ -32,6 +32,13 @@ import { batch, onMount } from "solid-js"
 import path from "path"
 import { useKV } from "./kv"
 
+function mergeStreamedPart(current: Part | undefined, incoming: Part): Part {
+  if (incoming.type !== "text" && incoming.type !== "reasoning") return incoming
+  if (!current || (current.type !== "text" && current.type !== "reasoning")) return incoming
+  if (incoming.text.length >= current.text.length) return incoming
+  return { ...incoming, text: current.text }
+}
+
 const emptyConsoleState: ConsoleState = {
   consoleManagedProviders: [],
   switchableOrgCount: 0,
@@ -147,9 +154,9 @@ export const {
       string,
       { sessionID: string; messageID: string; partID: string; field: string; delta: string }
     >()
-    // Parts for which we have received an authoritative full "part.updated".
-    // Used to ignore any subsequent (late/out-of-order) deltas to prevent duplication
-    // or spurious newlines/whitespace before the final token.
+    // Text/reasoning parts finalized by a terminal part.updated (time.end set).
+    // Ignores only late deltas after streaming ends; initial part.updated on stream
+    // start must still accept subsequent deltas.
     const finalizedParts = new Set<string>()
     const deltaFlushMs = 16
     let deltaFlush: ReturnType<typeof setTimeout> | undefined
@@ -407,30 +414,35 @@ export const {
           touchPart(event.properties.part.sessionID, event.properties.part.id)
           const messageID = event.properties.part.messageID
           const partID = event.properties.part.id
-          // Clear pending deltas for this part. The updated event provides the authoritative full state
-          // (e.g. after text streaming ends). Any still-queued deltas would otherwise append after the
-          // full text is set, causing the last token(s) to be duplicated (classic streaming bug).
-          for (const [key] of pendingDeltas) {
-            if (key.startsWith(`${messageID}:${partID}:`)) {
-              pendingDeltas.delete(key)
+          const part = event.properties.part
+          const terminal =
+            (part.type === "text" || part.type === "reasoning") && part.time?.end !== undefined
+          // Only drop queued deltas on a terminal snapshot. Stream-start part.updated events can
+          // arrive late and must not discard in-flight deltas or regress streamed text.
+          if (terminal) {
+            for (const [key] of pendingDeltas) {
+              if (key.startsWith(`${messageID}:${partID}:`)) {
+                pendingDeltas.delete(key)
+              }
             }
+            finalizedParts.add(`${messageID}:${partID}`)
           }
-          finalizedParts.add(`${messageID}:${partID}`)
           const parts = store.part[messageID]
           if (!parts) {
-            setStore("part", messageID, [event.properties.part])
+            setStore("part", messageID, [part])
             break
           }
           const result = search(parts, partID, (p) => p.id)
           if (result.found) {
-            setStore("part", messageID, result.index, reconcile(event.properties.part))
+            const merged = mergeStreamedPart(parts[result.index], part)
+            setStore("part", messageID, result.index, reconcile(merged))
             break
           }
           setStore(
             "part",
             messageID,
             produce((draft) => {
-              draft.splice(result.index, 0, event.properties.part)
+              draft.splice(result.index, 0, part)
             }),
           )
           break
@@ -461,6 +473,7 @@ export const {
 
         case "message.part.removed": {
           touchPart(event.properties.sessionID, event.properties.partID)
+          finalizedParts.delete(`${event.properties.messageID}:${event.properties.partID}`)
           const parts = store.part[event.properties.messageID]
           const result = search(parts, event.properties.partID, (p) => p.id)
           if (result.found) {
@@ -669,16 +682,7 @@ export const {
                   const parts = message.parts.flatMap((part) => {
                     const current = currentParts.find((item) => item.id === part.id)
                     if (tracker.parts.has(part.id)) return current ? [current] : []
-                    if (
-                      current &&
-                      (part.type === "text" || part.type === "reasoning") &&
-                      (current.type === "text" || current.type === "reasoning") &&
-                      part.text.length === 0 &&
-                      current.text.length > 0
-                    ) {
-                      return [current]
-                    }
-                    return [part]
+                    return [mergeStreamedPart(current, part)]
                   })
                   parts.push(
                     ...currentParts.filter(

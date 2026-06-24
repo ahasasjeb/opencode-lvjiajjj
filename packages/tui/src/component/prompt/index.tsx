@@ -623,7 +623,9 @@ export function Prompt(props: PromptProps) {
 
   onCleanup(() => {
     if (store.prompt.input) {
-      stashed = { prompt: unwrap(store.prompt), cursor: input.cursorOffset }
+      const cursor =
+        input && !input.isDestroyed ? input.cursorOffset : Bun.stringWidth(store.prompt.input)
+      stashed = { prompt: unwrap(store.prompt), cursor }
     }
     setInputTarget(undefined)
     props.ref?.(undefined)

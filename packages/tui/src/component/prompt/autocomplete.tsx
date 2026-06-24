@@ -145,7 +145,9 @@ export function Autocomplete(props: {
     // Track props.value to make memo reactive to text changes
     props.value // <- there surely is a better way to do this, like making .input() reactive
 
-    return props.input().getTextRange(store.index + 1, props.input().cursorOffset)
+    const input = props.input()
+    if (input.isDestroyed) return
+    return input.getTextRange(store.index + 1, input.cursorOffset)
   })
 
   // filter() reads reactive props.value plus non-reactive cursor/text state.
@@ -663,12 +665,15 @@ export function Autocomplete(props: {
         return store.visible
       },
       onInput(value) {
+        const input = props.input()
+        if (input.isDestroyed) return
+
         if (store.visible) {
           if (
             // Typed text before the trigger
-            props.input().cursorOffset <= store.index ||
+            input.cursorOffset <= store.index ||
             // There is a space between the trigger and the cursor
-            props.input().getTextRange(store.index, props.input().cursorOffset).match(/\s/) ||
+            input.getTextRange(store.index, input.cursorOffset).match(/\s/) ||
             // "/<command>" is not the sole content
             (store.visible === "/" && value.match(/^\S+\s+\S+\s*$/))
           ) {
@@ -678,7 +683,7 @@ export function Autocomplete(props: {
         }
 
         // Check if autocomplete should reopen (e.g., after backspace deleted a space)
-        const offset = props.input().cursorOffset
+        const offset = input.cursorOffset
         if (offset === 0) return
 
         // Check for "/" at position 0 - reopen slash commands

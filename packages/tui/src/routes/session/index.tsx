@@ -1309,7 +1309,7 @@ export function Session() {
                 <Show when={session()?.parentID}>
                   <SubagentFooter />
                 </Show>
-                <Show when={visible()}>
+                <Show when={!session()?.parentID}>
                   <pluginRuntime.Slot
                     name="session_prompt"
                     mode="replace"
