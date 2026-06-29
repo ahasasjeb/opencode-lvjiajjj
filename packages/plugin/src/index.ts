@@ -213,7 +213,12 @@ export type ProviderHookContext = {
 
 export type ProviderHook = {
   id: string
-  models?: (provider: ProviderV2, ctx: ProviderHookContext) => Promise<Record<string, ModelV2>>
+  source?: string
+  name?: string
+  models?: (
+    provider: ProviderV2,
+    ctx: ProviderHookContext & { update?(models: Record<string, ModelV2>): void },
+  ) => Promise<Record<string, ModelV2>>
 }
 
 /** @deprecated Use AuthOAuthResult instead. */

@@ -689,6 +689,18 @@ test("provider.sort prioritizes preferred models", () => {
   expect(sorted[sorted.length - 1].id).not.toContain("sonnet-4")
 })
 
+test("defaultModelIDs skips providers without models", () => {
+  expect(Provider.defaultModelIDs({ empty: { models: {} } })).toEqual({})
+})
+
+it.instance("OpenAI and ChatGPT catalog names identify their credential types", () =>
+  Effect.gen(function* () {
+    const catalog = yield* Provider.use.catalog()
+    expect(catalog[ProviderV2.ID.openai].name).toBe("OpenAI (API Key)")
+    expect(catalog[ProviderV2.ID.make("chatgpt")].name).toBe("ChatGPT (Codex OAuth)")
+  }),
+)
+
 it.instance(
   "multiple providers can be configured simultaneously",
   Effect.gen(function* () {

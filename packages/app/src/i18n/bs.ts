@@ -103,7 +103,7 @@ export const dict = {
   "dialog.provider.opencodeGo.tagline": "Povoljna pretplata za sve",
   "dialog.provider.anthropic.note": "Direktan pristup Claude modelima, uključujući Pro i Max",
   "dialog.provider.copilot.note": "AI modeli za pomoć pri kodiranju putem GitHub Copilot",
-  "dialog.provider.openai.note": "GPT modeli za brze, sposobne opšte AI zadatke",
+  "dialog.provider.openai.note": "Povežite se pomoću OpenAI API ključa",
   "dialog.provider.google.note": "Gemini modeli za brze, strukturirane odgovore",
   "dialog.provider.openrouter.note": "Pristup svim podržanim modelima preko jednog provajdera",
   "dialog.provider.vercel.note": "Jedinstven pristup AI modelima uz pametno rutiranje",

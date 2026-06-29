@@ -403,6 +403,7 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
       tuiConfig,
       dialog,
       keymap,
+      language,
       kv,
       route,
       routes: pluginRuntime.routes,

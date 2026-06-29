@@ -158,8 +158,7 @@ export const {
     // Ignores only late deltas after streaming ends; initial part.updated on stream
     // start must still accept subsequent deltas.
     const finalizedParts = new Set<string>()
-    const deltaFlushMs = 16
-    let deltaFlush: ReturnType<typeof setTimeout> | undefined
+    let deltaFlushQueued = false
 
     function queuePartDelta(input: {
       sessionID: string
@@ -175,9 +174,10 @@ export const {
         return
       }
       pendingDeltas.set(key, input)
-      if (deltaFlush !== undefined) return
-      deltaFlush = setTimeout(() => {
-        deltaFlush = undefined
+      if (deltaFlushQueued) return
+      deltaFlushQueued = true
+      queueMicrotask(() => {
+        deltaFlushQueued = false
         const items = [...pendingDeltas.values()]
         pendingDeltas.clear()
         if (!items.length) return
@@ -200,7 +200,7 @@ export const {
             )
           }
         })
-      }, deltaFlushMs).unref()
+      })
     }
 
     function sessionListQuery(): { scope?: "project"; path?: string } {

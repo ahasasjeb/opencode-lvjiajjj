@@ -11,6 +11,15 @@ const file = path.join(Global.Path.data, "auth.json")
 
 const fail = (message: string) => (cause: unknown) => new AuthError({ message, cause })
 
+function migrateOpenAIOAuth<T extends Record<string, unknown>>(data: T) {
+  const legacy = data.openai
+  if (!legacy || typeof legacy !== "object" || !("type" in legacy) || legacy.type !== "oauth" || data.chatgpt)
+    return data
+  Object.assign(data, { chatgpt: legacy })
+  delete data.openai
+  return data
+}
+
 export class Oauth extends Schema.Class<Oauth>("OAuth")({
   type: Schema.Literal("oauth"),
   refresh: Schema.String,
@@ -58,12 +67,12 @@ export const layer = Layer.effect(
     const all = Effect.fn("Auth.all")(function* () {
       if (process.env.OPENCODE_AUTH_CONTENT) {
         try {
-          return JSON.parse(process.env.OPENCODE_AUTH_CONTENT)
-        } catch (err) {}
+          return migrateOpenAIOAuth(JSON.parse(process.env.OPENCODE_AUTH_CONTENT))
+        } catch {}
       }
 
       const data = (yield* fsys.readJson(file).pipe(Effect.orElseSucceed(() => ({})))) as Record<string, unknown>
-      return Record.filterMap(data, (value) => Result.fromOption(decode(value), () => undefined))
+      return migrateOpenAIOAuth(Record.filterMap(data, (value) => Result.fromOption(decode(value), () => undefined)))
     })
 
     const get = Effect.fn("Auth.get")(function* (providerID: string) {

@@ -1119,7 +1119,11 @@ export function options(input: {
     }
   }
 
-  if (input.model.providerID === "openai" || input.providerOptions?.setCacheKey) {
+  if (
+    input.model.providerID === "openai" ||
+    input.model.providerID === "chatgpt" ||
+    input.providerOptions?.setCacheKey
+  ) {
     result["promptCacheKey"] = input.sessionID
   }
 
@@ -1225,6 +1229,7 @@ export function smallOptions(model: Provider.Model) {
   const small = Object.values(model.variants ?? {})[0] ?? {}
   if (
     model.providerID === "openai" ||
+    model.providerID === "chatgpt" ||
     model.api.npm === "@ai-sdk/openai" ||
     model.api.npm === "@ai-sdk/github-copilot"
   ) {

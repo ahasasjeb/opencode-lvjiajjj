@@ -2,8 +2,9 @@ import { test, expect, describe } from "bun:test"
 import { resolvePluginProviders } from "../../src/cli/cmd/providers"
 import type { Hooks } from "@opencode-ai/plugin"
 
-function hookWithAuth(provider: string): Hooks {
+function hookWithAuth(provider: string, name?: string): Hooks {
   return {
+    ...(name ? { provider: { id: provider, name } } : {}),
     auth: {
       provider,
       methods: [],
@@ -86,6 +87,16 @@ describe("resolvePluginProviders", () => {
       providerNames: { portkey: "Portkey AI" },
     })
     expect(result).toEqual([{ id: "portkey", name: "Portkey AI" }])
+  })
+
+  test("resolves name from the provider hook", () => {
+    const result = resolvePluginProviders({
+      hooks: [hookWithAuth("chatgpt", "ChatGPT (Codex OAuth)")],
+      existingProviders: {},
+      disabled: new Set(),
+      providerNames: {},
+    })
+    expect(result).toEqual([{ id: "chatgpt", name: "ChatGPT (Codex OAuth)" }])
   })
 
   test("falls back to id when no name configured", () => {

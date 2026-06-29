@@ -10,8 +10,10 @@ import { escapeHtml } from "@/util/html"
 const CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
 const ISSUER = "https://auth.openai.com"
 const CODEX_API_ENDPOINT = "https://chatgpt.com/backend-api/codex/responses"
+const CODEX_MODELS_ENDPOINT = "https://chatgpt.com/backend-api/codex/models"
 const OAUTH_PORT = 1455
 const OAUTH_POLLING_SAFETY_MARGIN_MS = 3000
+const MODELS_TIMEOUT_MS = 5000
 const ALLOWED_MODELS = new Set(["gpt-5.5", "gpt-5.3-codex-spark", "gpt-5.4", "gpt-5.4-mini"])
 
 interface PkceCodes {
@@ -100,7 +102,46 @@ interface TokenResponse {
 interface CodexAuthPluginOptions {
   issuer?: string
   codexApiEndpoint?: string
+  codexModelsEndpoint?: string
   experimentalWebSockets?: boolean
+}
+
+interface CodexModel {
+  slug: string
+  display_name: string
+  visibility: "list" | "hide" | "none"
+  supported_reasoning_levels?: Array<{ effort: string }>
+  context_window?: number
+  input_modalities?: string[]
+}
+
+const modelCache = new Map<string, CodexModel[]>()
+const modelRequests = new Map<string, Promise<CodexModel[] | undefined>>()
+
+function isCodexModel(input: unknown): input is CodexModel {
+  if (!input || typeof input !== "object") return false
+  if (!("slug" in input) || typeof input.slug !== "string") return false
+  if (!("display_name" in input) || typeof input.display_name !== "string") return false
+  if (
+    !("visibility" in input) ||
+    (input.visibility !== "list" && input.visibility !== "hide" && input.visibility !== "none")
+  )
+    return false
+  if ("context_window" in input && input.context_window !== undefined && typeof input.context_window !== "number")
+    return false
+  if (
+    "input_modalities" in input &&
+    input.input_modalities !== undefined &&
+    (!Array.isArray(input.input_modalities) || !input.input_modalities.every((item) => typeof item === "string"))
+  )
+    return false
+  if (
+    "supported_reasoning_levels" in input &&
+    input.supported_reasoning_levels !== undefined &&
+    !Array.isArray(input.supported_reasoning_levels)
+  )
+    return false
+  return true
 }
 
 async function exchangeCodeForTokens(code: string, redirectUri: string, pkce: PkceCodes): Promise<TokenResponse> {
@@ -121,7 +162,7 @@ async function exchangeCodeForTokens(code: string, redirectUri: string, pkce: Pk
   return response.json()
 }
 
-async function refreshAccessToken(refreshToken: string, issuer = ISSUER): Promise<TokenResponse> {
+async function refreshAccessToken(refreshToken: string, issuer = ISSUER, signal?: AbortSignal): Promise<TokenResponse> {
   const response = await fetch(`${issuer}/oauth/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -130,6 +171,7 @@ async function refreshAccessToken(refreshToken: string, issuer = ISSUER): Promis
       refresh_token: refreshToken,
       client_id: CLIENT_ID,
     }).toString(),
+    signal,
   })
   if (!response.ok) {
     throw new Error(`Token refresh failed: ${response.status}`)
@@ -349,6 +391,7 @@ function waitForOAuthCallback(pkce: PkceCodes, state: string): Promise<TokenResp
 export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPluginOptions = {}): Promise<Hooks> {
   const issuer = options.issuer ?? ISSUER
   const codexApiEndpoint = options.codexApiEndpoint ?? CODEX_API_ENDPOINT
+  const codexModelsEndpoint = options.codexModelsEndpoint ?? CODEX_MODELS_ENDPOINT
   let websocketFetchInstalled = false
   const websocketFetches: Array<ReturnType<typeof OpenAIWebSocketPool.createWebSocketFetch>> = []
 
@@ -362,40 +405,141 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
       for (const websocketFetch of websocketFetches) websocketFetch.remove(input.event.properties.info.id)
     },
     provider: {
-      id: "openai",
+      id: "chatgpt",
+      source: "openai",
+      name: "ChatGPT (Codex OAuth)",
       async models(provider, ctx) {
-        if (ctx.auth?.type !== "oauth") return provider.models
+        const currentAuth = ctx.auth
+        if (currentAuth?.type !== "oauth") return provider.models
 
-        return Object.fromEntries(
-          Object.entries(provider.models)
-            .filter(([, model]) => {
-              if (ALLOWED_MODELS.has(model.api.id)) return true
-              const match = model.api.id.match(/^gpt-(\d+\.\d+)/)
-              return match ? parseFloat(match[1]) > 5.4 : false
-            })
-            .map(([modelID, model]) => [
-              modelID,
-              {
-                ...model,
-                cost: {
-                  input: 0,
-                  output: 0,
-                  cache: { read: 0, write: 0 },
-                },
-                limit: model.id.includes("gpt-5.5")
-                  ? {
-                      context: 400_000,
-                      input: 272_000,
-                      output: 128_000,
-                    }
-                  : model.limit,
+        const available = Object.entries(provider.models).filter(([, model]) => {
+          if (ALLOWED_MODELS.has(model.api.id)) return true
+          const match = model.api.id.match(/^gpt-(\d+\.\d+)/)
+          return match ? parseFloat(match[1]) > 5.4 : false
+        })
+        const fallback = Object.fromEntries(
+          (available.length ? available : Object.entries(provider.models)).map(([modelID, model]) => [
+            modelID,
+            {
+              ...model,
+              cost: {
+                input: 0,
+                output: 0,
+                cache: { read: 0, write: 0 },
               },
-            ]),
+              limit: model.id.includes("gpt-5.5")
+                ? {
+                    context: 400_000,
+                    input: 272_000,
+                    output: 128_000,
+                  }
+                : model.limit,
+            },
+          ]),
         )
+        const mapModels = (remote: CodexModel[]) => {
+          const template = Object.values(fallback)[0] ?? Object.values(provider.models)[0]
+          if (!template) return {}
+          return Object.fromEntries(
+            remote
+              .filter((model) => model.visibility === "list")
+              .map((model) => {
+                const existing = provider.models[model.slug] ?? template
+                return [
+                  model.slug,
+                  {
+                    ...existing,
+                    id: model.slug,
+                    name: model.display_name,
+                    api: { ...existing.api, id: model.slug },
+                    capabilities: {
+                      ...existing.capabilities,
+                      reasoning: Boolean(model.supported_reasoning_levels?.length),
+                      input: {
+                        ...existing.capabilities.input,
+                        image: model.input_modalities?.includes("image") ?? existing.capabilities.input.image,
+                      },
+                    },
+                    cost: {
+                      input: 0,
+                      output: 0,
+                      cache: { read: 0, write: 0 },
+                    },
+                    limit: {
+                      ...existing.limit,
+                      context: model.context_window ?? existing.limit.context,
+                    },
+                  },
+                ]
+              }),
+          )
+        }
+        const cacheKey = `${codexModelsEndpoint}\0${currentAuth.accountId ?? "default"}`
+        const cached = modelCache.get(cacheKey)
+        if (cached) {
+          const models = mapModels(cached)
+          return Object.keys(models).length ? models : fallback
+        }
+
+        const fetchModels = async (): Promise<CodexModel[] | undefined> => {
+          const signal = AbortSignal.timeout(MODELS_TIMEOUT_MS)
+          const authWithAccount = currentAuth as typeof currentAuth & { accountId?: string }
+          const auth =
+            currentAuth.expires >= Date.now()
+              ? authWithAccount
+              : await refreshAccessToken(currentAuth.refresh, issuer, signal).then(async (tokens) => {
+                  const accountId = extractAccountId(tokens) || authWithAccount.accountId
+                  await input.client.auth.set({
+                    path: { id: "chatgpt" },
+                    body: {
+                      type: "oauth",
+                      refresh: tokens.refresh_token,
+                      access: tokens.access_token,
+                      expires: Date.now() + (tokens.expires_in ?? 3600) * 1000,
+                      ...(accountId && { accountId }),
+                    },
+                  })
+                  return {
+                    ...authWithAccount,
+                    access: tokens.access_token,
+                    accountId,
+                  }
+                })
+          const url = new URL(codexModelsEndpoint)
+          url.searchParams.set("client_version", InstallationVersion)
+          const response = await fetch(url, {
+            headers: {
+              authorization: `Bearer ${auth.access}`,
+              ...(auth.accountId ? { "ChatGPT-Account-Id": auth.accountId } : {}),
+              "User-Agent": `opencode/${InstallationVersion}`,
+            },
+            signal,
+          })
+          if (!response.ok) return undefined
+          const body: unknown = await response.json()
+          if (!body || typeof body !== "object" || !("models" in body) || !Array.isArray(body.models)) return undefined
+          const models = body.models.filter(isCodexModel)
+          modelCache.set(cacheKey, models)
+          if (auth.accountId) modelCache.set(`${codexModelsEndpoint}\0${auth.accountId}`, models)
+          return models
+        }
+        const request = modelRequests.get(cacheKey) ?? fetchModels()
+        modelRequests.set(cacheKey, request)
+        void request
+          .then((remote) => {
+            if (!remote) return
+            const models = mapModels(remote)
+            if (Object.keys(models).length) ctx.update?.(models)
+          })
+          .catch(() => {})
+          .finally(() => {
+            if (modelRequests.get(cacheKey) === request) modelRequests.delete(cacheKey)
+          })
+        return fallback
       },
     },
     auth: {
-      provider: "openai",
+      provider: "chatgpt",
       async loader(getAuth) {
         const auth = await getAuth()
         const websocketFetch = options.experimentalWebSockets
@@ -441,7 +585,7 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
                   .then(async (tokens) => {
                     const accountId = extractAccountId(tokens) || authWithAccount.accountId
                     await input.client.auth.set({
-                      path: { id: "openai" },
+                      path: { id: "chatgpt" },
                       body: {
                         type: "oauth",
                         refresh: tokens.refresh_token,
@@ -616,14 +760,10 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
             }
           },
         },
-        {
-          label: "Manually enter API Key",
-          type: "api",
-        },
       ],
     },
     "chat.headers": async (input, output) => {
-      if (input.model.providerID !== "openai") return
+      if (input.model.providerID !== "chatgpt") return
       output.headers.originator = "opencode"
       output.headers["User-Agent"] = `opencode/${InstallationVersion} (${os.platform()} ${os.release()}; ${os.arch()})`
       output.headers["session-id"] = input.sessionID
@@ -633,9 +773,27 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
       if (websocketFetchInstalled && input.agent === "title") output.headers[OpenAIWebSocketPool.TITLE_HEADER] = "true"
     },
     "chat.params": async (input, output) => {
-      if (input.model.providerID !== "openai") return
+      if (input.model.providerID !== "chatgpt") return
       // Match codex cli
       output.maxOutputTokens = undefined
+    },
+  }
+}
+
+export async function OpenAIAuthPlugin(): Promise<Hooks> {
+  return {
+    provider: {
+      id: "openai",
+      name: "OpenAI (API Key)",
+    },
+    auth: {
+      provider: "openai",
+      methods: [
+        {
+          label: "Manually enter API Key",
+          type: "api",
+        },
+      ],
     },
   }
 }

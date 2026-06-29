@@ -428,6 +428,11 @@ export type TuiApp = {
   readonly version: string
 }
 
+export type TuiI18n = {
+  readonly locale: string
+  t: (key: string, params?: Record<string, string | number | boolean>) => string
+}
+
 type Frozen<Value> = Value extends (...args: never[]) => unknown
   ? Value
   : Value extends ReadonlyArray<infer Item>
@@ -581,6 +586,7 @@ export type TuiWorkspace = {
 export type TuiPluginApi = {
   app: TuiApp
   attention: TuiAttention
+  i18n: TuiI18n
   /**
    * Legacy `api.command` API kept so v1 plugins can initialize. Remove in v2.
    *

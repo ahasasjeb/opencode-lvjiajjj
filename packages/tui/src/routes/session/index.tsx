@@ -1707,17 +1707,18 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
   const { theme, syntax } = useTheme()
   const renderer = useRenderer()
   const streaming = createMemo(() => !props.message.time.completed && props.last)
+  const content = createMemo(() => props.part.text.trim())
 
   const mermaidRenderNode = createMemo(() => mermaidMarkdownRenderNode(renderer))
 
   return (
-    <Show when={props.part.text.trim()}>
+    <Show when={content()}>
       <box id={`text-${props.part.messageID}-${props.part.id}`} paddingLeft={3} marginTop={1} flexShrink={0}>
         <markdown
           syntaxStyle={syntax()}
           streaming={streaming()}
           internalBlockMode="top-level"
-          content={props.part.text.trim()}
+          content={content()}
           tableOptions={{ style: "grid" }}
           conceal={ctx.conceal()}
           fg={theme.markdownText}

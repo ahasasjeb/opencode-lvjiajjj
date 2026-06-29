@@ -8,6 +8,7 @@ import type { useTheme } from "../context/theme"
 import { Dialog as DialogUI, type useDialog } from "../ui/dialog"
 import type { useOpencodeKeymap } from "../keymap"
 import type { useKV } from "../context/kv"
+import type { useLanguage } from "../context/language"
 import { DialogAlert } from "../ui/dialog-alert"
 import { DialogConfirm } from "../ui/dialog-confirm"
 import { DialogPrompt } from "../ui/dialog-prompt"
@@ -25,6 +26,7 @@ type Input = {
   tuiConfig: TuiConfig.Resolved
   dialog: ReturnType<typeof useDialog>
   keymap: ReturnType<typeof useOpencodeKeymap>
+  language: ReturnType<typeof useLanguage>
   kv: ReturnType<typeof useKV>
   route: ReturnType<typeof useRoute>
   routes: PluginRoutes
@@ -173,6 +175,14 @@ export function createTuiApiAdapters(input: Input): Omit<TuiPluginApi, "lifecycl
   return {
     app: appApi(input.version),
     attention: input.attention,
+    i18n: {
+      get locale() {
+        return input.language.locale()
+      },
+      t(key, params) {
+        return input.language.t(key, params)
+      },
+    },
     // Keep deprecated `api.command` working for v1 plugins; remove in v2.
     command: createCommandShim(input.keymap, input.dialog, input.tuiConfig.keybinds),
     keys: {

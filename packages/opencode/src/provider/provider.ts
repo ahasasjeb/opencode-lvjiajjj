@@ -1069,7 +1069,12 @@ export function toPublicInfo(provider: Info): Info {
 }
 
 export function defaultModelIDs<T extends { models: Record<string, { id: string }> }>(providers: Record<string, T>) {
-  return mapValues(providers, (item) => sort(Object.values(item.models))[0].id)
+  return Object.fromEntries(
+    Object.entries(providers).flatMap(([providerID, provider]) => {
+      const model = sort(Object.values(provider.models))[0]
+      return model ? [[providerID, model.id] as const] : []
+    }),
+  )
 }
 
 export class ModelNotFoundError extends Schema.TaggedErrorClass<ModelNotFoundError>()("ProviderModelNotFoundError", {
@@ -1111,6 +1116,7 @@ export type Error = ModelNotFoundError | InitError | NoProvidersError | NoModels
 
 export interface Interface {
   readonly list: () => Effect.Effect<Record<ProviderV2.ID, Info>>
+  readonly catalog: () => Effect.Effect<Record<ProviderV2.ID, Info>>
   readonly getProvider: (providerID: ProviderV2.ID) => Effect.Effect<Info>
   readonly getModel: (providerID: ProviderV2.ID, modelID: ModelV2.ID) => Effect.Effect<Model, ModelNotFoundError>
   readonly getLanguage: (model: Model) => Effect.Effect<LanguageModelV3, ModelNotFoundError>
@@ -1348,6 +1354,33 @@ export const layer = Layer.effect(
         }
 
         for (const hook of plugins) {
+          const provider = hook.provider
+          if (!provider) continue
+          if (database[provider.id]) {
+            if (provider.name) {
+              database[provider.id].name = provider.name
+              catalog[provider.id].name = provider.name
+            }
+            continue
+          }
+          if (!provider.source) continue
+          const source = database[provider.source]
+          if (!source) continue
+          const providerID = ProviderV2.ID.make(provider.id)
+          database[providerID] = {
+            ...toPublicInfo(source),
+            id: providerID,
+            name: provider.name ?? provider.id,
+            env: [],
+            models: mapValues(source.models, (model) => ({
+              ...model,
+              providerID,
+            })),
+          }
+          catalog[providerID] = toPublicInfo(database[providerID])
+        }
+
+        for (const hook of plugins) {
           const p = hook.provider
           const models = p?.models
           if (!p || !models) continue
@@ -1359,9 +1392,8 @@ export const layer = Layer.effect(
           if (!provider) continue
           const pluginAuth = yield* auth.get(providerID).pipe(Effect.orDie)
 
-          provider.models = yield* Effect.promise(async () => {
-            const next = await models(toPublicInfo(provider), { auth: pluginAuth })
-            return Object.fromEntries(
+          const apply = (next: Awaited<ReturnType<typeof models>>) => {
+            const parsed = Object.fromEntries(
               Object.entries(next).map(([id, model]) => [
                 id,
                 {
@@ -1370,7 +1402,15 @@ export const layer = Layer.effect(
                   providerID,
                 },
               ]),
-            )
+            ) as Info["models"]
+            provider.models = parsed
+            catalog[providerID].models = parsed
+            if (providers[providerID]) providers[providerID].models = parsed
+          }
+          provider.models = yield* Effect.promise(async () => {
+            const next = await models(toPublicInfo(provider), { auth: pluginAuth, update: apply })
+            apply(next)
+            return provider.models
           })
         }
 
@@ -1618,6 +1658,7 @@ export const layer = Layer.effect(
     )
 
     const list = Effect.fn("Provider.list")(() => InstanceState.use(state, (s) => s.providers))
+    const catalog = Effect.fn("Provider.catalog")(() => InstanceState.use(state, (s) => s.catalog))
 
     async function resolveSDK(model: Model, s: State, envs: Record<string, string | undefined>) {
       try {
@@ -1928,7 +1969,7 @@ export const layer = Layer.effect(
       }
     })
 
-    return Service.of({ list, getProvider, getModel, getLanguage, closest, getSmallModel, defaultModel })
+    return Service.of({ list, catalog, getProvider, getModel, getLanguage, closest, getSmallModel, defaultModel })
   }),
 )
 

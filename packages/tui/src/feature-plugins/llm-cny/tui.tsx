@@ -1,0 +1,482 @@
+/** @jsxImportSource @opentui/solid */
+import type { TuiPlugin, TuiPluginApi, TuiPluginModule } from "@opencode-ai/plugin/tui"
+import type { Message } from "@opencode-ai/sdk/v2"
+import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
+import { fetchDisplayBalance } from "./balance.js"
+import { fetchCopilotUsage, type CopilotQuota } from "./copilot-usage.js"
+import { consumeCodexResetCredit, fetchCodexUsage, type CodexResetOutcome, type CodexUsage } from "./codex-usage.js"
+import { fetchUsdCnyRate } from "./exchange-rate.js"
+import { calculateTrackedSession, supportsBalance, type BalanceProviderID } from "./pricing.js"
+import {
+  ActivationPrompt,
+  Divider,
+  EmptyUsage,
+  Header,
+  ProviderBalance,
+  Summary,
+} from "./tui/components.js"
+import { CodexUsagePanel } from "./tui/codex-components.js"
+import { CopilotQuotaPanel } from "./tui/copilot-components.js"
+import { errorMessage } from "./tui/format.js"
+import { parseOptions, type Options } from "./tui/options.js"
+import { randomCodexRefreshMs } from "./tui/refresh.js"
+import {
+  activeTrackedProviders,
+  childUsageRefreshKey,
+  completedTrackedReplyKey,
+  hasCopilotOAuthProvider,
+  hasCopilotUsage,
+  hasOpenAIApiKeyProvider,
+  hasChatGPTOAuthProvider,
+  hasChatGPTUsage,
+  isSubagentSession,
+  mergeMessages,
+  providerTokens,
+  taskChildSessionIDs,
+  usageRecords,
+} from "./tui/session.js"
+import { tokenSignature, type BalanceState, type BalanceStateMap } from "./tui/state.js"
+import { localizeMessage, translator } from "./tui/i18n.js"
+
+type CodexState =
+  | { status: "idle" | "loading" }
+  | { status: "ready"; usage: CodexUsage }
+  | { status: "error"; message: string }
+  | { status: "no-auth" }
+
+type CopilotState =
+  | { status: "idle" | "loading" }
+  | { status: "ready"; quota: CopilotQuota }
+  | { status: "error"; message: string }
+  | { status: "no-auth" }
+
+const pluginID = "internal:llm-cny"
+
+function View(props: { api: TuiPluginApi; options: Options; session_id: string }) {
+  const theme = () => props.api.theme.current
+  const t = translator(props.api)
+  const [balances, setBalances] = createSignal<BalanceStateMap>({})
+  const [remoteChildMessages, setRemoteChildMessages] = createSignal<ReadonlyArray<Message>>([])
+  const session = createMemo(() => props.api.state.session.get(props.session_id))
+  const messages = createMemo(() => props.api.state.session.messages(props.session_id))
+  const localChildSessionIDs = createMemo(() => taskChildSessionIDs(props.api, messages()))
+  const localChildMessages = createMemo(() =>
+    localChildSessionIDs().flatMap((sessionID) => props.api.state.session.messages(sessionID)),
+  )
+  const usageMessages = createMemo(() => mergeMessages(messages(), localChildMessages(), remoteChildMessages()))
+  const openAIApiKeyEnabled = createMemo(() => hasOpenAIApiKeyProvider(props.api.state.provider, props.api.state.config))
+  const costMessages = createMemo(() =>
+    openAIApiKeyEnabled() ? usageMessages() : usageMessages().filter((item) => item.role !== "assistant" || item.providerID !== "openai"),
+  )
+  const tokens = createMemo(() => providerTokens(props.api))
+  const activeProviders = createMemo(() => activeTrackedProviders(costMessages()))
+  const activeBalanceProviders = createMemo(() => activeProviders().filter(supportsBalance))
+  const hasTrackedUsage = createMemo(() => activeProviders().length > 0)
+  const needsUsdCnyRate = createMemo(() =>
+    activeProviders().some((item) => item.id === "openrouter" || item.id === "xai" || item.id === "anthropic" || item.id === "openai" || item.id === "google" || item.id === "google-vertex"),
+  )
+  const codexEnabled = createMemo(() => hasChatGPTOAuthProvider(props.api.state.provider) && hasChatGPTUsage(usageMessages()))
+  const copilotEnabled = createMemo(
+    () => hasCopilotOAuthProvider(props.api.state.provider) && hasCopilotUsage(usageMessages()),
+  )
+  const activated = createMemo(() => hasTrackedUsage() || codexEnabled() || copilotEnabled())
+  const completedTrackedReplies = createMemo(() => completedTrackedReplyKey(costMessages()))
+  const childRefreshKey = createMemo(() =>
+    childUsageRefreshKey({
+      sessionID: props.session_id,
+      session: session(),
+      localChildSessionIDs: localChildSessionIDs(),
+      messages: messages(),
+    }),
+  )
+  const [usdCnyRate, setUsdCnyRate] = createSignal<number | undefined>()
+  const summary = createMemo(() => calculateTrackedSession(usageRecords(costMessages()), { usdCnyRate: usdCnyRate() }))
+  const visible = createMemo(() => props.options.showWhenEmpty || activated())
+  const [codexState, setCodexState] = createSignal<CodexState>({ status: "idle" })
+  const [codexResetting, setCodexResetting] = createSignal(false)
+  const [copilotState, setCopilotState] = createSignal<CopilotState>({ status: "idle" })
+
+  const controllers = new Map<BalanceProviderID, AbortController>()
+  let previousTokenSignature = tokenSignature(tokens())
+  let previousCompletedTrackedReplies = ""
+  let childUsageRequest = 0
+  let codexRefreshTimer: ReturnType<typeof setTimeout> | undefined
+  let exchangeRateController: AbortController | undefined
+  let disposed = false
+
+  const setProviderBalance = (providerID: BalanceProviderID, state: BalanceState) => {
+    setBalances((current) => ({
+      ...current,
+      [providerID]: state,
+    }))
+  }
+
+  const refreshProvider = (providerID: BalanceProviderID, current = tokens()[providerID]) => {
+    controllers.get(providerID)?.abort()
+    if (!current) {
+      setProviderBalance(providerID, { status: "missing" })
+      return
+    }
+
+    const next = new AbortController()
+    controllers.set(providerID, next)
+    setProviderBalance(providerID, { status: "loading" })
+    fetchDisplayBalance(providerID, current, next.signal).then(
+      (result) => {
+        if (next.signal.aborted || controllers.get(providerID) !== next) return
+        if (!result.ok) {
+          setProviderBalance(providerID, { status: "error", message: localizeMessage(t, result.message) })
+          return
+        }
+        setProviderBalance(providerID, { status: "ready", balance: result.balance, updatedAt: Date.now() })
+      },
+      (cause) => {
+        if (next.signal.aborted || controllers.get(providerID) !== next) return
+        setProviderBalance(providerID, { status: "error", message: errorMessage(cause) })
+      },
+    )
+  }
+
+  const refreshChildUsage = async () => {
+    const request = ++childUsageRequest
+    try {
+      const children = await props.api.client.session.children({ sessionID: props.session_id })
+      if (request !== childUsageRequest) return
+
+      const ids = new Set<string>(localChildSessionIDs())
+      for (const child of children.data ?? []) {
+        if (isSubagentSession(child)) ids.add(child.id)
+      }
+
+      if (ids.size === 0) {
+        setRemoteChildMessages([])
+        return
+      }
+
+      const responses = await Promise.all(
+        [...ids].map((sessionID) => props.api.client.session.messages({ sessionID })),
+      )
+      if (request !== childUsageRequest) return
+
+      setRemoteChildMessages(responses.flatMap((response) => (response.data ?? []).map((item) => item.info)))
+    } catch {
+      if (request === childUsageRequest) setRemoteChildMessages([])
+    }
+  }
+
+  const refreshActive = () => {
+    for (const provider of activeBalanceProviders()) {
+      refreshProvider(provider.id)
+    }
+  }
+
+  const refreshUsdCnyRate = () => {
+    if (!needsUsdCnyRate()) return
+    exchangeRateController?.abort()
+    const next = new AbortController()
+    exchangeRateController = next
+    fetchUsdCnyRate(next.signal).then(
+      (result) => {
+        if (next.signal.aborted || exchangeRateController !== next) return
+        if (result.ok) setUsdCnyRate(result.rate)
+      },
+      () => {
+        // Keep the previous successful rate, or the pending warning if none was loaded yet.
+      },
+    )
+  }
+
+  let codexRequest = 0
+  let copilotRequest = 0
+  const clearCodexRefreshTimer = () => {
+    clearTimeout(codexRefreshTimer)
+    codexRefreshTimer = undefined
+  }
+
+  const scheduleCodexRefresh = () => {
+    if (disposed || !codexEnabled()) return
+
+    codexRefreshTimer = setTimeout(() => {
+      void refreshCodexUsage()
+    }, randomCodexRefreshMs())
+  }
+
+  const refreshCodexUsage = async () => {
+    clearCodexRefreshTimer()
+    if (disposed) return
+    if (!codexEnabled()) {
+      setCodexState({ status: "no-auth" })
+      return
+    }
+    const request = ++codexRequest
+    setCodexState((prev) => (prev.status === "ready" ? prev : { status: "loading" }))
+    try {
+      const stateDir = props.api.state.path.state
+      const result = await fetchCodexUsage(stateDir)
+      if (disposed || request !== codexRequest) return
+      if (result.ok) {
+        setCodexState({ status: "ready", usage: result.usage })
+      } else {
+        setCodexState({ status: "error", message: localizeMessage(t, result.message) })
+      }
+    } catch (cause) {
+      if (disposed || request !== codexRequest) return
+      setCodexState({ status: "error", message: errorMessage(cause) })
+    } finally {
+      if (!disposed && request === codexRequest && codexEnabled()) {
+        scheduleCodexRefresh()
+      }
+    }
+  }
+
+  const resetCodexUsage = async () => {
+    if (codexResetting()) return
+    setCodexResetting(true)
+    try {
+      const result = await consumeCodexResetCredit(props.api.state.path.state, crypto.randomUUID())
+      if (!result.ok) {
+        props.api.ui.toast({
+          variant: "error",
+          message: `${t("plugin.llmCny.codex.resetFailed")}: ${localizeMessage(t, result.message)}`,
+        })
+        return
+      }
+      props.api.ui.toast({
+        variant: result.outcome === "reset" || result.outcome === "already_redeemed" ? "success" : "warning",
+        message: t(resetOutcomeKey(result.outcome)),
+      })
+      await refreshCodexUsage()
+    } catch (cause) {
+      props.api.ui.toast({
+        variant: "error",
+        message: `${t("plugin.llmCny.codex.resetFailed")}: ${errorMessage(cause)}`,
+      })
+    } finally {
+      setCodexResetting(false)
+    }
+  }
+
+  const confirmCodexReset = () => {
+    props.api.ui.dialog.replace(() =>
+      props.api.ui.DialogConfirm({
+        title: t("plugin.llmCny.codex.resetConfirmTitle"),
+        message: t("plugin.llmCny.codex.resetConfirmMessage"),
+        onConfirm: () => void resetCodexUsage(),
+      }),
+    )
+  }
+
+  let copilotRefreshTimer: ReturnType<typeof setTimeout> | undefined
+
+  const clearCopilotRefreshTimer = () => {
+    clearTimeout(copilotRefreshTimer)
+    copilotRefreshTimer = undefined
+  }
+
+  const scheduleCopilotRefresh = () => {
+    if (disposed || !copilotEnabled()) return
+    copilotRefreshTimer = setTimeout(() => {
+      void refreshCopilotUsage()
+    }, randomCodexRefreshMs())
+  }
+
+  const refreshCopilotUsage = async () => {
+    clearCopilotRefreshTimer()
+    if (disposed) return
+    if (!copilotEnabled()) {
+      setCopilotState({ status: "no-auth" })
+      return
+    }
+    const request = ++copilotRequest
+    setCopilotState((prev) => (prev.status === "ready" ? prev : { status: "loading" }))
+    try {
+      const stateDir = props.api.state.path.state
+      const result = await fetchCopilotUsage(stateDir)
+      if (disposed || request !== copilotRequest) return
+      if (result.ok) {
+        setCopilotState({ status: "ready", quota: result.quota })
+      } else {
+        setCopilotState({ status: "error", message: localizeMessage(t, result.message) })
+      }
+    } catch (cause) {
+      if (disposed || request !== copilotRequest) return
+      setCopilotState({ status: "error", message: errorMessage(cause) })
+    } finally {
+      if (!disposed && request === copilotRequest && copilotEnabled()) {
+        scheduleCopilotRefresh()
+      }
+    }
+  }
+
+  createEffect(() => {
+    const current = tokenSignature(tokens())
+    if (current === previousTokenSignature) return
+    previousTokenSignature = current
+    if (!activated()) return
+    refreshActive()
+  })
+
+  createEffect(() => {
+    childRefreshKey()
+    void refreshChildUsage()
+  })
+
+  createEffect(() => {
+    if (needsUsdCnyRate() && usdCnyRate() === undefined) refreshUsdCnyRate()
+  })
+
+  createEffect(() => {
+    const current = completedTrackedReplies()
+    if (current === previousCompletedTrackedReplies) return
+    previousCompletedTrackedReplies = current
+    if (current === "") return
+    refreshActive()
+  })
+
+  createEffect(() => {
+    if (!codexEnabled()) {
+      clearCodexRefreshTimer()
+      setCodexState({ status: "no-auth" })
+      return
+    }
+
+    void refreshCodexUsage()
+  })
+
+  createEffect(() => {
+    if (!copilotEnabled()) {
+      clearCopilotRefreshTimer()
+      setCopilotState({ status: "no-auth" })
+      return
+    }
+
+    void refreshCopilotUsage()
+  })
+
+  onMount(() => {
+    const interval = setInterval(() => {
+      if (activated()) refreshActive()
+      if (needsUsdCnyRate()) refreshUsdCnyRate()
+    }, props.options.balanceRefreshMs)
+    onCleanup(() => clearInterval(interval))
+
+  })
+
+  onCleanup(() => {
+    disposed = true
+    clearCodexRefreshTimer()
+    clearCopilotRefreshTimer()
+    for (const controller of controllers.values()) {
+      controller.abort()
+    }
+    exchangeRateController?.abort()
+  })
+
+  return (
+    <Show when={visible()}>
+      <box
+        border
+        borderColor={theme().borderSubtle}
+        backgroundColor={theme().backgroundElement}
+        paddingTop={1}
+        paddingBottom={1}
+        paddingLeft={1}
+        paddingRight={1}
+        gap={1}
+      >
+        <Header
+          theme={props.api.theme.current}
+          t={t}
+          canRefresh={
+            (hasTrackedUsage() && activeBalanceProviders().some((item) => tokens()[item.id] !== undefined)) ||
+            codexEnabled() ||
+            copilotEnabled() ||
+            needsUsdCnyRate()
+          }
+          onRefresh={() => {
+            refreshActive()
+            refreshUsdCnyRate()
+            void refreshCodexUsage()
+            void refreshCopilotUsage()
+          }}
+        />
+        <Show when={activated()} fallback={<ActivationPrompt theme={props.api.theme.current} t={t} />}>
+          <Show when={hasTrackedUsage()}>
+            <Show when={summary().turns > 0} fallback={<EmptyUsage theme={props.api.theme.current} t={t} />}>
+              <Summary
+                theme={props.api.theme.current}
+                t={t}
+                locale={props.api.i18n.locale}
+                summary={summary()}
+                title={session()?.title}
+              />
+            </Show>
+            <Divider theme={props.api.theme.current} />
+          </Show>
+          <Show when={codexEnabled()}>
+            <CodexUsagePanel
+              theme={props.api.theme.current}
+              t={t}
+              locale={props.api.i18n.locale}
+              state={codexState()}
+              resetting={codexResetting()}
+              onReset={confirmCodexReset}
+            />
+            <Show when={hasTrackedUsage() || copilotEnabled()}>
+              <Divider theme={props.api.theme.current} />
+            </Show>
+          </Show>
+          <Show when={copilotEnabled()}>
+            <CopilotQuotaPanel
+              theme={props.api.theme.current}
+              t={t}
+              locale={props.api.i18n.locale}
+              state={copilotState()}
+            />
+            <Show when={hasTrackedUsage()}>
+              <Divider theme={props.api.theme.current} />
+            </Show>
+          </Show>
+          <For each={activeBalanceProviders()}>
+            {(provider) => (
+              <ProviderBalance
+                theme={props.api.theme.current}
+                t={t}
+                locale={props.api.i18n.locale}
+                provider={provider}
+                state={balances()[provider.id] ?? { status: "idle" }}
+              />
+            )}
+          </For>
+        </Show>
+      </box>
+    </Show>
+  )
+}
+
+function resetOutcomeKey(outcome: CodexResetOutcome) {
+  if (outcome === "reset") return "plugin.llmCny.codex.resetSuccess"
+  if (outcome === "already_redeemed") return "plugin.llmCny.codex.resetAlready"
+  if (outcome === "nothing_to_reset") return "plugin.llmCny.codex.resetNothing"
+  return "plugin.llmCny.codex.resetNoCredit"
+}
+
+const tui: TuiPlugin = async (api, options) => {
+  const config = parseOptions(options)
+
+  api.slots.register({
+    order: 150,
+    slots: {
+      sidebar_content(_ctx, props) {
+        return <View api={api} options={config} session_id={props.session_id} />
+      },
+    },
+  })
+}
+
+const plugin: TuiPluginModule & { id: string } = {
+  id: pluginID,
+  tui,
+}
+
+export default plugin

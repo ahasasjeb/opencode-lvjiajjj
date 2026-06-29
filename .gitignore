@@ -35,3 +35,5 @@ tsconfig.tsbuildinfo
 agent-tools
 MCPS
 terminals
+codexCLI
+/llm-cny

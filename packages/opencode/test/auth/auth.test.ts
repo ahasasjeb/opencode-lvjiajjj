@@ -74,4 +74,23 @@ describe("Auth", () => {
       expect(after["anthropic"]).toBeUndefined()
     }),
   )
+
+  it.instance("reads legacy OpenAI OAuth credentials as ChatGPT credentials", () =>
+    Effect.gen(function* () {
+      const auth = yield* Auth.Service
+      yield* auth.set("openai", {
+        type: "oauth",
+        refresh: "refresh",
+        access: "access",
+        expires: Date.now() + 60_000,
+      })
+      const data = yield* auth.all()
+      expect(data.openai).toBeUndefined()
+      expect(data.chatgpt).toMatchObject({
+        type: "oauth",
+        refresh: "refresh",
+        access: "access",
+      })
+    }),
+  )
 })

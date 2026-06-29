@@ -94,6 +94,7 @@ type Opts = {
   keymap?: HostPluginApi["keymap"]
   tuiConfig?: Partial<HostPluginApi["tuiConfig"]>
   app?: Partial<HostPluginApi["app"]>
+  i18n?: Partial<HostPluginApi["i18n"]>
   state?: {
     ready?: HostPluginApi["state"]["ready"]
     config?: HostPluginApi["state"]["config"]
@@ -199,6 +200,14 @@ export function createTuiPluginApi(opts: Opts = {}): HostPluginApi {
         activate: (id, options) => opts.attention?.soundboard?.activate?.(id, options) ?? false,
         current: () => opts.attention?.soundboard?.current?.() ?? "opencode.default",
         list: () => opts.attention?.soundboard?.list?.() ?? [],
+      },
+    },
+    i18n: {
+      get locale() {
+        return opts.i18n?.locale ?? "en"
+      },
+      t(key, params) {
+        return opts.i18n?.t?.(key, params) ?? key
       },
     },
     keys: {

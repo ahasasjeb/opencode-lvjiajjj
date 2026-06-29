@@ -8,6 +8,48 @@ import { mockTuiRuntime } from "../../fixture/tui-runtime"
 
 const { TuiPluginRuntime } = await import("../../../src/plugin/tui/runtime")
 
+test("exposes host i18n through the scoped plugin API", async () => {
+  await using tmp = await tmpdir({
+    init: async (dir) => {
+      const file = path.join(dir, "plugin.ts")
+      const spec = pathToFileURL(file).href
+      const marker = path.join(dir, "i18n.txt")
+
+      await Bun.write(
+        file,
+        `export default {
+  id: "demo.i18n",
+  tui: async (api, options) => {
+    await Bun.write(options.marker, api.i18n.locale + ":" + api.i18n.t("plugin.test"))
+  },
+}
+`,
+      )
+
+      return { spec, marker }
+    },
+  })
+
+  const { config, restore } = mockTuiRuntime(tmp.path, [[tmp.extra.spec, { marker: tmp.extra.marker }]])
+
+  try {
+    await TuiPluginRuntime.init({
+      api: createTuiPluginApi({
+        i18n: {
+          locale: "zh",
+          t: (key) => `translated:${key}`,
+        },
+      }),
+      config,
+    })
+
+    await expect(fs.readFile(tmp.extra.marker, "utf8")).resolves.toBe("zh:translated:plugin.test")
+  } finally {
+    await TuiPluginRuntime.dispose()
+    restore()
+  }
+})
+
 test("runs onDispose callbacks with aborted signal and is idempotent", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {

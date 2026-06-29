@@ -11,4 +11,10 @@ describe("i18n parity", () => {
       expect(zh[key]).not.toBe(en[key])
     }
   })
+
+  test("LLM CNY keys exist in both locales", () => {
+    const enKeys = Object.keys(en).filter((key) => key.startsWith("plugin.llmCny."))
+    const zhKeys = Object.keys(zh).filter((key) => key.startsWith("plugin.llmCny."))
+    expect(zhKeys.sort()).toEqual(enKeys.sort())
+  })
 })

@@ -95,7 +95,7 @@ export const dict = {
   "dialog.provider.opencodeGo.tagline": "Tania subskrypcja dla każdego",
   "dialog.provider.anthropic.note": "Bezpośredni dostęp do modeli Claude, w tym Pro i Max",
   "dialog.provider.copilot.note": "Modele AI do pomocy w kodowaniu przez GitHub Copilot",
-  "dialog.provider.openai.note": "Modele GPT do szybkich i wszechstronnych zadań AI",
+  "dialog.provider.openai.note": "Połącz za pomocą klucza API OpenAI",
   "dialog.provider.google.note": "Modele Gemini do szybkich i ustrukturyzowanych odpowiedzi",
   "dialog.provider.openrouter.note": "Dostęp do wszystkich obsługiwanych modeli od jednego dostawcy",
   "dialog.provider.vercel.note": "Ujednolicony dostęp do modeli AI z inteligentnym routingiem",

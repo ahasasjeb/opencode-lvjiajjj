@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
   CodexAuthPlugin,
+  OpenAIAuthPlugin,
   parseJwtClaims,
   extractAccountIdFromClaims,
   extractAccountId,
@@ -147,6 +148,181 @@ describe("plugin.codex", () => {
     expect(disabledOptions.fetch).toBeUndefined()
     expect(enabledOptions.fetch).toBeFunction()
     await enabled.dispose?.()
+  })
+
+  test("keeps OpenAI API key and ChatGPT login as separate providers", async () => {
+    const openai = await OpenAIAuthPlugin()
+    const chatgpt = await CodexAuthPlugin({} as never)
+
+    expect(openai.auth?.provider).toBe("openai")
+    expect(openai.auth?.methods.map((method) => method.type)).toEqual(["api"])
+    expect(chatgpt.auth?.provider).toBe("chatgpt")
+    expect(chatgpt.auth?.methods.map((method) => method.type)).toEqual(["oauth", "oauth"])
+    expect(chatgpt.provider).toMatchObject({
+      id: "chatgpt",
+      source: "openai",
+      name: "ChatGPT (Codex OAuth)",
+    })
+    expect(openai.provider).toMatchObject({
+      id: "openai",
+      name: "OpenAI (API Key)",
+    })
+  })
+
+  test("keeps static ChatGPT models when the preferred fallback set is empty", async () => {
+    using server = Bun.serve({
+      port: 0,
+      fetch() {
+        return new Response("unavailable", { status: 503 })
+      },
+    })
+    const hooks = await CodexAuthPlugin({} as never, {
+      codexModelsEndpoint: new URL("/models", server.url).toString(),
+    })
+    const models = await hooks.provider!.models!(
+      {
+        id: "chatgpt",
+        models: {
+          "gpt-4.1": {
+            id: "gpt-4.1",
+            providerID: "chatgpt",
+            name: "GPT-4.1",
+            api: { id: "gpt-4.1", url: "https://api.openai.com/v1", npm: "@ai-sdk/openai" },
+            cost: { input: 1, output: 1, cache: { read: 1, write: 1 } },
+            limit: { context: 100_000, output: 10_000 },
+          },
+        },
+      } as never,
+      {
+        auth: {
+          type: "oauth",
+          refresh: "refresh",
+          access: "access",
+          expires: Date.now() + 60_000,
+        } as never,
+      },
+    )
+
+    expect(models["gpt-4.1"]).toMatchObject({
+      cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
+    })
+  })
+
+  test("returns cached models immediately and refreshes them in the background", async () => {
+    let releaseModels: (() => void) | undefined
+    const modelsReady = new Promise<void>((resolve) => {
+      releaseModels = resolve
+    })
+    let requestURL: string | undefined
+    let requestHeaders: Headers | undefined
+    let requests = 0
+
+    using server = Bun.serve({
+      port: 0,
+      async fetch(input) {
+        requests += 1
+        requestURL = input.url
+        requestHeaders = new Headers(input.headers)
+        await modelsReady
+        return Response.json({
+          models: [
+            {
+              slug: "gpt-remote",
+              display_name: "GPT Remote",
+              visibility: "list",
+              supported_reasoning_levels: [{ effort: "high" }],
+              context_window: 300_000,
+              input_modalities: ["text", "image"],
+            },
+            {
+              slug: "gpt-hidden",
+              display_name: "GPT Hidden",
+              visibility: "hide",
+            },
+          ],
+        })
+      },
+    })
+
+    const hooks = await CodexAuthPlugin({} as never, {
+      codexModelsEndpoint: new URL("/backend-api/codex/models", server.url).toString(),
+    })
+    let update: Record<string, any> | undefined
+    const started = performance.now()
+    const models = await hooks.provider!.models!(
+      {
+        id: "chatgpt",
+        models: {
+          "gpt-5.4": {
+            id: "gpt-5.4",
+            providerID: "chatgpt",
+            name: "GPT-5.4",
+            api: { id: "gpt-5.4", url: "https://api.openai.com/v1", npm: "@ai-sdk/openai" },
+            capabilities: {
+              reasoning: true,
+              input: { text: true, image: false },
+            },
+            cost: { input: 1, output: 1, cache: { read: 1, write: 1 } },
+            limit: { context: 100_000, output: 10_000 },
+          },
+        },
+      } as never,
+      {
+        auth: {
+          type: "oauth",
+          refresh: "refresh",
+          access: "access",
+          expires: Date.now() + 60_000,
+          accountId: "account",
+        } as never,
+        update(models) {
+          update = models
+        },
+      },
+    )
+
+    expect(performance.now() - started).toBeLessThan(100)
+    expect(models["gpt-5.4"]).toBeDefined()
+    expect(update).toBeUndefined()
+
+    releaseModels!()
+    await waitFor(() => update !== undefined)
+
+    expect(new URL(requestURL!).searchParams.get("client_version")).toBeString()
+    expect(requestHeaders!.get("authorization")).toBe("Bearer access")
+    expect(requestHeaders!.get("ChatGPT-Account-Id")).toBe("account")
+    expect(Object.keys(update!)).toEqual(["gpt-remote"])
+    expect(update!["gpt-remote"]).toMatchObject({
+      id: "gpt-remote",
+      name: "GPT Remote",
+      api: { id: "gpt-remote" },
+      capabilities: {
+        reasoning: true,
+        input: { image: true },
+      },
+      cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
+      limit: { context: 300_000 },
+    })
+
+    const cached = await hooks.provider!.models!(
+      {
+        id: "chatgpt",
+        models: {
+          "gpt-5.4": models["gpt-5.4"],
+        },
+      } as never,
+      {
+        auth: {
+          type: "oauth",
+          refresh: "refresh",
+          access: "access",
+          expires: Date.now() + 60_000,
+          accountId: "account",
+        } as never,
+      },
+    )
+    expect(requests).toBe(1)
+    expect(Object.keys(cached)).toEqual(["gpt-remote"])
   })
 
   test("deduplicates concurrent Codex token refreshes", async () => {

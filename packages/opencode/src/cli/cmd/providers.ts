@@ -229,7 +229,7 @@ export function resolvePluginProviders(input: {
     if (input.enabled && !input.enabled.has(id)) continue
     result.push({
       id,
-      name: input.providerNames[id] ?? id,
+      name: input.providerNames[id] ?? hook.provider?.name ?? id,
     })
   }
 
@@ -371,11 +371,12 @@ export const ProvidersLoginCommand = effectCmd({
     const priority: Record<string, number> = {
       opencode: 0,
       openai: 1,
-      "github-copilot": 2,
-      google: 3,
-      anthropic: 4,
-      openrouter: 5,
-      vercel: 6,
+      chatgpt: 2,
+      "github-copilot": 3,
+      google: 4,
+      anthropic: 5,
+      openrouter: 6,
+      vercel: 7,
     }
     const pluginProviders = resolvePluginProviders({
       hooks,
@@ -393,11 +394,12 @@ export const ProvidersLoginCommand = effectCmd({
           (x) => x.name ?? x.id,
         ),
         map((x) => ({
-          label: x.name,
+          label: hooks.findLast((hook) => hook.provider?.id === x.id)?.provider?.name ?? x.name,
           value: x.id,
           hint: {
             opencode: "recommended",
-            openai: "ChatGPT Plus/Pro or API key",
+            openai: "API key",
+            chatgpt: "Plus/Pro login",
           }[x.id],
         })),
       ),
