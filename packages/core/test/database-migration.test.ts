@@ -14,6 +14,8 @@ import sessionMessageProjectionOrderMigration from "@opencode-ai/core/database/m
 import eventSourcedSessionInputMigration from "@opencode-ai/core/database/migration/20260604172448_event_sourced_session_input"
 import contextEpochAgentMigration from "@opencode-ai/core/database/migration/20260605042240_add_context_epoch_agent"
 import simplifyIntegrationCredentialsMigration from "@opencode-ai/core/database/migration/20260611192811_lush_chimera"
+import contextEpochReplacementMigration from "@opencode-ai/core/database/migration/20260629090000_add_context_epoch_replacement_seq"
+import contextEpochRepairMigration from "@opencode-ai/core/database/migration/20260629093000_repair_context_epoch_columns"
 import { ProjectV2 } from "@opencode-ai/core/project"
 import { ProjectTable } from "@opencode-ai/core/project/sql"
 import { AbsolutePath } from "@opencode-ai/core/schema"
@@ -93,6 +95,22 @@ describe("DatabaseMigration", () => {
     )
   })
 
+  test("replays the complete migration chain from an empty legacy database", async () => {
+    await run(
+      Effect.gen(function* () {
+        const db = yield* makeDb
+        yield* DatabaseMigration.applyOnly(db, migrations)
+
+        expect(
+          yield* db.get(
+            sql`SELECT name FROM pragma_table_info('session_context_epoch') WHERE name = 'replacement_seq'`,
+          ),
+        ).toEqual({ name: "replacement_seq" })
+        expect(yield* db.get(sql`SELECT count(*) as count FROM migration`)).toEqual({ count: migrations.length })
+      }),
+    )
+  })
+
   test("rejects a non-empty database without a session table", async () => {
     await expect(
       run(
@@ -121,6 +139,63 @@ describe("DatabaseMigration", () => {
         expect(yield* db.get(sql`SELECT agent FROM session_context_epoch WHERE session_id = 'ses_existing'`)).toEqual({
           agent: "build",
         })
+      }),
+    )
+  })
+
+  test("adds replacement_seq to Context Epoch tables created by the earlier migration", async () => {
+    await run(
+      Effect.gen(function* () {
+        const db = yield* makeDb
+        yield* db.run(
+          sql`CREATE TABLE session_context_epoch (session_id text PRIMARY KEY, baseline text NOT NULL, agent text DEFAULT 'build' NOT NULL, snapshot text NOT NULL, baseline_seq integer NOT NULL, revision integer DEFAULT 0 NOT NULL)`,
+        )
+        yield* db.run(
+          sql`INSERT INTO session_context_epoch (session_id, baseline, snapshot, baseline_seq) VALUES ('ses_existing', 'baseline', '{}', 0)`,
+        )
+
+        yield* DatabaseMigration.applyOnly(db, [contextEpochReplacementMigration])
+
+        expect(
+          yield* db.get(
+            sql`SELECT name FROM pragma_table_info('session_context_epoch') WHERE name = 'replacement_seq'`,
+          ),
+        ).toEqual({ name: "replacement_seq" })
+        expect(
+          yield* db.get(sql`SELECT session_id, replacement_seq FROM session_context_epoch WHERE session_id = 'ses_existing'`),
+        ).toEqual({ session_id: "ses_existing", replacement_seq: null })
+      }),
+    )
+  })
+
+  test("repairs every Context Epoch column added after the original migration shipped", async () => {
+    await run(
+      Effect.gen(function* () {
+        const db = yield* makeDb
+        yield* db.run(
+          sql`CREATE TABLE session_context_epoch (session_id text PRIMARY KEY, baseline text NOT NULL, snapshot text NOT NULL, baseline_seq integer NOT NULL)`,
+        )
+        yield* db.run(
+          sql`INSERT INTO session_context_epoch (session_id, baseline, snapshot, baseline_seq) VALUES ('ses_existing', 'baseline', '{}', 0)`,
+        )
+        yield* db.run(sql`CREATE TABLE migration (id text PRIMARY KEY, time_completed integer NOT NULL)`)
+        yield* db.run(
+          sql`INSERT INTO migration (id, time_completed) VALUES ('20260629090000_add_context_epoch_replacement_seq', 0)`,
+        )
+
+        yield* DatabaseMigration.applyOnly(db, [contextEpochReplacementMigration, contextEpochRepairMigration])
+
+        expect(
+          yield* db.all(
+            sql`SELECT name FROM pragma_table_info('session_context_epoch') WHERE name IN ('agent', 'replacement_seq', 'revision') ORDER BY name`,
+          ),
+        ).toEqual([{ name: "agent" }, { name: "replacement_seq" }, { name: "revision" }])
+        expect(
+          yield* db.get(
+            sql`SELECT session_id, agent, replacement_seq, revision FROM session_context_epoch WHERE session_id = 'ses_existing'`,
+          ),
+        ).toEqual({ session_id: "ses_existing", agent: "build", replacement_seq: null, revision: 0 })
+        expect(yield* db.get(sql`SELECT count(*) as count FROM migration`)).toEqual({ count: 2 })
       }),
     )
   })

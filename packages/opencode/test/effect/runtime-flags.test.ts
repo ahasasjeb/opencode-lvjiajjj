@@ -51,6 +51,9 @@ describe("RuntimeFlags", () => {
       expect(flags.enableQuestionTool).toBe(true)
       expect(flags.experimentalReferences).toBe(true)
       expect(flags.experimentalBackgroundSubagents).toBe(true)
+      expect(flags.subagentMaxThreads).toBe(6)
+      expect(flags.subagentMaxDepth).toBe(1)
+      expect(flags.subagentForegroundTimeoutMs).toBe(30_000)
       expect(flags.experimentalLspTy).toBe(false)
       expect(flags.experimentalLspTool).toBe(true)
       expect(flags.experimentalOxfmt).toBe(true)
@@ -118,6 +121,10 @@ describe("RuntimeFlags", () => {
       expect(flags.outputTokenMax).toBeUndefined()
       expect(flags.bashDefaultTimeoutMs).toBe(1_000)
       expect(flags.enableExperimentalModels).toBe(false)
+      expect(flags.experimentalBackgroundSubagents).toBe(true)
+      expect(flags.subagentMaxThreads).toBe(6)
+      expect(flags.subagentMaxDepth).toBe(1)
+      expect(flags.subagentForegroundTimeoutMs).toBe(30_000)
       expect(flags.client).toBe("cli")
     }),
   )
@@ -368,6 +375,26 @@ describe("RuntimeFlags", () => {
       const flags = yield* readFlags.pipe(Effect.provide(fromConfig({ OPENCODE_DISABLE_CLAUDE_CODE: "true" })))
 
       expect(flags.disableClaudeCodeSkills).toBe(true)
+    }),
+  )
+
+  it.effect("parses subagent limits and explicit background disable", () =>
+    Effect.gen(function* () {
+      const flags = yield* readFlags.pipe(
+        Effect.provide(
+          fromConfig({
+            OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS: "false",
+            OPENCODE_SUBAGENT_MAX_THREADS: "3",
+            OPENCODE_SUBAGENT_MAX_DEPTH: "2",
+            OPENCODE_SUBAGENT_FOREGROUND_TIMEOUT_MS: "15000",
+          }),
+        ),
+      )
+
+      expect(flags.experimentalBackgroundSubagents).toBe(false)
+      expect(flags.subagentMaxThreads).toBe(3)
+      expect(flags.subagentMaxDepth).toBe(2)
+      expect(flags.subagentForegroundTimeoutMs).toBe(15_000)
     }),
   )
 })

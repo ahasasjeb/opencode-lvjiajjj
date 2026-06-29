@@ -311,7 +311,9 @@ export const make = Effect.gen(function* () {
       state.jobs,
       Effect.fnUntraced(function* (jobs) {
         const job = jobs.get(id)
-        if (!job || job.info.status !== "running") return [{}, jobs] as readonly [PromoteResult, Map<string, Active>]
+        if (!job) return [{}, jobs] as readonly [PromoteResult, Map<string, Active>]
+        if (job.info.status !== "running")
+          return [{ info: snapshot(job) }, jobs] as readonly [PromoteResult, Map<string, Active>]
         if (job.info.metadata?.background === true)
           return [{ info: snapshot(job) }, jobs] as readonly [PromoteResult, Map<string, Active>]
         const next = {

@@ -5,6 +5,7 @@ import { NamedError } from "@opencode-ai/core/util/error"
 import { Skill } from "../../src/skill"
 import { Permission } from "../../src/permission"
 import { SystemPrompt } from "../../src/session/system"
+import PROMPT_KIMI from "../../src/session/prompt/kimi.txt"
 import { LocationServiceMap } from "@opencode-ai/core/location-layer"
 import { testEffect } from "../lib/effect"
 
@@ -64,6 +65,14 @@ const it = testEffect(
 )
 
 describe("session.system", () => {
+  it.effect("Kimi prompt explains background subagent lifecycle", () =>
+    Effect.sync(() => {
+      expect(PROMPT_KIMI).toContain("Use `background: true` only for independent work")
+      expect(PROMPT_KIMI).toContain("do not poll, sleep, or duplicate it")
+      expect(PROMPT_KIMI).toContain("Use `task_id` to send follow-up context")
+    }),
+  )
+
   it.effect("skills output is sorted by name and stable across calls", () =>
     Effect.gen(function* () {
       const prompt = yield* SystemPrompt.Service

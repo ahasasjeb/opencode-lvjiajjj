@@ -30,6 +30,21 @@ function userMessage(id: string, text: string): SessionMessages[number] {
   }
 }
 
+function backgroundResultMessage(id: string, parentUserMessageId: string): SessionMessages[number] {
+  const message = userMessage(id, "")
+  const part = message.parts[0]
+  if (part?.type !== "text") {
+    throw new Error("expected text part")
+  }
+  part.synthetic = true
+  part.metadata = {
+    backgroundResult: true,
+    parentUserMessageId,
+  }
+  part.text = "<task state=\"completed\">done</task>"
+  return message
+}
+
 function assistantInfo(
   id: string,
   input: {
@@ -349,6 +364,34 @@ describe("run session replay", () => {
         kind: "system",
         text: "▣ Build · gpt-5 · 2.0s",
         messageID: "msg-step-2",
+      }),
+    ])
+  })
+
+  test("replays one turn summary after a background-result continuation", () => {
+    const out = replaySession({
+      messages: [
+        userMessage("msg-user-1", "Run both tasks"),
+        assistantMessage("msg-launch", "Both tasks are running", {
+          parentID: "msg-user-1",
+          time: { created: 200, completed: 900 },
+        }),
+        backgroundResultMessage("msg-background-result", "msg-user-1"),
+        assistantMessage("msg-final", "Both tasks completed", {
+          parentID: "msg-background-result",
+          time: { created: 1000, completed: 3000 },
+        }),
+      ],
+      permissions: [],
+      questions: [],
+      thinking: true,
+      limits: {},
+    })
+
+    expect(out.commits.filter((commit) => commit.summary)).toEqual([
+      expect.objectContaining({
+        kind: "system",
+        messageID: "msg-final",
       }),
     ])
   })

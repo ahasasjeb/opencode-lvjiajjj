@@ -50,6 +50,58 @@ const layer = (flags: Partial<RuntimeFlags.Info> = {}) =>
 
 const it = testEffect(layer())
 const background = testEffect(layer({ experimentalBackgroundSubagents: true }))
+const foreground = testEffect(layer({ experimentalBackgroundSubagents: false }))
+const shallow = testEffect(layer({ subagentMaxDepth: 1 }))
+const limited = testEffect(layer({ subagentMaxThreads: 2 }))
+const timeout = testEffect(layer({ subagentForegroundTimeoutMs: 10 }))
+const runStateStatuses: SessionStatus.Info[] = []
+const runStateParentID = SessionID.make("ses_parent_status")
+const runStateBackground = { active: true }
+const runState = testEffect(
+  SessionRunState.layer.pipe(
+    Layer.provide(
+      Layer.succeed(
+        BackgroundJob.Service,
+        BackgroundJob.Service.of({
+          list: () =>
+            Effect.succeed(
+              runStateBackground.active
+                ? [
+                    {
+                      id: "ses_child_status",
+                      type: "task",
+                      status: "running",
+                      started_at: 0,
+                      metadata: { background: true, parentSessionId: runStateParentID },
+                    },
+                  ]
+                : [],
+            ),
+          get: () => Effect.die("unexpected get"),
+          start: () => Effect.die("unexpected start"),
+          extend: () => Effect.die("unexpected extend"),
+          wait: () => Effect.die("unexpected wait"),
+          waitForPromotion: () => Effect.die("unexpected waitForPromotion"),
+          promote: () => Effect.die("unexpected promote"),
+          cancel: () => Effect.die("unexpected cancel"),
+        }),
+      ),
+    ),
+    Layer.provide(
+      Layer.succeed(
+        SessionStatus.Service,
+        SessionStatus.Service.of({
+          get: () => Effect.die("unexpected get"),
+          list: () => Effect.die("unexpected list"),
+          set: (_sessionID, info) =>
+            Effect.sync(() => {
+              runStateStatuses.push(info)
+            }),
+        }),
+      ),
+    ),
+  ),
+)
 
 function defer<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void
@@ -147,6 +199,9 @@ describe("tool.task", () => {
         const second = yield* get()
 
         expect(first).toBe(second)
+        expect(first).toContain("Prefer a small, purposeful set over speculative fan-out")
+        expect(first).toContain("A long foreground task may be promoted to background automatically")
+        expect(first).toContain("Do not poll, sleep, or repeatedly ask for status")
 
         const alpha = first.indexOf("- alpha: Alpha agent")
         const explore = first.indexOf("- explore:")
@@ -449,7 +504,101 @@ describe("tool.task", () => {
     },
   )
 
-  it.instance("rejects background execution when the experiment is disabled", () =>
+  shallow.instance("rejects nested subagents at the default depth limit", () =>
+    Effect.gen(function* () {
+      const sessions = yield* Session.Service
+      const { chat, assistant } = yield* seed()
+      const child = yield* sessions.create({ parentID: chat.id, title: "Child", agent: "general" })
+      const user = yield* sessions.updateMessage({
+        id: MessageID.ascending(),
+        role: "user",
+        sessionID: child.id,
+        agent: "general",
+        model: ref,
+        time: { created: Date.now() },
+      })
+      const childAssistant = yield* sessions.updateMessage({
+        ...assistant,
+        id: MessageID.ascending(),
+        parentID: user.id,
+        sessionID: child.id,
+        agent: "general",
+        mode: "general",
+      })
+      const tool = yield* TaskTool
+      const def = yield* tool.init()
+      const exit = yield* def
+        .execute(
+          {
+            description: "spawn grandchild",
+            prompt: "delegate again",
+            subagent_type: "general",
+          },
+          {
+            sessionID: child.id,
+            messageID: childAssistant.id,
+            agent: "general",
+            abort: new AbortController().signal,
+            extra: { promptOps: stubOps() },
+            messages: [],
+            metadata: () => Effect.void,
+            ask: () => Effect.void,
+          },
+        )
+        .pipe(Effect.exit)
+
+      expect(Exit.isFailure(exit)).toBe(true)
+      expect(yield* sessions.children(child.id)).toEqual([])
+    }),
+  )
+
+  limited.instance("limits concurrent subagent model runs", () =>
+    Effect.gen(function* () {
+      const { chat, assistant } = yield* seed()
+      const tool = yield* TaskTool
+      const def = yield* tool.init()
+      const count = { active: 0, maximum: 0 }
+      const promptOps = {
+        ...stubOps(),
+        prompt: (input) =>
+          Effect.acquireUseRelease(
+            Effect.sync(() => {
+              count.active++
+              count.maximum = Math.max(count.maximum, count.active)
+            }),
+            () => Effect.sleep("50 millis").pipe(Effect.as(reply(input, "done"))),
+            () =>
+              Effect.sync(() => {
+                count.active--
+              }),
+          ),
+      } satisfies TaskPromptOps
+      const execute = (description: string) =>
+        def.execute(
+          {
+            description,
+            prompt: description,
+            subagent_type: "general",
+          },
+          {
+            sessionID: chat.id,
+            messageID: assistant.id,
+            agent: "build",
+            abort: new AbortController().signal,
+            extra: { promptOps },
+            messages: [],
+            metadata: () => Effect.void,
+            ask: () => Effect.void,
+          },
+        )
+
+      yield* Effect.all([execute("one"), execute("two"), execute("three")], { concurrency: "unbounded" })
+
+      expect(count.maximum).toBe(2)
+    }),
+  )
+
+  foreground.instance("rejects background execution when background subagents are explicitly disabled", () =>
     Effect.gen(function* () {
       const { chat, assistant } = yield* seed()
       const tool = yield* TaskTool
@@ -480,6 +629,42 @@ describe("tool.task", () => {
     }),
   )
 
+  timeout.instance("automatically backgrounds a foreground subagent after the wait timeout", () =>
+    Effect.gen(function* () {
+      const jobs = yield* BackgroundJob.Service
+      const { chat, assistant } = yield* seed()
+      const tool = yield* TaskTool
+      const def = yield* tool.init()
+      const result = yield* def.execute(
+        {
+          description: "slow inspection",
+          prompt: "keep working",
+          subagent_type: "general",
+        },
+        {
+          sessionID: chat.id,
+          messageID: assistant.id,
+          agent: "build",
+          abort: new AbortController().signal,
+          extra: {
+            promptOps: {
+              ...stubOps(),
+              prompt: () => Effect.never,
+            },
+          },
+          messages: [],
+          metadata: () => Effect.void,
+          ask: () => Effect.void,
+        },
+      )
+
+      expect(result.metadata.background).toBe(true)
+      expect(result.output).toContain('state="running"')
+      expect((yield* jobs.get(result.metadata.sessionId))?.metadata?.background).toBe(true)
+      yield* jobs.cancel(result.metadata.sessionId)
+    }),
+  )
+
   it.instance("promotes a running foreground task without restarting it", () =>
     Effect.gen(function* () {
       const jobs = yield* BackgroundJob.Service
@@ -488,15 +673,11 @@ describe("tool.task", () => {
       const def = yield* tool.init()
       const ready = yield* Deferred.make<void>()
       const done = yield* Deferred.make<void>()
-      const injected = yield* Deferred.make<SessionPrompt.PromptInput>()
       let runs = 0
       const promptOps: TaskPromptOps = {
         cancel: () => Effect.void,
         resolvePromptParts: (template) => Effect.succeed([{ type: "text" as const, text: template }]),
         prompt: (input) => {
-          if (input.sessionID === chat.id) {
-            return Deferred.succeed(injected, input).pipe(Effect.as(reply(input, "injected")))
-          }
           return Effect.gen(function* () {
             runs += 1
             yield* Deferred.succeed(ready, undefined)
@@ -531,6 +712,7 @@ describe("tool.task", () => {
       expect(job).toBeDefined()
       if (!job) throw new Error("task job not found")
       expect(job.metadata?.parentSessionId).toBe(chat.id)
+      expect(job.metadata?.parentUserMessageId).toBe(assistant.parentID)
       yield* jobs.promote(job.id)
 
       const result = yield* Fiber.join(fiber)
@@ -541,7 +723,6 @@ describe("tool.task", () => {
 
       yield* Deferred.succeed(done, undefined)
       expect((yield* jobs.wait({ id: result.metadata.sessionId })).info?.output).toBe("background done")
-      expect((yield* Deferred.await(injected)).parts[0]?.type).toBe("text")
       expect(runs).toBe(1)
     }),
   )
@@ -593,15 +774,10 @@ describe("tool.task", () => {
       const first = defer<void>()
       const second = defer<void>()
       const updated = defer<SessionPrompt.PromptInput>()
-      const injected = defer<SessionPrompt.PromptInput>()
       let prompts = 0
       const promptOps: TaskPromptOps = {
         ...stubOps(),
         prompt: (input) => {
-          if (input.sessionID === chat.id) {
-            injected.resolve(input)
-            return Effect.succeed(reply(input, "done"))
-          }
           prompts++
           if (prompts === 1) return Effect.promise(() => first.promise).pipe(Effect.as(reply(input, "first done")))
           updated.resolve(input)
@@ -651,10 +827,7 @@ describe("tool.task", () => {
       const waited = yield* jobs.wait({ id: started.metadata.sessionId, timeout: 1_000 })
       expect(waited.info?.status).toBe("completed")
       expect(waited.info?.output).toBe("second done")
-      const notification = yield* Effect.promise(() => injected.promise)
-      expect(notification.variant).toBe("xhigh")
-      expect(notification.parts[0]?.type).toBe("text")
-      if (notification.parts[0]?.type === "text") expect(notification.parts[0].text).toContain("second done")
+      expect(prompts).toBe(2)
     }),
   )
 
@@ -691,12 +864,13 @@ describe("tool.task", () => {
     }),
   )
 
-  background.instance("background task completion does not wait for the parent async prompt", () =>
+  background.instance("background task completion does not start a separate parent prompt", () =>
     Effect.gen(function* () {
       const jobs = yield* BackgroundJob.Service
       const { chat, assistant } = yield* seed()
       const tool = yield* TaskTool
       const def = yield* tool.init()
+      let parentPrompts = 0
 
       const result = yield* def.execute(
         {
@@ -713,8 +887,10 @@ describe("tool.task", () => {
           extra: {
             promptOps: {
               ...stubOps({ text: "background done" }),
-              prompt: (input) =>
-                input.sessionID === chat.id ? Effect.never : Effect.succeed(reply(input, "background done")),
+              prompt: (input) => {
+                if (input.sessionID === chat.id) parentPrompts++
+                return Effect.succeed(reply(input, "background done"))
+              },
             } satisfies TaskPromptOps,
           },
           messages: [],
@@ -726,6 +902,7 @@ describe("tool.task", () => {
       const waited = yield* jobs.wait({ id: result.metadata.sessionId, timeout: 1_000 })
       expect(waited.timedOut).toBe(false)
       expect(waited.info?.status).toBe("completed")
+      expect(parentPrompts).toBe(0)
     }),
   )
 
@@ -843,6 +1020,28 @@ describe("tool.task", () => {
       const waited = yield* jobs.wait({ id: result.metadata.sessionId, timeout: 1_000 })
       expect(waited.timedOut).toBe(false)
       expect(waited.info?.status).toBe("cancelled")
+    }),
+  )
+
+  runState.instance("keeps the parent session busy while a background task is running", () =>
+    Effect.gen(function* () {
+      const runState = yield* SessionRunState.Service
+      const response = reply({ sessionID: runStateParentID, parts: [] }, "parent done")
+      runStateBackground.active = true
+      runStateStatuses.length = 0
+
+      yield* runState.ensureRunning(runStateParentID, Effect.succeed(response), Effect.succeed(response))
+
+      expect(runStateStatuses).toEqual([])
+
+      const idleSessionID = SessionID.make("ses_parent_idle")
+      runStateBackground.active = false
+      yield* runState.ensureRunning(
+        idleSessionID,
+        Effect.succeed(reply({ sessionID: idleSessionID, parts: [] }, "interrupted")),
+        Effect.succeed(reply({ sessionID: idleSessionID, parts: [] }, "idle")),
+      )
+      expect(runStateStatuses).toEqual([{ type: "idle" }])
     }),
   )
 

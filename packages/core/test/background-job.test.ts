@@ -25,6 +25,10 @@ describe("BackgroundJob", () => {
         timedOut: false,
         info: { status: "completed", output: "done" },
       })
+      expect(yield* jobs.promote(job.id)).toMatchObject({
+        status: "completed",
+        output: "done",
+      })
     }).pipe(Effect.provide(BackgroundJob.layer)),
   )
 

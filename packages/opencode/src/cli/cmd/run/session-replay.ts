@@ -120,8 +120,31 @@ function isShellSyntheticAssistant(message: SessionMessages[number], shellParent
   )
 }
 
+function backgroundResultParent(message: SessionMessages[number]) {
+  if (message.info.role !== "user") {
+    return
+  }
+
+  const part = message.parts.find(
+    (part) =>
+      part.type === "text" &&
+      part.synthetic &&
+      part.metadata?.backgroundResult === true &&
+      typeof part.metadata.parentUserMessageId === "string",
+  )
+  if (part?.type === "text" && typeof part.metadata?.parentUserMessageId === "string") {
+    return part.metadata.parentUserMessageId
+  }
+}
+
 function summaryMessageIDs(messages: SessionMessages): ReadonlySet<string> {
   const shellParents = new Set(messages.filter(isShellSyntheticUser).map((message) => message.info.id))
+  const backgroundParents = new Map(
+    messages.flatMap((message) => {
+      const parent = backgroundResultParent(message)
+      return parent ? [[message.info.id, parent] as const] : []
+    }),
+  )
   const parents = new Set<string>()
   const summaries = new Set<string>()
 
@@ -135,11 +158,12 @@ function summaryMessageIDs(messages: SessionMessages): ReadonlySet<string> {
       continue
     }
 
-    if (parents.has(message.info.parentID)) {
+    const parentID = backgroundParents.get(message.info.parentID) ?? message.info.parentID
+    if (parents.has(parentID)) {
       continue
     }
 
-    parents.add(message.info.parentID)
+    parents.add(parentID)
 
     const completed = message.info.time.completed
     if (typeof completed === "number" && completed > message.info.time.created) {

@@ -5,7 +5,7 @@ import { Runner } from "@/effect/runner"
 import { BackgroundJob } from "@/background/job"
 import { Effect, Latch, Layer, Scope, Context } from "effect"
 import { Session } from "./session"
-import { SessionID } from "./schema"
+import { MessageID, SessionID } from "./schema"
 import { SessionStatus } from "./status"
 
 export interface Interface {
@@ -16,6 +16,11 @@ export interface Interface {
     onInterrupt: Effect.Effect<SessionV1.WithParts>,
     work: Effect.Effect<SessionV1.WithParts>,
   ) => Effect.Effect<SessionV1.WithParts>
+  readonly settleBackgroundTasks: (input: {
+    sessionID: SessionID
+    parentUserMessageID: MessageID
+    onWait: Effect.Effect<void>
+  }) => Effect.Effect<BackgroundJob.Info[] | undefined>
   readonly startShell: (
     sessionID: SessionID,
     onInterrupt: Effect.Effect<SessionV1.WithParts>,
@@ -59,6 +64,15 @@ export const layer = Layer.effect(
       const next = Runner.make<SessionV1.WithParts>(data.scope, {
         onIdle: Effect.gen(function* () {
           data.runners.delete(sessionID)
+          if (
+            (yield* background.list()).some(
+              (job) =>
+                job.status === "running" &&
+                job.metadata?.background === true &&
+                job.metadata.parentSessionId === sessionID,
+            )
+          )
+            return
           yield* status.set(sessionID, { type: "idle" })
         }),
         onBusy: status.set(sessionID, { type: "busy" }),
@@ -93,6 +107,34 @@ export const layer = Layer.effect(
       return yield* (yield* runner(sessionID, onInterrupt)).ensureRunning(work)
     })
 
+    const settleBackgroundTasks = Effect.fn("SessionRunState.settleBackgroundTasks")(function* (input: {
+      sessionID: SessionID
+      parentUserMessageID: MessageID
+      onWait: Effect.Effect<void>
+    }) {
+      const jobs = (yield* background.list()).filter(
+        (job) =>
+          job.type === "task" &&
+          job.status !== "cancelled" &&
+          job.metadata?.background === true &&
+          job.metadata.parentSessionId === input.sessionID &&
+          job.metadata.parentUserMessageId === input.parentUserMessageID,
+      )
+      if (jobs.length === 0) return
+      yield* input.onWait
+      return yield* Effect.forEach(
+        jobs,
+        (job) =>
+          job.status === "running"
+            ? background.wait({ id: job.id }).pipe(
+                Effect.map((result) => result.info),
+                Effect.map((result) => result ?? job),
+              )
+            : Effect.succeed(job),
+        { concurrency: "unbounded" },
+      )
+    })
+
     const startShell = Effect.fn("SessionRunState.startShell")(function* (
       sessionID: SessionID,
       onInterrupt: Effect.Effect<SessionV1.WithParts>,
@@ -104,7 +146,7 @@ export const layer = Layer.effect(
         .pipe(Effect.catchTag("RunnerBusy", () => Effect.fail(busyError(sessionID))))
     })
 
-    return Service.of({ assertNotBusy, cancel, ensureRunning, startShell })
+    return Service.of({ assertNotBusy, cancel, ensureRunning, settleBackgroundTasks, startShell })
   }),
 )
 

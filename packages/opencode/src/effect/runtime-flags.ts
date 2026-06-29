@@ -7,10 +7,20 @@ const positiveInteger = (name: string) =>
     Config.map((value) => (Number.isInteger(value) && value > 0 ? value : undefined)),
     Config.orElse(() => Config.succeed(undefined)),
   )
+const integer = (name: string, minimum: number, fallback: number) =>
+  Config.number(name).pipe(
+    Config.map((value) => (Number.isInteger(value) && value >= minimum ? value : fallback)),
+    Config.orElse(() => Config.succeed(fallback)),
+  )
 const experimental = bool("OPENCODE_EXPERIMENTAL")
 const enabledByExperimental = (name: string) =>
   Config.all({ experimental, enabled: Config.boolean(name).pipe(Config.option) }).pipe(
     Config.map((flags) => Option.getOrElse(flags.enabled, () => flags.experimental)),
+  )
+const enabledByDefault = (name: string) =>
+  Config.boolean(name).pipe(
+    Config.option,
+    Config.map((value) => Option.getOrElse(value, () => true)),
   )
 
 export class Service extends ConfigService.Service<Service>()("@opencode/RuntimeFlags", {
@@ -40,7 +50,10 @@ export class Service extends ConfigService.Service<Service>()("@opencode/Runtime
   enableExperimentalModels: bool("OPENCODE_ENABLE_EXPERIMENTAL_MODELS"),
   enableQuestionTool: bool("OPENCODE_ENABLE_QUESTION_TOOL"),
   experimentalReferences: enabledByExperimental("OPENCODE_EXPERIMENTAL_REFERENCES"),
-  experimentalBackgroundSubagents: enabledByExperimental("OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS"),
+  experimentalBackgroundSubagents: enabledByDefault("OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS"),
+  subagentMaxThreads: integer("OPENCODE_SUBAGENT_MAX_THREADS", 1, 6),
+  subagentMaxDepth: integer("OPENCODE_SUBAGENT_MAX_DEPTH", 0, 1),
+  subagentForegroundTimeoutMs: integer("OPENCODE_SUBAGENT_FOREGROUND_TIMEOUT_MS", 1, 30_000),
   experimentalLspTy: bool("OPENCODE_EXPERIMENTAL_LSP_TY"),
   experimentalLspTool: enabledByExperimental("OPENCODE_EXPERIMENTAL_LSP_TOOL"),
   experimentalOxfmt: enabledByExperimental("OPENCODE_EXPERIMENTAL_OXFMT"),

@@ -45,7 +45,7 @@ import { decodeDataUrl } from "@/util/data-url"
 import { Process } from "@/util/process"
 import { Cause, Effect, Exit, Latch, Layer, Option, Scope, Context, Schema, Types } from "effect"
 import { InstanceState } from "@/effect/instance-state"
-import { TaskTool, type TaskPromptOps } from "@/tool/task"
+import { renderOutput, TaskTool, type TaskPromptOps } from "@/tool/task"
 import { SessionRunState } from "./run-state"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { EventV2Bridge } from "@/event-v2-bridge"
@@ -1132,6 +1132,71 @@ export const layer = Layer.effect(
       throw new Error("Impossible")
     })
 
+    const continueWithBackgroundResults = Effect.fn("SessionPrompt.continueWithBackgroundResults")(function* (input: {
+      sessionID: SessionID
+      user: SessionV1.User
+      assistant: SessionV1.Assistant
+    }) {
+      const finish = input.assistant.finish
+      const settled = yield* state.settleBackgroundTasks({
+        sessionID: input.sessionID,
+        parentUserMessageID: input.user.id,
+        onWait: Effect.gen(function* () {
+          input.assistant.finish = "tool-calls"
+          yield* sessions.updateMessage(input.assistant)
+        }),
+      })
+      if (!settled) return false
+      const results = settled.flatMap((job) => {
+        if (job.status === "completed")
+          return [
+            renderOutput({
+              sessionID: SessionID.make(job.id),
+              state: "completed",
+              summary: job.title ? `Background task completed: ${job.title}` : "Background task completed",
+              text: job.output ?? "",
+            }),
+          ]
+        if (job.status === "error")
+          return [
+            renderOutput({
+              sessionID: SessionID.make(job.id),
+              state: "error",
+              summary: job.title ? `Background task failed: ${job.title}` : "Background task failed",
+              text: job.error ?? "",
+            }),
+          ]
+        return []
+      })
+      if (results.length === 0) {
+        input.assistant.finish = finish
+        yield* sessions.updateMessage(input.assistant)
+        return false
+      }
+
+      yield* createUserMessage(
+        {
+          sessionID: input.sessionID,
+          agent: input.user.agent,
+          model: input.user.model,
+          variant: input.assistant.variant,
+          parts: [
+            {
+              type: "text",
+              synthetic: true,
+              metadata: {
+                backgroundResult: true,
+                parentUserMessageId: input.user.id,
+                jobIds: settled.map((job) => job.id),
+              },
+              text: results.join("\n\n"),
+            },
+          ],
+        },
+      ).pipe(Effect.catch(Effect.die))
+      return true
+    })
+
     const runLoop: (sessionID: SessionID) => Effect.Effect<SessionV1.WithParts> = Effect.fn("SessionPrompt.run")(
       function* (sessionID: SessionID) {
         const ctx = yield* InstanceState.context
@@ -1168,6 +1233,15 @@ export const layer = Layer.effect(
             !hasToolCalls &&
             lastUser.id < lastAssistant.id
           ) {
+            if (
+              !lastAssistant.error &&
+              (yield* continueWithBackgroundResults({
+                sessionID,
+                user: lastUser,
+                assistant: lastAssistant,
+              }))
+            )
+              continue
             const orphan = lastAssistantMsg?.parts.find(
               (part): part is SessionV1.ToolPart => part.type === "tool" && isOrphanedInterruptedTool(part),
             )

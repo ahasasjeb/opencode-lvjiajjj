@@ -163,7 +163,7 @@ const blockingProcessor = Layer.succeed(
   }),
 )
 
-function makePrompt(input?: { processor?: "blocking" }) {
+function makePrompt(input?: { processor?: "blocking"; sharedBackground?: boolean }) {
   const deps = Layer.mergeAll(
     Session.defaultLayer,
     Snapshot.defaultLayer,
@@ -183,6 +183,9 @@ function makePrompt(input?: { processor?: "blocking" }) {
     Database.defaultLayer,
     EventV2Bridge.defaultLayer,
   ).pipe(Layer.provideMerge(infra))
+  const runState = input?.sharedBackground
+    ? SessionRunState.layer.pipe(Layer.provide(status), Layer.provideMerge(BackgroundJob.defaultLayer))
+    : run
   const question = Question.layer.pipe(Layer.provideMerge(deps))
   const todo = Todo.layer.pipe(Layer.provideMerge(deps))
   const registry = ToolRegistry.layer.pipe(
@@ -216,7 +219,7 @@ function makePrompt(input?: { processor?: "blocking" }) {
     Layer.provide(SessionRevert.defaultLayer),
     Layer.provide(Image.defaultLayer),
     Layer.provide(summary),
-    Layer.provideMerge(run),
+    Layer.provideMerge(runState),
     Layer.provideMerge(compact),
     Layer.provideMerge(proc),
     Layer.provideMerge(registry),
@@ -229,7 +232,7 @@ function makePrompt(input?: { processor?: "blocking" }) {
   )
 }
 
-function makeHttp(input?: { processor?: "blocking" }) {
+function makeHttp(input?: { processor?: "blocking"; sharedBackground?: boolean }) {
   return Layer.mergeAll(TestLLMServer.layer, makePrompt(input))
 }
 
@@ -238,6 +241,7 @@ function makeHttpNoLLMServer(input?: { processor?: "blocking" }) {
 }
 
 const it = testEffect(makeHttp())
+const backgroundIt = testEffect(makeHttp({ sharedBackground: true }))
 const noLLMServer = testEffect(makeHttpNoLLMServer())
 const raceNoLLMServer = testEffect(makeHttpNoLLMServer({ processor: "blocking" }))
 const unix = process.platform !== "win32" ? it.instance : it.instance.skip
@@ -724,6 +728,75 @@ it.instance("loop continues when finish is tool-calls", () =>
   }),
 )
 
+backgroundIt.instance("loop waits for sibling background tasks and completes one logical turn", () =>
+  Effect.gen(function* () {
+    const { llm } = yield* useServerConfig(providerCfg)
+    const prompt = yield* SessionPrompt.Service
+    const sessions = yield* Session.Service
+    const jobs = yield* BackgroundJob.Service
+    const status = yield* SessionStatus.Service
+    const session = yield* sessions.create({
+      title: "Background batch",
+      permission: [{ permission: "*", pattern: "*", action: "allow" }],
+    })
+    const user = yield* prompt.prompt({
+      sessionID: session.id,
+      agent: "build",
+      noReply: true,
+      parts: [{ type: "text", text: "inspect both" }],
+    })
+    const first = yield* Deferred.make<void>()
+    const second = yield* Deferred.make<void>()
+    const start = (id: SessionID, title: string, gate: Deferred.Deferred<void>, output: string) =>
+      jobs.start({
+        id,
+        type: "task",
+        title,
+        metadata: {
+          background: true,
+          parentSessionId: session.id,
+          parentUserMessageId: user.info.id,
+        },
+        run: Deferred.await(gate).pipe(Effect.as(output)),
+      })
+    const firstID = SessionID.make("ses_background_first")
+    const secondID = SessionID.make("ses_background_second")
+    yield* start(firstID, "first inspection", first, "first result")
+    yield* start(secondID, "second inspection", second, "second result")
+    yield* llm.text("Both tasks are running.")
+    yield* llm.text("Both tasks completed.")
+
+    const fiber = yield* prompt.loop({ sessionID: session.id }).pipe(Effect.forkChild)
+    yield* llm.wait(1)
+    expect((yield* status.get(session.id)).type).toBe("busy")
+
+    yield* Deferred.succeed(first, undefined)
+    yield* jobs.wait({ id: firstID })
+    expect(yield* llm.calls).toBe(1)
+    expect((yield* status.get(session.id)).type).toBe("busy")
+
+    yield* Deferred.succeed(second, undefined)
+    const result = yield* Fiber.join(fiber)
+    expect(result.info.role).toBe("assistant")
+
+    const messages = yield* sessions.messages({ sessionID: session.id })
+    expect(yield* llm.calls).toBe(2)
+    const assistants = messages.filter((message) => message.info.role === "assistant")
+    expect(assistants).toHaveLength(2)
+    expect(assistants[0]?.info.role === "assistant" && assistants[0].info.finish).toBe("tool-calls")
+    expect(assistants[1]?.info.role === "assistant" && assistants[1].info.finish).toBe("stop")
+
+    const synthetic = messages.find((message) =>
+      message.parts.some(
+        (part) => part.type === "text" && part.synthetic && part.metadata?.backgroundResult === true,
+      ),
+    )
+    const text = synthetic?.parts.find((part) => part.type === "text")
+    expect(text?.type === "text" && text.text).toContain("first result")
+    expect(text?.type === "text" && text.text).toContain("second result")
+  }),
+)
+
 it.instance("glob tool keeps instance context during prompt runs", () =>
   Effect.gen(function* () {
     const { dir, llm } = yield* useServerConfig(providerCfg)
@@ -788,6 +861,42 @@ it.instance("loop continues when finish is stop but assistant has tool parts", (
       expect(result.parts.some((part) => part.type === "text" && part.text === "second")).toBe(true)
       expect(result.info.finish).toBe("stop")
     }
+  }),
+)
+
+it.instance("task tool completes a subagent and resumes the parent", () =>
+  Effect.gen(function* () {
+    const { llm } = yield* useServerConfig(providerCfg)
+    const prompt = yield* SessionPrompt.Service
+    const sessions = yield* Session.Service
+    const chat = yield* sessions.create({
+      title: "Parent",
+      permission: [{ permission: "*", pattern: "*", action: "allow" }],
+    })
+    yield* llm.tool("task", {
+      description: "inspect bug",
+      prompt: "look into the cache key path",
+      subagent_type: "general",
+    })
+    yield* llm.text("child result")
+    yield* llm.text("parent result")
+    yield* user(chat.id, "hello")
+
+    const result = yield* prompt.loop({ sessionID: chat.id })
+    expect(yield* llm.calls).toBe(3)
+    expect(result.info.role).toBe("assistant")
+    expect(result.parts.some((part) => part.type === "text" && part.text === "parent result")).toBe(true)
+
+    const children = yield* sessions.children(chat.id)
+    expect(children).toHaveLength(1)
+    const messages = yield* MessageV2.filterCompactedEffect(children[0]!.id)
+    expect(
+      messages.some(
+        (message) =>
+          message.info.role === "assistant" &&
+          message.parts.some((part) => part.type === "text" && part.text === "child result"),
+      ),
+    ).toBe(true)
   }),
 )
 
