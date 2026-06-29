@@ -400,6 +400,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
 
@@ -514,6 +515,8 @@ export const dict = {
   "session.review.noSnapshot":
     "El seguimiento de instantáneas está deshabilitado en la configuración, por lo que los cambios de sesión no están disponibles",
   "session.review.noChanges": "Sin cambios",
+  "session.review.noUncommittedChanges": "Aún no hay cambios sin confirmar",
+  "session.review.noBranchChanges": "Aún no hay cambios en la rama",
 
   "session.files.selectToOpen": "Selecciona un archivo para abrir",
   "session.files.all": "Todos los archivos",

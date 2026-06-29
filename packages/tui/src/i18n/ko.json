@@ -1,0 +1,9 @@
+{
+  "category.language": "언어",
+  "command.language.cycle": "언어 선택",
+  "command.language.set": "사용할 언어: {{language}}",
+  "toast.language.description": "{{language}}(으)로 전환했습니다",
+  "toast.language.title": "언어",
+  "dialog.language.title": "언어",
+  "command.language.list": "언어 선택"
+}

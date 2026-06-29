@@ -400,6 +400,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
 
@@ -513,6 +514,8 @@ export const dict = {
   "session.review.noSnapshot":
     "Praćenje snimaka (snapshot) je onemogućeno u konfiguraciji, pa promjene sesije nisu dostupne",
   "session.review.noChanges": "Nema izmjena",
+  "session.review.noUncommittedChanges": "Još nema neobjavljenih promjena",
+  "session.review.noBranchChanges": "Još nema promjena na grani",
 
   "session.files.selectToOpen": "Odaberi datoteku za otvaranje",
   "session.files.all": "Sve datoteke",

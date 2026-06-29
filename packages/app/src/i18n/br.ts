@@ -366,6 +366,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
   "toast.language.title": "Idioma",
@@ -461,6 +462,8 @@ export const dict = {
   "session.review.noSnapshot":
     "O rastreamento de snapshot está desabilitado na configuração, então as alterações da sessão estão indisponíveis",
   "session.review.noChanges": "Sem alterações",
+  "session.review.noUncommittedChanges": "Ainda não há alterações sem commit",
+  "session.review.noBranchChanges": "Ainda não há alterações na branch",
   "session.files.selectToOpen": "Selecione um arquivo para abrir",
   "session.files.all": "Todos os arquivos",
   "session.files.empty": "Nenhum arquivo",

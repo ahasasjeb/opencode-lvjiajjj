@@ -413,6 +413,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
 
@@ -521,6 +522,8 @@ export const dict = {
   "session.review.noVcs": "未检测到 Git 版本控制系统，无法显示更改",
   "session.review.noSnapshot": "配置中已禁用快照跟踪，因此会话更改不可用",
   "session.review.noChanges": "无更改",
+  "session.review.noUncommittedChanges": "暂无未提交的更改",
+  "session.review.noBranchChanges": "暂无分支更改",
   "session.files.selectToOpen": "选择要打开的文件",
   "session.files.all": "所有文件",
   "session.files.empty": "无文件",

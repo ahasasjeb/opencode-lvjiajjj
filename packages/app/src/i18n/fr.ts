@@ -368,6 +368,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
   "toast.language.title": "Langue",
@@ -463,6 +464,8 @@ export const dict = {
   "session.review.loadingChanges": "Chargement des modifications...",
   "session.review.empty": "Aucune modification dans cette session pour l'instant",
   "session.review.noChanges": "Aucune modification",
+  "session.review.noUncommittedChanges": "Aucune modification non validée pour le moment",
+  "session.review.noBranchChanges": "Aucune modification de branche pour le moment",
   "session.review.noVcs": "Aucun système de contrôle de version Git détecté, modifications non affichées",
   "session.review.noSnapshot":
     "Le suivi des instantanés est désactivé dans la configuration, les modifications de session sont donc indisponibles",

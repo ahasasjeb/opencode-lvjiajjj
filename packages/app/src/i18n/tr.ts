@@ -403,6 +403,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
 
@@ -518,6 +519,8 @@ export const dict = {
   "session.review.noSnapshot":
     "Yapılandırmada anlık görüntü takibi devre dışı bırakıldı, bu nedenle oturum değişiklikleri kullanılamıyor",
   "session.review.noChanges": "Değişiklik yok",
+  "session.review.noUncommittedChanges": "Henüz commit edilmemiş değişiklik yok",
+  "session.review.noBranchChanges": "Henüz dal değişikliği yok",
 
   "session.files.selectToOpen": "Açmak için bir dosya seçin",
   "session.files.all": "Tüm dosyalar",

@@ -401,6 +401,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
 
@@ -514,6 +515,8 @@ export const dict = {
   "session.review.noSnapshot":
     "Snapshot-sporing er deaktivert i konfigurasjonen, så sesjonsendringer er ikke tilgjengelige",
   "session.review.noChanges": "Ingen endringer",
+  "session.review.noUncommittedChanges": "Ingen endringer uten commit ennå",
+  "session.review.noBranchChanges": "Ingen grenendringer ennå",
 
   "session.files.selectToOpen": "Velg en fil å åpne",
   "session.files.all": "Alle filer",

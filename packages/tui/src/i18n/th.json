@@ -1,0 +1,9 @@
+{
+  "category.language": "ภาษา",
+  "command.language.cycle": "เลือกภาษา",
+  "command.language.set": "ใช้ภาษา: {{language}}",
+  "toast.language.description": "เปลี่ยนเป็น {{language}} แล้ว",
+  "toast.language.title": "ภาษา",
+  "dialog.language.title": "ภาษา",
+  "command.language.list": "เลือกภาษา"
+}

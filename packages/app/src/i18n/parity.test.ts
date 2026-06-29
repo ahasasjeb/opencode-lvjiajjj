@@ -19,11 +19,19 @@ import { dict as zht } from "./zht"
 import { dict as tr } from "./tr"
 
 const locales = [ar, br, bs, da, de, es, fr, ja, ko, no, pl, ru, uk, th, tr, zh, zht]
-const keys = ["command.session.previous.unseen", "command.session.next.unseen"] as const
+const keys = [
+  "command.session.previous.unseen",
+  "command.session.next.unseen",
+  "command.language.cycle",
+  "command.language.set",
+  "session.review.noUncommittedChanges",
+  "session.review.noBranchChanges",
+] as const
 
 describe("i18n parity", () => {
-  test("non-English locales translate targeted unseen session keys", () => {
+  test("non-English locales translate targeted keys", () => {
     for (const locale of locales) {
+      expect(locale["language.uk"]).toBeDefined()
       for (const key of keys) {
         expect(locale[key]).toBeDefined()
         expect(locale[key]).not.toBe(en[key])

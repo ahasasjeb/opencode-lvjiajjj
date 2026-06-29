@@ -1,0 +1,9 @@
+{
+  "category.language": "Sprog",
+  "command.language.cycle": "Vælg sprog",
+  "command.language.set": "Brug sprog: {{language}}",
+  "toast.language.description": "Skiftede til {{language}}",
+  "toast.language.title": "Sprog",
+  "dialog.language.title": "Sprog",
+  "command.language.list": "Vælg sprog"
+}

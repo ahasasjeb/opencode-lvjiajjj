@@ -1,0 +1,9 @@
+{
+  "category.language": "Dil",
+  "command.language.cycle": "Dil seç",
+  "command.language.set": "Dili kullan: {{language}}",
+  "toast.language.description": "{{language}} diline geçildi",
+  "toast.language.title": "Dil",
+  "dialog.language.title": "Dil",
+  "command.language.list": "Dil seç"
+}

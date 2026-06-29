@@ -400,6 +400,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
 
@@ -513,6 +514,8 @@ export const dict = {
   "session.review.noVcs": "Система контроля версий Git не обнаружена, изменения не отображаются",
   "session.review.noSnapshot": "Отслеживание снимков отключено в настройках, поэтому изменения сессии недоступны",
   "session.review.noChanges": "Нет изменений",
+  "session.review.noUncommittedChanges": "Пока нет незафиксированных изменений",
+  "session.review.noBranchChanges": "Пока нет изменений в ветке",
   "session.files.selectToOpen": "Выберите файл, чтобы открыть",
   "session.files.all": "Все файлы",
   "session.files.empty": "Нет файлов",

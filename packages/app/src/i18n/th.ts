@@ -398,6 +398,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
 
@@ -508,6 +509,8 @@ export const dict = {
   "session.review.noVcs": "ไม่ตรวจพบระบบควบคุมเวอร์ชัน Git การเปลี่ยนแปลงจะไม่แสดง",
   "session.review.noSnapshot": "การติดตามสแนปชอตถูกปิดใช้งานในการกำหนดค่า ดังนั้นการเปลี่ยนแปลงเซสชันจึงไม่พร้อมใช้งาน",
   "session.review.noChanges": "ไม่มีการเปลี่ยนแปลง",
+  "session.review.noUncommittedChanges": "ยังไม่มีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต",
+  "session.review.noBranchChanges": "ยังไม่มีการเปลี่ยนแปลงในสาขา",
 
   "session.files.selectToOpen": "เลือกไฟล์เพื่อเปิด",
   "session.files.empty": "ไม่มีไฟล์",

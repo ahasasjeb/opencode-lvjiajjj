@@ -373,6 +373,7 @@ export const dict = {
   "language.no": "Norsk",
   "language.br": "Português (Brasil)",
   "language.bs": "Bosanski",
+  "language.uk": "Українська",
   "language.th": "ไทย",
   "language.tr": "Türkçe",
   "toast.language.title": "Sprache",
@@ -469,6 +470,8 @@ export const dict = {
   "session.review.noSnapshot":
     "Snapshot-Tracking ist in der Konfiguration deaktiviert, daher sind Sitzungsänderungen nicht verfügbar",
   "session.review.noChanges": "Keine Änderungen",
+  "session.review.noUncommittedChanges": "Noch keine nicht committeten Änderungen",
+  "session.review.noBranchChanges": "Noch keine Branch-Änderungen",
   "session.files.selectToOpen": "Datei zum Öffnen auswählen",
   "session.files.all": "Alle Dateien",
   "session.files.empty": "Keine Dateien",

@@ -1,0 +1,9 @@
+{
+  "category.language": "Idioma",
+  "command.language.cycle": "Elegir idioma",
+  "command.language.set": "Usar idioma: {{language}}",
+  "toast.language.description": "Se cambió a {{language}}",
+  "toast.language.title": "Idioma",
+  "dialog.language.title": "Idioma",
+  "command.language.list": "Elegir idioma"
+}
