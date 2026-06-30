@@ -697,6 +697,7 @@ describe("tool.task", () => {
           {
             sessionID: chat.id,
             messageID: assistant.id,
+            callID: "task-call",
             agent: "build",
             abort: new AbortController().signal,
             extra: { promptOps },
@@ -712,6 +713,7 @@ describe("tool.task", () => {
       expect(job).toBeDefined()
       if (!job) throw new Error("task job not found")
       expect(job.metadata?.parentSessionId).toBe(chat.id)
+      expect(job.metadata?.parentCallId).toBe("task-call")
       expect(job.metadata?.parentUserMessageId).toBe(assistant.parentID)
       yield* jobs.promote(job.id)
 

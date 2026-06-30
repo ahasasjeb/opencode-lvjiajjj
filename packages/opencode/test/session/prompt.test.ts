@@ -747,7 +747,29 @@ backgroundIt.instance("loop waits for sibling background tasks and completes one
     })
     const first = yield* Deferred.make<void>()
     const second = yield* Deferred.make<void>()
-    const start = (id: SessionID, title: string, gate: Deferred.Deferred<void>, output: string) =>
+    const taskMessage: SessionV1.Assistant = {
+      id: MessageID.ascending(),
+      role: "assistant",
+      parentID: user.info.id,
+      sessionID: session.id,
+      mode: "build",
+      agent: "build",
+      cost: 0,
+      path: { cwd: "/tmp", root: "/tmp" },
+      tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+      modelID: ref.modelID,
+      providerID: ref.providerID,
+      finish: "tool-calls",
+      time: { created: Date.now(), completed: Date.now() },
+    }
+    yield* sessions.updateMessage(taskMessage)
+    const start = (
+      id: SessionID,
+      callID: string,
+      title: string,
+      gate: Deferred.Deferred<void>,
+      output: string,
+    ) =>
       jobs.start({
         id,
         type: "task",
@@ -755,14 +777,35 @@ backgroundIt.instance("loop waits for sibling background tasks and completes one
         metadata: {
           background: true,
           parentSessionId: session.id,
+          parentMessageId: taskMessage.id,
+          parentCallId: callID,
           parentUserMessageId: user.info.id,
         },
         run: Deferred.await(gate).pipe(Effect.as(output)),
       })
     const firstID = SessionID.make("ses_background_first")
     const secondID = SessionID.make("ses_background_second")
-    yield* start(firstID, "first inspection", first, "first result")
-    yield* start(secondID, "second inspection", second, "second result")
+    const addTaskPart = (id: SessionID, callID: string, title: string) =>
+      sessions.updatePart({
+        id: PartID.ascending(),
+        messageID: taskMessage.id,
+        sessionID: session.id,
+        type: "tool",
+        callID,
+        tool: "task",
+        state: {
+          status: "completed",
+          input: { description: title, prompt: title, subagent_type: "general", background: true },
+          output: "background task running",
+          title,
+          metadata: { background: true, sessionId: id, jobId: id },
+          time: { start: Date.now(), end: Date.now() },
+        },
+      })
+    yield* addTaskPart(firstID, "call-first", "first inspection")
+    yield* addTaskPart(secondID, "call-second", "second inspection")
+    yield* start(firstID, "call-first", "first inspection", first, "first result")
+    yield* start(secondID, "call-second", "second inspection", second, "second result")
     yield* llm.text("Both tasks are running.")
     yield* llm.text("Both tasks completed.")
 
@@ -782,9 +825,26 @@ backgroundIt.instance("loop waits for sibling background tasks and completes one
     const messages = yield* sessions.messages({ sessionID: session.id })
     expect(yield* llm.calls).toBe(2)
     const assistants = messages.filter((message) => message.info.role === "assistant")
-    expect(assistants).toHaveLength(2)
+    expect(assistants).toHaveLength(3)
     expect(assistants[0]?.info.role === "assistant" && assistants[0].info.finish).toBe("tool-calls")
-    expect(assistants[1]?.info.role === "assistant" && assistants[1].info.finish).toBe("stop")
+    expect(assistants[1]?.info.role === "assistant" && assistants[1].info.finish).toBe("tool-calls")
+    expect(assistants[2]?.info.role === "assistant" && assistants[2].info.finish).toBe("stop")
+
+    const taskParts = messages
+      .find((message) => message.info.id === taskMessage.id)
+      ?.parts.filter((part): part is SessionV1.ToolPart => part.type === "tool" && part.tool === "task")
+    expect(taskParts).toHaveLength(2)
+    expect(taskParts?.[0]?.state.status === "completed" && taskParts[0].state.output).toBe(
+      "background task running",
+    )
+    expect(
+      taskParts?.[0]?.state.status === "completed" &&
+        taskParts[0].state.metadata.backgroundResult?.output,
+    ).toBe("first result")
+    expect(
+      taskParts?.[1]?.state.status === "completed" &&
+        taskParts[1].state.metadata.backgroundResult?.output,
+    ).toBe("second result")
 
     const synthetic = messages.find((message) =>
       message.parts.some(

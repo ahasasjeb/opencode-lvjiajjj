@@ -1147,32 +1147,76 @@ export const layer = Layer.effect(
         }),
       })
       if (!settled) return false
-      const results = settled.flatMap((job) => {
-        if (job.status === "completed")
-          return [
-            renderOutput({
-              sessionID: SessionID.make(job.id),
-              state: "completed",
-              summary: job.title ? `Background task completed: ${job.title}` : "Background task completed",
-              text: job.output ?? "",
-            }),
-          ]
-        if (job.status === "error")
-          return [
-            renderOutput({
-              sessionID: SessionID.make(job.id),
-              state: "error",
-              summary: job.title ? `Background task failed: ${job.title}` : "Background task failed",
-              text: job.error ?? "",
-            }),
-          ]
-        return []
-      })
-      if (results.length === 0) {
+      const backgroundResults = settled
+        .map((job) => {
+          if (job.status === "completed")
+            return {
+              job,
+              sessionId: job.id,
+              status: "completed" as const,
+              title: job.title,
+              output: job.output ?? "",
+              completedAt: job.completed_at,
+            }
+          if (job.status === "error")
+            return {
+              job,
+              sessionId: job.id,
+              status: "error" as const,
+              title: job.title,
+              output: job.error ?? "",
+              completedAt: job.completed_at,
+            }
+          return
+        })
+        .filter((result) => result !== undefined)
+      if (backgroundResults.length === 0) {
         input.assistant.finish = finish
         yield* sessions.updateMessage(input.assistant)
         return false
       }
+
+      yield* Effect.forEach(
+        backgroundResults,
+        (result) =>
+          Effect.gen(function* () {
+            const parentMessageId = result.job.metadata?.parentMessageId
+            const parentCallId = result.job.metadata?.parentCallId
+            if (typeof parentMessageId !== "string" || typeof parentCallId !== "string") return
+            const parent = yield* MessageV2.get({
+              sessionID: input.sessionID,
+              messageID: MessageID.make(parentMessageId),
+            }).pipe(
+              Effect.provideService(Database.Service, database),
+              Effect.catchCause(() => Effect.succeed(undefined)),
+            )
+            const part = parent?.parts.find(
+              (part): part is SessionV1.ToolPart =>
+                part.type === "tool" &&
+                part.tool === "task" &&
+                part.callID === parentCallId &&
+                part.state.status === "completed",
+            )
+            if (!part || part.state.status !== "completed") return
+            yield* sessions.updatePart({
+              ...part,
+              state: {
+                ...part.state,
+                metadata: {
+                  ...part.state.metadata,
+                  backgroundResult: {
+                    sessionId: result.sessionId,
+                    status: result.status,
+                    title: result.title,
+                    output: result.output,
+                    completedAt: result.completedAt,
+                  },
+                },
+              },
+            })
+          }),
+        { concurrency: "unbounded", discard: true },
+      )
 
       yield* createUserMessage(
         {
@@ -1187,9 +1231,27 @@ export const layer = Layer.effect(
               metadata: {
                 backgroundResult: true,
                 parentUserMessageId: input.user.id,
-                jobIds: settled.map((job) => job.id),
+                jobIds: backgroundResults.map((result) => result.sessionId),
+                results: backgroundResults.map((result) => ({
+                  sessionId: result.sessionId,
+                  status: result.status,
+                  title: result.title,
+                  output: result.output,
+                  completedAt: result.completedAt,
+                })),
               },
-              text: results.join("\n\n"),
+              text: backgroundResults
+                .map((result) =>
+                  renderOutput({
+                    sessionID: SessionID.make(result.sessionId),
+                    state: result.status,
+                    summary: result.title
+                      ? `Background task ${result.status === "completed" ? "completed" : "failed"}: ${result.title}`
+                      : `Background task ${result.status === "completed" ? "completed" : "failed"}`,
+                    text: result.output,
+                  }),
+                )
+                .join("\n\n"),
             },
           ],
         },

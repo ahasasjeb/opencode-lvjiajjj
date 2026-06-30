@@ -185,6 +185,7 @@ export const TaskTool = Tool.define(
       const metadata = {
         parentSessionId: ctx.sessionID,
         parentMessageId: ctx.messageID,
+        parentCallId: ctx.callID,
         parentUserMessageId: msg.info.parentID,
         sessionId: nextSession.id,
         model,

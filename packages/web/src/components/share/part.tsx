@@ -701,17 +701,33 @@ function ToolFooter(props: { time: number }) {
 
 function TaskTool(props: ToolProps) {
   const messages = useShareMessages()
+  const result = createMemo(() => {
+    const input = props.state.metadata?.backgroundResult
+    if (!input || typeof input !== "object") return
+    const value = input as Record<string, unknown>
+    if (value.status !== "completed" && value.status !== "error") return
+    if (typeof value.output !== "string") return
+    return {
+      status: value.status,
+      output: value.output,
+    }
+  })
+  const output = createMemo(() => result()?.output ?? props.state.output)
 
   return (
     <>
       <div data-component="tool-title">
-        <span data-slot="name">Task</span>
+        <span data-slot="name">{result()?.status === "error" ? "Task failed" : "Task"}</span>
         <span data-slot="target">{props.state.input.description}</span>
       </div>
       <div data-component="tool-input">&ldquo;{props.state.input.prompt}&rdquo;</div>
       <ResultsButton showCopy={messages.show_output} hideCopy={messages.hide_output}>
         <div data-component="tool-output">
-          <ContentMarkdown expand text={props.state.output} />
+          {result()?.status === "error" ? (
+            <ContentError>{output()}</ContentError>
+          ) : (
+            <ContentMarkdown expand text={output()} />
+          )}
         </div>
       </ResultsButton>
     </>
