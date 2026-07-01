@@ -4,6 +4,7 @@ import { SessionV1 } from "@opencode-ai/core/v1/session"
 import { Database } from "@opencode-ai/core/database/database"
 import { eq } from "drizzle-orm"
 import { EventV2Bridge } from "@/event-v2-bridge"
+import { Auth } from "@/auth"
 import { FetchHttpClient } from "effect/unstable/http"
 import { expect } from "bun:test"
 import { Cause, Deferred, Duration, Effect, Exit, Fiber, Layer } from "effect"
@@ -182,6 +183,7 @@ function makePrompt(input?: { processor?: "blocking"; sharedBackground?: boolean
     status,
     Database.defaultLayer,
     EventV2Bridge.defaultLayer,
+    Auth.defaultLayer,
   ).pipe(Layer.provideMerge(infra))
   const runState = input?.sharedBackground
     ? SessionRunState.layer.pipe(Layer.provide(status), Layer.provideMerge(BackgroundJob.defaultLayer))

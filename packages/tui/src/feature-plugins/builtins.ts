@@ -2,6 +2,7 @@ import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui"
 import HomeFooter from "./home/footer"
 import HomeTips from "./home/tips"
 import LlmCny from "./llm-cny/tui"
+import Firecrawl from "./firecrawl"
 import SidebarContext from "./sidebar/context"
 import SidebarFiles from "./sidebar/files"
 import SidebarFooter from "./sidebar/footer"
@@ -24,6 +25,7 @@ export function createBuiltinPlugins(options: { experimentalEventSystem: boolean
     HomeFooter,
     HomeTips,
     LlmCny,
+    Firecrawl,
     SidebarContext,
     SidebarMcp,
     SidebarLsp,

@@ -18,6 +18,8 @@ import { described } from "./metadata"
 import { QueryBoolean } from "./query"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
+import { ToolCredential } from "@/tool/credential"
+import { CreditUsage } from "@/tool/firecrawl"
 
 const ConsoleStateResponse = Schema.Struct({
   consoleManagedProviders: Schema.mutable(Schema.Array(Schema.String)),
@@ -44,6 +46,7 @@ export const ConsoleSwitchPayload = Schema.Struct({
 })
 
 const ToolIDs = Schema.Array(Schema.String).annotate({ identifier: "ToolIDs" })
+const ToolCredentials = Schema.Array(ToolCredential.Status).annotate({ identifier: "ToolCredentials" })
 const ToolListItem = Schema.Struct({
   id: Schema.String,
   description: Schema.String,
@@ -89,6 +92,8 @@ export const ExperimentalPaths = {
   consoleSwitch: "/experimental/console/switch",
   tool: "/experimental/tool",
   toolIDs: "/experimental/tool/ids",
+  toolCredentials: "/experimental/tool/credentials",
+  firecrawlCreditUsage: "/experimental/tool/firecrawl/credit-usage",
   worktree: "/experimental/worktree",
   worktreeReset: "/experimental/worktree/reset",
   session: "/experimental/session",
@@ -156,6 +161,29 @@ export const ExperimentalApi = HttpApi.make("experimental")
             summary: "List tool IDs",
             description:
               "Get a list of all available tool IDs, including both built-in tools and dynamically registered tools.",
+          }),
+        ),
+        HttpApiEndpoint.get("toolCredentials", ExperimentalPaths.toolCredentials, {
+          query: WorkspaceRoutingQuery,
+          success: described(ToolCredentials, "External tool credential status"),
+          error: HttpApiError.InternalServerError,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "tool.credentials",
+            summary: "List external tool credentials",
+            description:
+              "List tools that require manually supplied credentials and whether each credential is available.",
+          }),
+        ),
+        HttpApiEndpoint.get("firecrawlCreditUsage", ExperimentalPaths.firecrawlCreditUsage, {
+          query: WorkspaceRoutingQuery,
+          success: described(CreditUsage, "Firecrawl credit usage"),
+          error: HttpApiError.InternalServerError,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "tool.firecrawlCreditUsage",
+            summary: "Get Firecrawl credit usage",
+            description: "Get remaining and plan credits using the configured Firecrawl credential.",
           }),
         ),
         HttpApiEndpoint.get("worktree", ExperimentalPaths.worktree, {

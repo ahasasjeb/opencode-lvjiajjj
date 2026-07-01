@@ -2164,6 +2164,22 @@ export type ToolList = Array<ToolListItem>
 
 export type ToolIds = Array<string>
 
+export type ToolCredentialStatus = {
+  id: "firecrawl"
+  env: string
+  configured: boolean
+  source?: "environment" | "stored"
+}
+
+export type ToolCredentials = Array<ToolCredentialStatus>
+
+export type FirecrawlCreditUsage = {
+  remainingCredits: number
+  planCredits: number
+  billingPeriodStart: string
+  billingPeriodEnd: string
+}
+
 export type WorktreeError = {
   name:
     | "WorktreeNotGitError"
@@ -5704,6 +5720,71 @@ export type ToolIdsResponses = {
 }
 
 export type ToolIdsResponse = ToolIdsResponses[keyof ToolIdsResponses]
+
+export type ToolCredentialsData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/experimental/tool/credentials"
+}
+
+export type ToolCredentialsErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * InternalServerError
+   */
+  500: EffectHttpApiErrorInternalServerError
+}
+
+export type ToolCredentialsError = ToolCredentialsErrors[keyof ToolCredentialsErrors]
+
+export type ToolCredentialsResponses = {
+  /**
+   * External tool credential status
+   */
+  200: ToolCredentials
+}
+
+export type ToolCredentialsResponse = ToolCredentialsResponses[keyof ToolCredentialsResponses]
+
+export type ToolFirecrawlCreditUsageData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/experimental/tool/firecrawl/credit-usage"
+}
+
+export type ToolFirecrawlCreditUsageErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * InternalServerError
+   */
+  500: EffectHttpApiErrorInternalServerError
+}
+
+export type ToolFirecrawlCreditUsageError = ToolFirecrawlCreditUsageErrors[keyof ToolFirecrawlCreditUsageErrors]
+
+export type ToolFirecrawlCreditUsageResponses = {
+  /**
+   * Firecrawl credit usage
+   */
+  200: FirecrawlCreditUsage
+}
+
+export type ToolFirecrawlCreditUsageResponse =
+  ToolFirecrawlCreditUsageResponses[keyof ToolFirecrawlCreditUsageResponses]
 
 export type WorktreeRemoveData = {
   body?: WorktreeRemoveInput

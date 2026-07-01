@@ -10,6 +10,8 @@ import { Session } from "@/session/session"
 import type { SessionID } from "@/session/schema"
 import { ToolJsonSchema } from "@/tool/json-schema"
 import { ToolRegistry } from "@/tool/registry"
+import { ToolCredential } from "@/tool/credential"
+import { creditUsage } from "@/tool/firecrawl"
 import { Worktree } from "@/worktree"
 import { Effect, Option } from "effect"
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse"
@@ -104,6 +106,14 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       return yield* registry.ids()
     })
 
+    const toolCredentials = Effect.fn("ExperimentalHttpApi.toolCredentials")(function* () {
+      return yield* ToolCredential.list().pipe(Effect.orDie)
+    })
+
+    const firecrawlCreditUsage = Effect.fn("ExperimentalHttpApi.firecrawlCreditUsage")(function* () {
+      return yield* creditUsage().pipe(Effect.orDie)
+    })
+
     const worktree = Effect.fn("ExperimentalHttpApi.worktree")(function* () {
       const ctx = yield* InstanceState.context
       return yield* project.sandboxes(ctx.project.id)
@@ -176,6 +186,8 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       .handle("consoleSwitch", switchConsole)
       .handle("tool", tool)
       .handle("toolIDs", toolIDs)
+      .handle("toolCredentials", toolCredentials)
+      .handle("firecrawlCreditUsage", firecrawlCreditUsage)
       .handle("worktree", worktree)
       .handle("worktreeCreate", worktreeCreate)
       .handle("worktreeRemove", worktreeRemove)

@@ -13,6 +13,8 @@ import { TaskTool } from "./task"
 import { Database } from "@opencode-ai/core/database/database"
 import { TodoWriteTool } from "./todo"
 import { WebFetchTool } from "./webfetch"
+import { FirecrawlTool } from "./firecrawl"
+import { ToolCredential } from "./credential"
 import { WriteTool } from "./write"
 import { InvalidTool } from "./invalid"
 import { SkillTool } from "./skill"
@@ -52,6 +54,7 @@ import { BackgroundJob } from "@/background/job"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
+import { Auth } from "@/auth"
 
 export function webSearchEnabled(providerID: ProviderV2.ID, flags = { exa: false, parallel: false }) {
   return providerID === ProviderV2.ID.opencode || flags.exa || flags.parallel
@@ -97,6 +100,7 @@ export const layer = Layer.effect(
     const lsptool = yield* LspTool
     const plan = yield* PlanExitTool
     const webfetch = yield* WebFetchTool
+    const firecrawl = yield* FirecrawlTool
     const websearch = yield* WebSearchTool
     const shell = yield* ShellTool
     const globtool = yield* GlobTool
@@ -106,6 +110,7 @@ export const layer = Layer.effect(
     const patchtool = yield* ApplyPatchTool
     const skilltool = yield* SkillTool
     const agent = yield* Agent.Service
+    const firecrawlEnabled = (yield* ToolCredential.get("firecrawl").pipe(Effect.orDie)) !== undefined
 
     const state = yield* InstanceState.make<State>(
       Effect.fn("ToolRegistry.state")(function* (ctx) {
@@ -205,6 +210,7 @@ export const layer = Layer.effect(
           write: Tool.init(writetool),
           task: Tool.init(task),
           fetch: Tool.init(webfetch),
+          firecrawl: Tool.init(firecrawl),
           todo: Tool.init(todo),
           search: Tool.init(websearch),
           skill: Tool.init(skilltool),
@@ -227,6 +233,7 @@ export const layer = Layer.effect(
             tool.write,
             tool.task,
             tool.fetch,
+            ...(firecrawlEnabled ? [tool.firecrawl] : []),
             tool.todo,
             tool.search,
             tool.skill,
@@ -335,6 +342,7 @@ export const defaultLayer = Layer.suspend(() =>
       Layer.provide(Format.defaultLayer),
       Layer.provide(CrossSpawnSpawner.defaultLayer),
       Layer.provide(Truncate.defaultLayer),
+      Layer.provide(Auth.defaultLayer),
     )
     .pipe(Layer.provide(Database.defaultLayer), Layer.provide(RuntimeFlags.defaultLayer)),
 )
@@ -435,6 +443,7 @@ export const node = LayerNode.make(layer.pipe(Layer.provide(Ripgrep.defaultLayer
   Truncate.node,
   RuntimeFlags.node,
   Database.node,
+  Auth.node,
 ])
 
 export * as ToolRegistry from "./registry"

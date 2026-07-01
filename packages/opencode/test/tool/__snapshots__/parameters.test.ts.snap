@@ -421,6 +421,67 @@ exports[`tool parameters JSON Schema (wire shape) webfetch 1`] = `
 }
 `;
 
+exports[`tool parameters JSON Schema (wire shape) firecrawl 1`] = `
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "action": {
+      "description": "Firecrawl operation to perform",
+      "enum": [
+        "scrape",
+        "search",
+        "crawl",
+        "crawl_status",
+      ],
+      "type": "string",
+    },
+    "format": {
+      "default": "markdown",
+      "description": "Content format for scrape and crawl. Defaults to markdown.",
+      "enum": [
+        "markdown",
+        "html",
+        "links",
+        "summary",
+      ],
+      "type": "string",
+    },
+    "id": {
+      "description": "Crawl job ID for crawl_status",
+      "type": "string",
+    },
+    "limit": {
+      "description": "Maximum search results or crawled pages",
+      "maximum": 9007199254740991,
+      "minimum": -9007199254740991,
+      "type": "integer",
+    },
+    "maxDiscoveryDepth": {
+      "description": "Maximum crawl link depth",
+      "maximum": 9007199254740991,
+      "minimum": -9007199254740991,
+      "type": "integer",
+    },
+    "onlyMainContent": {
+      "description": "Extract only the main page content. Defaults to true.",
+      "type": "boolean",
+    },
+    "query": {
+      "description": "Search query for search",
+      "type": "string",
+    },
+    "url": {
+      "description": "URL for scrape or crawl",
+      "type": "string",
+    },
+  },
+  "required": [
+    "action",
+  ],
+  "type": "object",
+}
+`;
+
 exports[`tool parameters JSON Schema (wire shape) websearch 1`] = `
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",

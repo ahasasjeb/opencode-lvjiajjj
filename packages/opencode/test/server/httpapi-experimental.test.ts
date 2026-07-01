@@ -142,12 +142,13 @@ describe("experimental HttpApi", () => {
       Effect.gen(function* () {
         const tmp = yield* TestInstance
         const directory = tmp.directory
-        const [consoleState, consoleOrgs, toolList, toolIDs, worktrees, resources] = yield* Effect.all(
+        const [consoleState, consoleOrgs, toolList, toolIDs, toolCredentials, worktrees, resources] = yield* Effect.all(
           [
             request(ExperimentalPaths.console, directory),
             request(ExperimentalPaths.consoleOrgs, directory),
             request(`${ExperimentalPaths.tool}?provider=opencode&model=gpt-5`, directory),
             request(ExperimentalPaths.toolIDs, directory),
+            request(ExperimentalPaths.toolCredentials, directory),
             request(ExperimentalPaths.worktree, directory),
             request(ExperimentalPaths.resource, directory),
           ],
@@ -174,6 +175,15 @@ describe("experimental HttpApi", () => {
 
         expect(toolIDs.status).toBe(200)
         expect(yield* json(toolIDs)).toContain("bash")
+
+        expect(toolCredentials.status).toBe(200)
+        expect(yield* json(toolCredentials)).toContainEqual(
+          expect.objectContaining({
+            id: "firecrawl",
+            env: "FIRECRAWL_API_KEY",
+            configured: expect.any(Boolean),
+          }),
+        )
 
         expect(worktrees.status).toBe(200)
         expect(yield* json(worktrees)).toEqual([])

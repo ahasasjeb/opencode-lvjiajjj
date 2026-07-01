@@ -1782,6 +1782,9 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
         <Match when={display() === "websearch"}>
           <WebSearch {...toolprops} />
         </Match>
+        <Match when={display() === "firecrawl"}>
+          <Firecrawl {...toolprops} />
+        </Match>
         <Match when={display() === "write"}>
           <Write {...toolprops} />
         </Match>
@@ -2253,6 +2256,28 @@ function WebSearch(props: ToolProps) {
   )
 }
 
+function Firecrawl(props: ToolProps) {
+  const language = useLanguage()
+  const action = stringValue(props.input.action) ?? "scrape"
+  const target =
+    action === "search"
+      ? stringValue(props.input.query)
+      : action === "crawl_status"
+        ? stringValue(props.input.id)
+        : stringValue(props.input.url)
+  return (
+    <InlineTool
+      icon="◇"
+      pending={language.t("tool.pending.firecrawl")}
+      complete={`${action}${target ? ` ${target}` : ""}`}
+      part={props.part}
+    >
+      Firecrawl {action}
+      {target ? ` ${target}` : ""}
+    </InlineTool>
+  )
+}
+
 function Task(props: ToolProps) {
   const { theme } = useTheme()
   const language = useLanguage()
@@ -2636,6 +2661,7 @@ const toolDisplays = new Set([
   "grep",
   "webfetch",
   "websearch",
+  "firecrawl",
   "write",
   "edit",
   "task",

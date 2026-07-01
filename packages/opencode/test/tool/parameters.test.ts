@@ -23,6 +23,7 @@ import { Parameters as Skill } from "../../src/tool/skill"
 import { Parameters as Task } from "../../src/tool/task"
 import { Parameters as Todo } from "../../src/tool/todo"
 import { Parameters as WebFetch } from "../../src/tool/webfetch"
+import { Parameters as Firecrawl } from "../../src/tool/firecrawl"
 import { Parameters as WebSearch } from "../../src/tool/websearch"
 import { Parameters as Write } from "../../src/tool/write"
 
@@ -50,6 +51,7 @@ describe("tool parameters", () => {
     test("task", () => expect(toJsonSchema(Task)).toMatchSnapshot())
     test("todo", () => expect(toJsonSchema(Todo)).toMatchSnapshot())
     test("webfetch", () => expect(toJsonSchema(WebFetch)).toMatchSnapshot())
+    test("firecrawl", () => expect(toJsonSchema(Firecrawl)).toMatchSnapshot())
     test("websearch", () => expect(toJsonSchema(WebSearch)).toMatchSnapshot())
     test("write", () => expect(toJsonSchema(Write)).toMatchSnapshot())
 
@@ -273,6 +275,20 @@ describe("tool parameters", () => {
         url: "https://example.com",
         format: "markdown",
       })
+    })
+  })
+
+  describe("firecrawl", () => {
+    test("defaults omitted format to markdown", () => {
+      expect(parse(Firecrawl, { action: "scrape", url: "https://example.com" })).toMatchObject({
+        action: "scrape",
+        url: "https://example.com",
+        format: "markdown",
+      })
+    })
+
+    test("rejects unsupported actions", () => {
+      expect(accepts(Firecrawl, { action: "extract", url: "https://example.com" })).toBe(false)
     })
   })
 

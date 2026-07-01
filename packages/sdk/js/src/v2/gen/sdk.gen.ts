@@ -227,6 +227,10 @@ import type {
   SyncStealErrors,
   SyncStealResponses,
   TextPartInput,
+  ToolCredentialsErrors,
+  ToolCredentialsResponses,
+  ToolFirecrawlCreditUsageErrors,
+  ToolFirecrawlCreditUsageResponses,
   ToolIdsErrors,
   ToolIdsResponses,
   ToolListErrors,
@@ -1502,6 +1506,70 @@ export class Tool extends HeyApiClient {
     )
     return (options?.client ?? this.client).get<ToolIdsResponses, ToolIdsErrors, ThrowOnError>({
       url: "/experimental/tool/ids",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * List external tool credentials
+   *
+   * List tools that require manually supplied credentials and whether each credential is available.
+   */
+  public credentials<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<ToolCredentialsResponses, ToolCredentialsErrors, ThrowOnError>({
+      url: "/experimental/tool/credentials",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Get Firecrawl credit usage
+   *
+   * Get remaining and plan credits using the configured Firecrawl credential.
+   */
+  public firecrawlCreditUsage<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<
+      ToolFirecrawlCreditUsageResponses,
+      ToolFirecrawlCreditUsageErrors,
+      ThrowOnError
+    >({
+      url: "/experimental/tool/firecrawl/credit-usage",
       ...options,
       ...params,
     })
