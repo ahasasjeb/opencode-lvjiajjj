@@ -12,7 +12,6 @@ import PROMPT_KIMI from "./prompt/kimi.txt"
 
 import PROMPT_CODEX from "./prompt/codex.txt"
 import PROMPT_TRINITY from "./prompt/trinity.txt"
-import PROMPT_MERMAID from "./prompt/mermaid.txt"
 import type { Provider } from "@/provider/provider"
 import type { Agent } from "@/agent/agent"
 import { Permission } from "@/permission"
@@ -36,7 +35,7 @@ export function provider(model: Provider.Model) {
     if (model.api.id.toLowerCase().includes("kimi")) return PROMPT_KIMI
     return PROMPT_DEFAULT
   })()
-  return [base, PROMPT_MERMAID]
+  return [base]
 }
 
 export interface Interface {
