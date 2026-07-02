@@ -1,9 +1,0 @@
-MAXIMUM STEPS REACHED.
-
-Do not call tools. Reply with text only.
-
-Your reply must include:
-- that the step limit was reached
-- what you completed
-- what remains
-- what should happen next
