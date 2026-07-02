@@ -28,7 +28,15 @@ const keys = [
   "session.review.noBranchChanges",
 ] as const
 
+const enKeys = Object.keys(en).sort()
+
 describe("i18n parity", () => {
+  test("non-English locales include every English key", () => {
+    for (const locale of locales) {
+      expect(Object.keys(locale).sort()).toEqual(enKeys)
+    }
+  })
+
   test("non-English locales translate targeted keys", () => {
     for (const locale of locales) {
       expect(locale["language.uk"]).toBeDefined()
