@@ -36,6 +36,10 @@ export const Parameters = Schema.Struct({
   onlyMainContent: Schema.optional(Schema.Boolean).annotate({
     description: "Extract only the main page content. Defaults to true.",
   }),
+  waitFor: Schema.optional(Schema.Int).annotate({
+    description:
+      "Delay in milliseconds before fetching page content, allowing dynamic pages time to load. Omit to use Firecrawl's default of no extra wait.",
+  }),
 })
 
 export const FirecrawlTool = Tool.define(
@@ -68,7 +72,17 @@ export const FirecrawlTool = Tool.define(
           return {
             title: title(params),
             output: output(params.action, result),
-            metadata: { action: params.action },
+            metadata: {
+              action: params.action,
+              url: params.url,
+              query: params.query,
+              id: params.id,
+              format: params.format,
+              limit: params.limit,
+              maxDiscoveryDepth: params.maxDiscoveryDepth,
+              onlyMainContent: params.onlyMainContent,
+              waitFor: scrapeWaitFor(params),
+            },
           }
         }).pipe(Effect.orDie),
     }
@@ -114,11 +128,13 @@ function request(http: HttpClient.HttpClient, key: string, params: Schema.Schema
 }
 
 function body(params: Schema.Schema.Type<typeof Parameters>): Record<string, unknown> {
+  const scrapeOptions = scrapeOptionsBody(params)
   if (params.action === "scrape") {
     return {
       url: requireUrl(params.url),
       formats: [params.format],
       onlyMainContent: params.onlyMainContent ?? true,
+      waitFor: scrapeWaitFor(params),
     }
   }
   if (params.action === "search") {
@@ -126,7 +142,7 @@ function body(params: Schema.Schema.Type<typeof Parameters>): Record<string, unk
       query: requireValue(params.query, "query"),
       limit: Math.max(1, Math.min(params.limit ?? 5, 100)),
       sources: ["web"],
-      scrapeOptions: { formats: [params.format], onlyMainContent: params.onlyMainContent ?? true },
+      scrapeOptions,
     }
   }
   return {
@@ -134,7 +150,21 @@ function body(params: Schema.Schema.Type<typeof Parameters>): Record<string, unk
     limit: Math.max(1, Math.min(params.limit ?? 20, 1000)),
     maxDiscoveryDepth: Math.max(0, Math.min(params.maxDiscoveryDepth ?? 2, 10)),
     allowExternalLinks: false,
-    scrapeOptions: { formats: [params.format], onlyMainContent: params.onlyMainContent ?? true },
+    scrapeOptions,
+  }
+}
+
+function scrapeWaitFor(params: Schema.Schema.Type<typeof Parameters>) {
+  if (params.waitFor === undefined) return undefined
+  return Math.max(0, Math.min(params.waitFor, 300_000))
+}
+
+function scrapeOptionsBody(params: Schema.Schema.Type<typeof Parameters>) {
+  const waitFor = scrapeWaitFor(params)
+  return {
+    formats: [params.format],
+    onlyMainContent: params.onlyMainContent ?? true,
+    ...(waitFor === undefined ? {} : { waitFor }),
   }
 }
 

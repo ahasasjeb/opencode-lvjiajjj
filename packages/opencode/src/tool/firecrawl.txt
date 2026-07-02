@@ -1,6 +1,7 @@
 - Uses Firecrawl v2 for reliable web scraping, search, and bounded crawling
 - Prefer this tool over webfetch when a page requires JavaScript rendering, anti-bot handling, clean main-content extraction, web search, or multi-page crawling
 - Use "scrape" for one URL, "search" to discover sources, "crawl" for a bounded site crawl, and "crawl_status" to retrieve crawl results
+- Use waitFor when a page needs extra time for JavaScript-rendered content to load
 - Follow only links relevant to the task; do not recursively collect every discovered link by default
 - Keep crawls narrowly scoped with a reasonable limit and discovery depth
 - Fall back to webfetch when Firecrawl is unnecessary or cannot complete the request

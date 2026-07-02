@@ -40,7 +40,7 @@ import type {
 import { useLocal } from "../../context/local"
 import { Locale } from "../../util/locale"
 import { useLanguage } from "../../context/language"
-import { webSearchProviderLabel } from "../../util/tool-display"
+import { formatFirecrawlLabel, webSearchProviderLabel } from "../../util/tool-display"
 import { useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
 import { useSDK } from "../../context/sdk"
 import { useEditorContext } from "../../context/editor"
@@ -2268,22 +2268,15 @@ function WebSearch(props: ToolProps) {
 
 function Firecrawl(props: ToolProps) {
   const language = useLanguage()
-  const action = stringValue(props.input.action) ?? "scrape"
-  const target =
-    action === "search"
-      ? stringValue(props.input.query)
-      : action === "crawl_status"
-        ? stringValue(props.input.id)
-        : stringValue(props.input.url)
+  const label = createMemo(() => formatFirecrawlLabel(props.input))
   return (
     <InlineTool
       icon="◇"
       pending={language.t("tool.pending.firecrawl")}
-      complete={`${action}${target ? ` ${target}` : ""}`}
+      complete={label()}
       part={props.part}
     >
-      Firecrawl {action}
-      {target ? ` ${target}` : ""}
+      Firecrawl {label()}
     </InlineTool>
   )
 }

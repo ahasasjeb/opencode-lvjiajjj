@@ -700,5 +700,7 @@
   "plugin.firecrawl.source_undefined": "未配置",
   "plugin.firecrawl.credit_loading": "正在读取积分用量……",
   "plugin.firecrawl.credit_error": "无法读取积分用量",
-  "plugin.firecrawl.credit_usage": "剩余 {{remaining}} / {{plan}} 积分"
+  "plugin.firecrawl.credit_usage": "剩余 {{remaining}} / {{plan}} 积分",
+  "plugin.firecrawl.status_enabled": "已启用",
+  "plugin.firecrawl.status_disabled": "未启用"
 }

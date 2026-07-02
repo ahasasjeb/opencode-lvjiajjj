@@ -24,6 +24,10 @@ exports[`tool parameters JSON Schema (wire shape) bash 1`] = `
       "description": "The command to execute",
       "type": "string",
     },
+    "description": {
+      "description": "Optional short note describing the command's purpose for metadata and logs.",
+      "type": "string",
+    },
     "timeout": {
       "description": "Optional timeout in milliseconds",
       "exclusiveMinimum": 0,
@@ -455,6 +459,12 @@ exports[`tool parameters JSON Schema (wire shape) firecrawl 1`] = `
     "url": {
       "description": "URL for scrape or crawl",
       "type": "string",
+    },
+    "waitFor": {
+      "description": "Delay in milliseconds before fetching page content, allowing dynamic pages time to load. Omit to use Firecrawl's default of no extra wait.",
+      "maximum": 9007199254740991,
+      "minimum": -9007199254740991,
+      "type": "integer",
     },
   },
   "required": [

@@ -718,5 +718,7 @@
   "plugin.firecrawl.source_undefined": "Not configured",
   "plugin.firecrawl.credit_loading": "Loading credit usage...",
   "plugin.firecrawl.credit_error": "Unable to load credit usage",
-  "plugin.firecrawl.credit_usage": "{{remaining}} of {{plan}} credits remaining"
+  "plugin.firecrawl.credit_usage": "{{remaining}} of {{plan}} credits remaining",
+  "plugin.firecrawl.status_enabled": "Enabled",
+  "plugin.firecrawl.status_disabled": "Disabled"
 }

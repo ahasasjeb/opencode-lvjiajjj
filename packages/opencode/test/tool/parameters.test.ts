@@ -284,6 +284,14 @@ describe("tool parameters", () => {
       })
     })
 
+    test("accepts waitFor for scrape", () => {
+      expect(parse(Firecrawl, { action: "scrape", url: "https://example.com", waitFor: 5000 })).toMatchObject({
+        action: "scrape",
+        url: "https://example.com",
+        waitFor: 5000,
+      })
+    })
+
     test("rejects unsupported actions", () => {
       expect(accepts(Firecrawl, { action: "extract", url: "https://example.com" })).toBe(false)
     })
