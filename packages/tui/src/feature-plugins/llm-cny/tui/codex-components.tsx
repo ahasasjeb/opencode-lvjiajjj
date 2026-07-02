@@ -1,6 +1,6 @@
 import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { RGBA } from "@opentui/core"
-import { Match, Show, Switch } from "solid-js"
+import { createSignal, Match, Show, Switch } from "solid-js"
 import type { CodexUsage, WindowLimit } from "../codex-usage.js"
 import { formatWindowLabel } from "./codex-format.js"
 import type { Translator } from "./i18n.js"
@@ -80,6 +80,8 @@ export function CodexUsagePanel(props: {
   | { status: "error"; message: string }
   | { status: "no-auth" }
 }) {
+  const [resetHovered, setResetHovered] = createSignal(false)
+  const resetInteractive = () => !props.resetting
   const planLabel = (): string => {
     if (props.state.status !== "ready") return ""
     const map: Record<string, string> = {
@@ -140,9 +142,12 @@ export function CodexUsagePanel(props: {
                 <Show when={props.state.status === "ready" && (props.state.usage.resetCredits ?? 0) > 0}>
                   <text
                     fg={props.resetting ? props.theme.textMuted : props.theme.primary}
+                    bg={resetHovered() && resetInteractive() ? props.theme.borderSubtle : undefined}
                     selectable={false}
-                    onMouseDown={() => {
-                      if (!props.resetting) props.onReset()
+                    onMouseOver={() => setResetHovered(true)}
+                    onMouseOut={() => setResetHovered(false)}
+                    onMouseUp={() => {
+                      if (resetInteractive()) props.onReset()
                     }}
                   >
                     {" "}
