@@ -26,13 +26,25 @@ function wordmark(pad = "") {
   })
 }
 
-export function sessionEpilogue(input: { title: string; sessionID?: string }) {
+export function sessionEpilogue(input: { title: string; sessionID?: string; executable?: string }) {
   const weak = (text: string) => `${dim}${text.padEnd(10, " ")}${reset}`
   return [
     ...wordmark("  "),
     "",
     `  ${weak("Session")}${bold}${input.title}${reset}`,
-    `  ${weak("Continue")}${bold}opencode -s ${input.sessionID}${reset}`,
+    `  ${weak("Continue")}${bold}${continuationCommand(["-s", input.sessionID ?? ""], input.executable)}${reset}`,
     "",
   ].join("\n")
+}
+
+export function continuationCommand(args: string[], executable = process.argv0, platform = process.platform) {
+  const command =
+    platform === "win32"
+      ? /^[\w./:\\-]+$/.test(executable)
+        ? executable
+        : `"${executable}"`
+      : /^[\w./:-]+$/.test(executable)
+        ? executable
+        : `'${executable.replaceAll("'", "'\\''")}'`
+  return [command, ...args].join(" ")
 }
