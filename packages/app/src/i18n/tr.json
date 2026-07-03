@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "Arşivlenecek aktif oturum yok.",
   "workspace.reset.archived.one": "1 oturum arşivlenecek.",
   "workspace.reset.archived.many": "{{count}} oturum arşivlenecek.",
-  "workspace.reset.note": "Bu işlem çalışma alanını varsayılan dalla eşleşecek şekilde sıfırlayacak."
+  "workspace.reset.note": "Bu işlem çalışma alanını varsayılan dalla eşleşecek şekilde sıfırlayacak.",
+  "home.recentlyClosed": "Yakın zamanda kapatılanlar"
 }

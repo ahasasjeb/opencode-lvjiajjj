@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Não foi possível carregar o uso de créditos",
   "plugin.firecrawl.credit_usage": "{{remaining}} de {{plan}} créditos restantes",
   "plugin.firecrawl.status_enabled": "Ativado",
-  "plugin.firecrawl.status_disabled": "Desativado"
+  "plugin.firecrawl.status_disabled": "Desativado",
+  "command.debug.view": "Ver informações de depuração",
+  "keybind.debug_view": "Ver informações de depuração",
+  "dialog.debug.title": "Depuração",
+  "dialog.debug.version": "Versão",
+  "dialog.debug.date": "Data",
+  "dialog.debug.os": "SO",
+  "dialog.debug.terminal": "Terminal",
+  "dialog.debug.session_id": "ID da sessão",
+  "dialog.debug.model": "Modelo",
+  "dialog.debug.not_available": "Indisponível",
+  "dialog.debug.share_hint": "Compartilhe isso ao relatar um problema.",
+  "dialog.debug.copy": "Copiar",
+  "dialog.debug.copied": "Copiado",
+  "dialog.debug.copy_keybind": "Copiar informações de depuração",
+  "toast.debug_copied": "Informações de depuração copiadas para a área de transferência"
 }

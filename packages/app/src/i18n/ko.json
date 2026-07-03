@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "활성 세션이 보관되지 않습니다.",
   "workspace.reset.archived.one": "1개의 세션이 보관됩니다.",
   "workspace.reset.archived.many": "{{count}}개의 세션이 보관됩니다.",
-  "workspace.reset.note": "이 작업은 작업 공간을 기본 브랜치와 일치하도록 재설정합니다."
+  "workspace.reset.note": "이 작업은 작업 공간을 기본 브랜치와 일치하도록 재설정합니다.",
+  "home.recentlyClosed": "최근 닫은 항목"
 }

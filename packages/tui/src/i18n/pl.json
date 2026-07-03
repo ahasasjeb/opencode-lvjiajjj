@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Nie można załadować zużycia kredytów",
   "plugin.firecrawl.credit_usage": "Pozostało {{remaining}} z {{plan}} kredytów",
   "plugin.firecrawl.status_enabled": "Włączone",
-  "plugin.firecrawl.status_disabled": "Wyłączone"
+  "plugin.firecrawl.status_disabled": "Wyłączone",
+  "command.debug.view": "Zobacz informacje debugowania",
+  "keybind.debug_view": "Zobacz informacje debugowania",
+  "dialog.debug.title": "Debugowanie",
+  "dialog.debug.version": "Wersja",
+  "dialog.debug.date": "Data",
+  "dialog.debug.os": "System operacyjny",
+  "dialog.debug.terminal": "Terminal",
+  "dialog.debug.session_id": "ID sesji",
+  "dialog.debug.model": "Model",
+  "dialog.debug.not_available": "Niedostępne",
+  "dialog.debug.share_hint": "Udostępnij to przy zgłaszaniu problemu.",
+  "dialog.debug.copy": "Kopiuj",
+  "dialog.debug.copied": "Skopiowano",
+  "dialog.debug.copy_keybind": "Kopiuj informacje debugowania",
+  "toast.debug_copied": "Skopiowano informacje debugowania do schowka"
 }

@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Guthabennutzung konnte nicht geladen werden",
   "plugin.firecrawl.credit_usage": "{{remaining}} von {{plan}} Guthaben verbleibend",
   "plugin.firecrawl.status_enabled": "Aktiviert",
-  "plugin.firecrawl.status_disabled": "Deaktiviert"
+  "plugin.firecrawl.status_disabled": "Deaktiviert",
+  "command.debug.view": "Debug-Informationen anzeigen",
+  "keybind.debug_view": "Debug-Informationen anzeigen",
+  "dialog.debug.title": "Debug",
+  "dialog.debug.version": "Version",
+  "dialog.debug.date": "Datum",
+  "dialog.debug.os": "Betriebssystem",
+  "dialog.debug.terminal": "Terminal",
+  "dialog.debug.session_id": "Sitzungs-ID",
+  "dialog.debug.model": "Modell",
+  "dialog.debug.not_available": "Nicht verfügbar",
+  "dialog.debug.share_hint": "Teile dies beim Melden eines Problems.",
+  "dialog.debug.copy": "Kopieren",
+  "dialog.debug.copied": "Kopiert",
+  "dialog.debug.copy_keybind": "Debug-Informationen kopieren",
+  "toast.debug_copied": "Debug-Informationen in die Zwischenablage kopiert"
 }

@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "Активные сессии не будут архивированы.",
   "workspace.reset.archived.one": "1 сессия будет архивирована.",
   "workspace.reset.archived.many": "{{count}} сессий будет архивировано.",
-  "workspace.reset.note": "Это сбросит рабочее пространство до соответствия ветке по умолчанию."
+  "workspace.reset.note": "Это сбросит рабочее пространство до соответствия ветке по умолчанию.",
+  "home.recentlyClosed": "Недавно закрытые"
 }

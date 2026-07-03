@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "アクティブなセッションはアーカイブされません。",
   "workspace.reset.archived.one": "1つのセッションがアーカイブされます。",
   "workspace.reset.archived.many": "{{count}}個のセッションがアーカイブされます。",
-  "workspace.reset.note": "これにより、ワークスペースはデフォルトブランチと一致するようにリセットされます。"
+  "workspace.reset.note": "これにより、ワークスペースはデフォルトブランチと一致するようにリセットされます。",
+  "home.recentlyClosed": "最近閉じた項目"
 }

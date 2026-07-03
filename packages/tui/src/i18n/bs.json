@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Nije moguće učitati korištenje kredita",
   "plugin.firecrawl.credit_usage": "Preostalo {{remaining}} od {{plan}} kredita",
   "plugin.firecrawl.status_enabled": "Omogućeno",
-  "plugin.firecrawl.status_disabled": "Onemogućeno"
+  "plugin.firecrawl.status_disabled": "Onemogućeno",
+  "command.debug.view": "Prikaži informacije za otklanjanje grešaka",
+  "keybind.debug_view": "Prikaži informacije za otklanjanje grešaka",
+  "dialog.debug.title": "Otklanjanje grešaka",
+  "dialog.debug.version": "Verzija",
+  "dialog.debug.date": "Datum",
+  "dialog.debug.os": "OS",
+  "dialog.debug.terminal": "Terminal",
+  "dialog.debug.session_id": "ID sesije",
+  "dialog.debug.model": "Model",
+  "dialog.debug.not_available": "Nedostupno",
+  "dialog.debug.share_hint": "Podijelite ovo kada prijavljujete problem.",
+  "dialog.debug.copy": "Kopiraj",
+  "dialog.debug.copied": "Kopirano",
+  "dialog.debug.copy_keybind": "Kopiraj informacije za otklanjanje grešaka",
+  "toast.debug_copied": "Informacije za otklanjanje grešaka kopirane u međuspremnik"
 }

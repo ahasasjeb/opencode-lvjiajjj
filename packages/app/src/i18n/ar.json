@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "لن تتم أرشفة أي جلسات نشطة.",
   "workspace.reset.archived.one": "ستتم أرشفة جلسة واحدة.",
   "workspace.reset.archived.many": "ستتم أرشفة {{count}} جلسات.",
-  "workspace.reset.note": "سيؤدي هذا إلى إعادة تعيين مساحة العمل لتتطابق مع الفرع الافتراضي."
+  "workspace.reset.note": "سيؤدي هذا إلى إعادة تعيين مساحة العمل لتتطابق مع الفرع الافتراضي.",
+  "home.recentlyClosed": "أُغلقت مؤخراً"
 }

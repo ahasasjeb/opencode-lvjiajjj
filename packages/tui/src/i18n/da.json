@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Kunne ikke indlæse kreditforbrug",
   "plugin.firecrawl.credit_usage": "{{remaining}} af {{plan}} kreditter tilbage",
   "plugin.firecrawl.status_enabled": "Aktiveret",
-  "plugin.firecrawl.status_disabled": "Deaktiveret"
+  "plugin.firecrawl.status_disabled": "Deaktiveret",
+  "command.debug.view": "Vis fejloplysninger",
+  "keybind.debug_view": "Vis fejloplysninger",
+  "dialog.debug.title": "Fejlfinding",
+  "dialog.debug.version": "Version",
+  "dialog.debug.date": "Dato",
+  "dialog.debug.os": "OS",
+  "dialog.debug.terminal": "Terminal",
+  "dialog.debug.session_id": "Session-id",
+  "dialog.debug.model": "Model",
+  "dialog.debug.not_available": "Ikke tilgængelig",
+  "dialog.debug.share_hint": "Del dette, når du rapporterer et problem.",
+  "dialog.debug.copy": "Kopiér",
+  "dialog.debug.copied": "Kopieret",
+  "dialog.debug.copy_keybind": "Kopiér fejloplysninger",
+  "toast.debug_copied": "Fejloplysninger kopieret til udklipsholderen"
 }

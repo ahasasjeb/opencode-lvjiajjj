@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "Nijedna aktivna sesija neće biti arhivirana.",
   "workspace.reset.archived.one": "1 sesija će biti arhivirana.",
   "workspace.reset.archived.many": "Biće arhivirano {{count}} sesija.",
-  "workspace.reset.note": "Ovo će resetovati radni prostor da odgovara podrazumijevanoj grani."
+  "workspace.reset.note": "Ovo će resetovati radni prostor da odgovara podrazumijevanoj grani.",
+  "home.recentlyClosed": "Nedavno zatvoreno"
 }

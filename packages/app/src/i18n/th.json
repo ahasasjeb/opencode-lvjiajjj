@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "ไม่มีเซสชันที่ใช้งานอยู่จะถูกจัดเก็บ",
   "workspace.reset.archived.one": "1 เซสชันจะถูกจัดเก็บ",
   "workspace.reset.archived.many": "{{count}} เซสชันจะถูกจัดเก็บ",
-  "workspace.reset.note": "สิ่งนี้จะรีเซ็ตพื้นที่ทำงานให้ตรงกับสาขาเริ่มต้น"
+  "workspace.reset.note": "สิ่งนี้จะรีเซ็ตพื้นที่ทำงานให้ตรงกับสาขาเริ่มต้น",
+  "home.recentlyClosed": "ปิดล่าสุด"
 }

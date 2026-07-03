@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "不会归档任何活跃会话。",
   "workspace.reset.archived.one": "将归档 1 个会话。",
   "workspace.reset.archived.many": "将归档 {{count}} 个会话。",
-  "workspace.reset.note": "这将把工作区重置为与默认分支一致。"
+  "workspace.reset.note": "这将把工作区重置为与默认分支一致。",
+  "home.recentlyClosed": "最近关闭"
 }

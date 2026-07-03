@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Kunne ikke laste kredittbruk",
   "plugin.firecrawl.credit_usage": "{{remaining}} av {{plan}} kreditter igjen",
   "plugin.firecrawl.status_enabled": "Aktivert",
-  "plugin.firecrawl.status_disabled": "Deaktivert"
+  "plugin.firecrawl.status_disabled": "Deaktivert",
+  "command.debug.view": "Vis feilsøkingsinformasjon",
+  "keybind.debug_view": "Vis feilsøkingsinformasjon",
+  "dialog.debug.title": "Feilsøking",
+  "dialog.debug.version": "Versjon",
+  "dialog.debug.date": "Dato",
+  "dialog.debug.os": "OS",
+  "dialog.debug.terminal": "Terminal",
+  "dialog.debug.session_id": "Økt-ID",
+  "dialog.debug.model": "Modell",
+  "dialog.debug.not_available": "Ikke tilgjengelig",
+  "dialog.debug.share_hint": "Del dette når du rapporterer et problem.",
+  "dialog.debug.copy": "Kopier",
+  "dialog.debug.copied": "Kopiert",
+  "dialog.debug.copy_keybind": "Kopier feilsøkingsinformasjon",
+  "toast.debug_copied": "Feilsøkingsinformasjon kopiert til utklippstavlen"
 }

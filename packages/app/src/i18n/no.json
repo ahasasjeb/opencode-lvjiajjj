@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "Ingen aktive sesjoner vil bli arkivert.",
   "workspace.reset.archived.one": "1 sesjon vil bli arkivert.",
   "workspace.reset.archived.many": "{{count}} sesjoner vil bli arkivert.",
-  "workspace.reset.note": "Dette vil tilbakestille arbeidsområdet til å samsvare med standardgrenen."
+  "workspace.reset.note": "Dette vil tilbakestille arbeidsområdet til å samsvare med standardgrenen.",
+  "home.recentlyClosed": "Nylig lukket"
 }

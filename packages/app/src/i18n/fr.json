@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "Aucune session active ne sera archivée.",
   "workspace.reset.archived.one": "1 session sera archivée.",
   "workspace.reset.archived.many": "{{count}} sessions seront archivées.",
-  "workspace.reset.note": "Cela réinitialisera l'espace de travail pour correspondre à la branche par défaut."
+  "workspace.reset.note": "Cela réinitialisera l'espace de travail pour correspondre à la branche par défaut.",
+  "home.recentlyClosed": "Fermés récemment"
 }

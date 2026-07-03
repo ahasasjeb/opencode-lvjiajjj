@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "Żadne aktywne sesje nie zostaną zarchiwizowane.",
   "workspace.reset.archived.one": "1 sesja zostanie zarchiwizowana.",
   "workspace.reset.archived.many": "{{count}} sesji zostanie zarchiwizowanych.",
-  "workspace.reset.note": "To zresetuje przestrzeń roboczą, aby odpowiadała domyślnej gałęzi."
+  "workspace.reset.note": "To zresetuje przestrzeń roboczą, aby odpowiadała domyślnej gałęzi.",
+  "home.recentlyClosed": "Ostatnio zamknięte"
 }

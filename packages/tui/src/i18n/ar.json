@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "تعذّر تحميل استخدام الرصيد",
   "plugin.firecrawl.credit_usage": "متبقٍ {{remaining}} من {{plan}} رصيد",
   "plugin.firecrawl.status_enabled": "مُفعَّل",
-  "plugin.firecrawl.status_disabled": "مُعطَّل"
+  "plugin.firecrawl.status_disabled": "مُعطَّل",
+  "command.debug.view": "عرض معلومات التصحيح",
+  "keybind.debug_view": "عرض معلومات التصحيح",
+  "dialog.debug.title": "تصحيح",
+  "dialog.debug.version": "الإصدار",
+  "dialog.debug.date": "التاريخ",
+  "dialog.debug.os": "نظام التشغيل",
+  "dialog.debug.terminal": "الطرفية",
+  "dialog.debug.session_id": "معرّف الجلسة",
+  "dialog.debug.model": "النموذج",
+  "dialog.debug.not_available": "غير متاح",
+  "dialog.debug.share_hint": "شارك هذه المعلومات عند الإبلاغ عن مشكلة.",
+  "dialog.debug.copy": "نسخ",
+  "dialog.debug.copied": "تم النسخ",
+  "dialog.debug.copy_keybind": "نسخ معلومات التصحيح",
+  "toast.debug_copied": "تم نسخ معلومات التصحيح إلى الحافظة"
 }

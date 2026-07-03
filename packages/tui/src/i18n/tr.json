@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Kredi kullanımı yüklenemedi",
   "plugin.firecrawl.credit_usage": "{{remaining}} / {{plan}} kredi kaldı",
   "plugin.firecrawl.status_enabled": "Etkin",
-  "plugin.firecrawl.status_disabled": "Devre dışı"
+  "plugin.firecrawl.status_disabled": "Devre dışı",
+  "command.debug.view": "Hata ayıklama bilgilerini görüntüle",
+  "keybind.debug_view": "Hata ayıklama bilgilerini görüntüle",
+  "dialog.debug.title": "Hata ayıklama",
+  "dialog.debug.version": "Sürüm",
+  "dialog.debug.date": "Tarih",
+  "dialog.debug.os": "İşletim sistemi",
+  "dialog.debug.terminal": "Terminal",
+  "dialog.debug.session_id": "Oturum kimliği",
+  "dialog.debug.model": "Model",
+  "dialog.debug.not_available": "Kullanılamıyor",
+  "dialog.debug.share_hint": "Bir sorun bildirirken bunu paylaşın.",
+  "dialog.debug.copy": "Kopyala",
+  "dialog.debug.copied": "Kopyalandı",
+  "dialog.debug.copy_keybind": "Hata ayıklama bilgilerini kopyala",
+  "toast.debug_copied": "Hata ayıklama bilgileri panoya kopyalandı"
 }

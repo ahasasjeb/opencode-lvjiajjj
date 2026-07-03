@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "不會封存任何作用中工作階段。",
   "workspace.reset.archived.one": "將封存 1 個工作階段。",
   "workspace.reset.archived.many": "將封存 {{count}} 個工作階段。",
-  "workspace.reset.note": "這將把工作區重設為與預設分支一致。"
+  "workspace.reset.note": "這將把工作區重設為與預設分支一致。",
+  "home.recentlyClosed": "最近關閉"
 }

@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Не вдалося завантажити використання кредитів",
   "plugin.firecrawl.credit_usage": "Залишилось {{remaining}} з {{plan}} кредитів",
   "plugin.firecrawl.status_enabled": "Увімкнено",
-  "plugin.firecrawl.status_disabled": "Вимкнено"
+  "plugin.firecrawl.status_disabled": "Вимкнено",
+  "command.debug.view": "Переглянути налагоджувальну інформацію",
+  "keybind.debug_view": "Переглянути налагоджувальну інформацію",
+  "dialog.debug.title": "Налагодження",
+  "dialog.debug.version": "Версія",
+  "dialog.debug.date": "Дата",
+  "dialog.debug.os": "ОС",
+  "dialog.debug.terminal": "Термінал",
+  "dialog.debug.session_id": "ID сесії",
+  "dialog.debug.model": "Модель",
+  "dialog.debug.not_available": "Недоступно",
+  "dialog.debug.share_hint": "Додайте це під час повідомлення про проблему.",
+  "dialog.debug.copy": "Скопіювати",
+  "dialog.debug.copied": "Скопійовано",
+  "dialog.debug.copy_keybind": "Скопіювати налагоджувальну інформацію",
+  "toast.debug_copied": "Налагоджувальну інформацію скопійовано до буфера обміну"
 }

@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Не удалось загрузить использование кредитов",
   "plugin.firecrawl.credit_usage": "Осталось {{remaining}} из {{plan}} кредитов",
   "plugin.firecrawl.status_enabled": "Включено",
-  "plugin.firecrawl.status_disabled": "Отключено"
+  "plugin.firecrawl.status_disabled": "Отключено",
+  "command.debug.view": "Показать отладочную информацию",
+  "keybind.debug_view": "Показать отладочную информацию",
+  "dialog.debug.title": "Отладка",
+  "dialog.debug.version": "Версия",
+  "dialog.debug.date": "Дата",
+  "dialog.debug.os": "ОС",
+  "dialog.debug.terminal": "Терминал",
+  "dialog.debug.session_id": "ID сессии",
+  "dialog.debug.model": "Модель",
+  "dialog.debug.not_available": "Недоступно",
+  "dialog.debug.share_hint": "Приложите это при сообщении о проблеме.",
+  "dialog.debug.copy": "Скопировать",
+  "dialog.debug.copied": "Скопировано",
+  "dialog.debug.copy_keybind": "Скопировать отладочную информацию",
+  "toast.debug_copied": "Отладочная информация скопирована в буфер обмена"
 }

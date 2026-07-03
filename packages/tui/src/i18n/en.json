@@ -720,5 +720,20 @@
   "plugin.firecrawl.credit_error": "Unable to load credit usage",
   "plugin.firecrawl.credit_usage": "{{remaining}} of {{plan}} credits remaining",
   "plugin.firecrawl.status_enabled": "Enabled",
-  "plugin.firecrawl.status_disabled": "Disabled"
+  "plugin.firecrawl.status_disabled": "Disabled",
+  "command.debug.view": "View debug info",
+  "keybind.debug_view": "View debug info",
+  "dialog.debug.title": "Debug",
+  "dialog.debug.version": "Version",
+  "dialog.debug.date": "Date",
+  "dialog.debug.os": "OS",
+  "dialog.debug.terminal": "Terminal",
+  "dialog.debug.session_id": "Session ID",
+  "dialog.debug.model": "Model",
+  "dialog.debug.not_available": "Not available",
+  "dialog.debug.share_hint": "Share this when reporting an issue.",
+  "dialog.debug.copy": "copy",
+  "dialog.debug.copied": "copied",
+  "dialog.debug.copy_keybind": "Copy debug info",
+  "toast.debug_copied": "Debug info copied to clipboard"
 }

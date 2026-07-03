@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "無法讀取點數用量",
   "plugin.firecrawl.credit_usage": "剩餘 {{remaining}} / {{plan}} 點",
   "plugin.firecrawl.status_enabled": "已啟用",
-  "plugin.firecrawl.status_disabled": "未啟用"
+  "plugin.firecrawl.status_disabled": "未啟用",
+  "command.debug.view": "查看偵錯資訊",
+  "keybind.debug_view": "查看偵錯資訊",
+  "dialog.debug.title": "偵錯",
+  "dialog.debug.version": "版本",
+  "dialog.debug.date": "日期",
+  "dialog.debug.os": "作業系統",
+  "dialog.debug.terminal": "終端",
+  "dialog.debug.session_id": "會話 ID",
+  "dialog.debug.model": "模型",
+  "dialog.debug.not_available": "不可用",
+  "dialog.debug.share_hint": "回報問題時請附上這些資訊。",
+  "dialog.debug.copy": "複製",
+  "dialog.debug.copied": "已複製",
+  "dialog.debug.copy_keybind": "複製偵錯資訊",
+  "toast.debug_copied": "偵錯資訊已複製到剪貼簿"
 }

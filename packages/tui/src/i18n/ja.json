@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "クレジット使用量を読み込めませんでした",
   "plugin.firecrawl.credit_usage": "残り {{remaining}} / {{plan}} クレジット",
   "plugin.firecrawl.status_enabled": "有効",
-  "plugin.firecrawl.status_disabled": "無効"
+  "plugin.firecrawl.status_disabled": "無効",
+  "command.debug.view": "デバッグ情報を表示",
+  "keybind.debug_view": "デバッグ情報を表示",
+  "dialog.debug.title": "デバッグ",
+  "dialog.debug.version": "バージョン",
+  "dialog.debug.date": "日付",
+  "dialog.debug.os": "OS",
+  "dialog.debug.terminal": "ターミナル",
+  "dialog.debug.session_id": "セッション ID",
+  "dialog.debug.model": "モデル",
+  "dialog.debug.not_available": "利用不可",
+  "dialog.debug.share_hint": "問題を報告するときはこの情報を共有してください。",
+  "dialog.debug.copy": "コピー",
+  "dialog.debug.copied": "コピー済み",
+  "dialog.debug.copy_keybind": "デバッグ情報をコピー",
+  "toast.debug_copied": "デバッグ情報をクリップボードにコピーしました"
 }

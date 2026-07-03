@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "ไม่สามารถโหลดการใช้เครดิต",
   "plugin.firecrawl.credit_usage": "เหลือ {{remaining}} จาก {{plan}} เครดิต",
   "plugin.firecrawl.status_enabled": "เปิดใช้งาน",
-  "plugin.firecrawl.status_disabled": "ปิดใช้งาน"
+  "plugin.firecrawl.status_disabled": "ปิดใช้งาน",
+  "command.debug.view": "ดูข้อมูลดีบัก",
+  "keybind.debug_view": "ดูข้อมูลดีบัก",
+  "dialog.debug.title": "ดีบัก",
+  "dialog.debug.version": "เวอร์ชัน",
+  "dialog.debug.date": "วันที่",
+  "dialog.debug.os": "ระบบปฏิบัติการ",
+  "dialog.debug.terminal": "เทอร์มินัล",
+  "dialog.debug.session_id": "รหัสเซสชัน",
+  "dialog.debug.model": "โมเดล",
+  "dialog.debug.not_available": "ไม่พร้อมใช้งาน",
+  "dialog.debug.share_hint": "แชร์ข้อมูลนี้เมื่อรายงานปัญหา",
+  "dialog.debug.copy": "คัดลอก",
+  "dialog.debug.copied": "คัดลอกแล้ว",
+  "dialog.debug.copy_keybind": "คัดลอกข้อมูลดีบัก",
+  "toast.debug_copied": "คัดลอกข้อมูลดีบักไปยังคลิปบอร์ดแล้ว"
 }

@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "크레딧 사용량을 불러올 수 없습니다",
   "plugin.firecrawl.credit_usage": "{{remaining}} / {{plan}} 크레딧 남음",
   "plugin.firecrawl.status_enabled": "활성화됨",
-  "plugin.firecrawl.status_disabled": "비활성화됨"
+  "plugin.firecrawl.status_disabled": "비활성화됨",
+  "command.debug.view": "디버그 정보 보기",
+  "keybind.debug_view": "디버그 정보 보기",
+  "dialog.debug.title": "디버그",
+  "dialog.debug.version": "버전",
+  "dialog.debug.date": "날짜",
+  "dialog.debug.os": "운영체제",
+  "dialog.debug.terminal": "터미널",
+  "dialog.debug.session_id": "세션 ID",
+  "dialog.debug.model": "모델",
+  "dialog.debug.not_available": "해당 없음",
+  "dialog.debug.share_hint": "문제를 보고할 때 이 정보를 함께 공유하세요.",
+  "dialog.debug.copy": "복사",
+  "dialog.debug.copied": "복사됨",
+  "dialog.debug.copy_keybind": "디버그 정보 복사",
+  "toast.debug_copied": "디버그 정보가 클립보드에 복사되었습니다"
 }

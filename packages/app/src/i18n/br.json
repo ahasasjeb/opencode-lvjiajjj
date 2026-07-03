@@ -968,5 +968,6 @@
   "workspace.reset.archived.none": "Nenhuma sessão ativa será arquivada.",
   "workspace.reset.archived.one": "1 sessão será arquivada.",
   "workspace.reset.archived.many": "{{count}} sessões serão arquivadas.",
-  "workspace.reset.note": "Isso redefinirá o espaço de trabalho para corresponder ao branch padrão."
+  "workspace.reset.note": "Isso redefinirá o espaço de trabalho para corresponder ao branch padrão.",
+  "home.recentlyClosed": "Fechados recentemente"
 }

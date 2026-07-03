@@ -25,5 +25,20 @@
   "plugin.firecrawl.credit_error": "Impossible de charger l'utilisation des crédits",
   "plugin.firecrawl.credit_usage": "{{remaining}} sur {{plan}} crédits restants",
   "plugin.firecrawl.status_enabled": "Activé",
-  "plugin.firecrawl.status_disabled": "Désactivé"
+  "plugin.firecrawl.status_disabled": "Désactivé",
+  "command.debug.view": "Voir les infos de débogage",
+  "keybind.debug_view": "Voir les infos de débogage",
+  "dialog.debug.title": "Débogage",
+  "dialog.debug.version": "Version",
+  "dialog.debug.date": "Date",
+  "dialog.debug.os": "OS",
+  "dialog.debug.terminal": "Terminal",
+  "dialog.debug.session_id": "ID de session",
+  "dialog.debug.model": "Modèle",
+  "dialog.debug.not_available": "Indisponible",
+  "dialog.debug.share_hint": "Partagez ceci lors du signalement d’un problème.",
+  "dialog.debug.copy": "Copier",
+  "dialog.debug.copied": "Copié",
+  "dialog.debug.copy_keybind": "Copier les infos de débogage",
+  "toast.debug_copied": "Infos de débogage copiées dans le presse-papiers"
 }
