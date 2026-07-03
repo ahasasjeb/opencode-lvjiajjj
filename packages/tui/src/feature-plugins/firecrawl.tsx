@@ -178,21 +178,23 @@ const tui: TuiPlugin = async (api) => {
         title: "plugin.firecrawl.credits_command",
         category: "category.system",
         slashName: "firecrawl",
-        run() {
+        run: async () => {
           if (!credential()?.configured) {
             void showCredentials()
             return
           }
-          void loadCredit()
+          await loadCredit()
           api.ui.dialog.replace(() =>
             api.ui.DialogAlert({
               title: t("plugin.firecrawl.title"),
-              message: credit()
-                ? t("plugin.firecrawl.credit_usage", {
-                    remaining: formatCredit(credit()!.remainingCredits, api.i18n.locale),
-                    plan: formatCredit(credit()!.planCredits, api.i18n.locale),
-                  })
-                : t("plugin.firecrawl.credit_loading"),
+              message: creditError()
+                ? t("plugin.firecrawl.credit_error")
+                : credit()
+                  ? t("plugin.firecrawl.credit_usage", {
+                      remaining: formatCredit(credit()!.remainingCredits, api.i18n.locale),
+                      plan: formatCredit(credit()!.planCredits, api.i18n.locale),
+                    })
+                  : t("plugin.firecrawl.credit_loading"),
             }),
           )
         },
