@@ -748,6 +748,27 @@ it.instance(
   },
 )
 
+it.instance(
+  "getSmallModel falls back to Qwen models for openrouter",
+  Effect.gen(function* () {
+    const model = yield* Provider.use.getSmallModel(ProviderV2.ID.openrouter)
+    expect(model?.id).toBe(ModelV2.ID.make("qwen/qwen3.6-35b-a3b"))
+  }),
+  {
+    config: {
+      provider: {
+        openrouter: {
+          whitelist: ["qwen/qwen3.5-35b-a3b", "qwen/qwen3.6-35b-a3b"],
+          models: {
+            "qwen/qwen3.5-35b-a3b": { release_date: "2026-01-01" },
+            "qwen/qwen3.6-35b-a3b": { release_date: "2026-02-01" },
+          },
+        },
+      },
+    },
+  },
+)
+
 it.instance("getSmallModel skips inferred models for Azure", () =>
   Effect.gen(function* () {
     yield* set("AZURE_RESOURCE_NAME", "test-resource")

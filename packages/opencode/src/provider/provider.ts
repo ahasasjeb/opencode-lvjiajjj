@@ -1952,6 +1952,13 @@ const layer = Layer.effect(
         if (candidates[0]) return candidates[0]
       }
 
+      if (providerID === ProviderV2.ID.openrouter) {
+        for (const modelID of openrouterSmallModelFallbackPriority) {
+          const fallback = provider.models[ModelV2.ID.make(modelID)]
+          if (fallback) return fallback
+        }
+      }
+
       return undefined
     })
 
@@ -1996,6 +2003,7 @@ const layer = Layer.effect(
 
 const priority = ["gpt-5", "claude-sonnet-4", "big-pickle", "gemini-3-pro"]
 const smallModelFamilyPriority = ["gemini-flash", "gpt-nano", "claude-haiku"]
+const openrouterSmallModelFallbackPriority = ["qwen/qwen3.6-35b-a3b", "qwen/qwen3.5-35b-a3b"]
 export function sort<T extends { id: string }>(models: T[]) {
   return sortBy(
     models,

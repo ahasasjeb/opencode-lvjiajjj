@@ -201,17 +201,16 @@ const layer = Layer.effect(
 
       const real = (m: SessionV1.WithParts) =>
         m.info.role === "user" && !m.parts.every((p) => "synthetic" in p && p.synthetic)
-      const idx = input.history.findIndex(real)
+      const idx = input.history.findLastIndex(real)
       if (idx === -1) return
-      if (input.history.filter(real).length !== 1) return
 
       const context = input.history.slice(0, idx + 1)
-      const firstUser = context[idx]
-      if (!firstUser || firstUser.info.role !== "user") return
-      const firstInfo = firstUser.info
+      const latestUser = context[idx]
+      if (!latestUser || latestUser.info.role !== "user") return
+      const latestInfo = latestUser.info
 
-      const subtasks = firstUser.parts.filter((p): p is SessionV1.SubtaskPart => p.type === "subtask")
-      const onlySubtasks = subtasks.length > 0 && firstUser.parts.every((p) => p.type === "subtask")
+      const subtasks = latestUser.parts.filter((p): p is SessionV1.SubtaskPart => p.type === "subtask")
+      const onlySubtasks = subtasks.length > 0 && latestUser.parts.every((p) => p.type === "subtask")
 
       const ag = yield* agents.get("title")
       if (!ag) return
@@ -220,12 +219,15 @@ const layer = Layer.effect(
         : ((yield* provider.getSmallModel(input.providerID)) ??
           (yield* provider.getModel(input.providerID, input.modelID)))
       const msgs = onlySubtasks
-        ? [{ role: "user" as const, content: subtasks.map((p) => p.prompt).join("\n") }]
+        ? [
+            ...(yield* MessageV2.toModelMessagesEffect(context.slice(0, idx), mdl)),
+            { role: "user" as const, content: subtasks.map((p) => p.prompt).join("\n") },
+          ]
         : yield* MessageV2.toModelMessagesEffect(context, mdl)
       const text = yield* llm
         .stream({
           agent: ag,
-          user: firstInfo,
+          user: latestInfo,
           system: [],
           small: true,
           tools: {},

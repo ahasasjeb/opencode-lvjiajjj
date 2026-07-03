@@ -795,6 +795,57 @@ it.instance("static loop consumes queued replies across turns", () =>
   }),
 )
 
+it.instance("retries default title generation with full conversation history", () =>
+  Effect.gen(function* () {
+    const { llm } = yield* useServerConfig(providerCfg)
+    const prompt = yield* SessionPrompt.Service
+    const sessions = yield* Session.Service
+    const session = yield* sessions.create({})
+    const defaultTitle = session.title
+
+    yield* prompt.prompt({
+      sessionID: session.id,
+      agent: "build",
+      noReply: true,
+      parts: [{ type: "text", text: "first turn" }],
+    })
+    yield* llm.text("first answer")
+    yield* prompt.loop({ sessionID: session.id })
+
+    yield* sessions.setTitle({ sessionID: session.id, title: defaultTitle })
+
+    yield* prompt.prompt({
+      sessionID: session.id,
+      agent: "build",
+      noReply: true,
+      parts: [{ type: "text", text: "second turn" }],
+    })
+    yield* llm.text("second answer")
+    yield* prompt.loop({ sessionID: session.id })
+
+    yield* pollWithTimeout(
+      Effect.gen(function* () {
+        const titleHits = (yield* llm.hits).filter((hit) =>
+          JSON.stringify(hit.body).includes("Generate a title for this conversation"),
+        )
+        if (titleHits.length !== 2) return
+        return titleHits
+      }),
+      "timed out waiting for retried title generation",
+    )
+
+    const titleHits = (yield* llm.hits).filter((hit) =>
+      JSON.stringify(hit.body).includes("Generate a title for this conversation"),
+    )
+    expect(titleHits).toHaveLength(2)
+
+    const retriedBody = JSON.stringify(titleHits[1]?.body)
+    expect(retriedBody).toContain("first turn")
+    expect(retriedBody).toContain("first answer")
+    expect(retriedBody).toContain("second turn")
+  }),
+)
+
 it.instance("loop continues when finish is tool-calls", () =>
   Effect.gen(function* () {
     const { llm } = yield* useServerConfig(providerCfg)
