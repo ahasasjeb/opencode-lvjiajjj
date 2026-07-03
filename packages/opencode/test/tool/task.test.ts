@@ -60,7 +60,6 @@ const background = testEffect(layer({ experimentalBackgroundSubagents: true }))
 const foreground = testEffect(layer({ experimentalBackgroundSubagents: false }))
 const shallow = testEffect(layer({ subagentMaxDepth: 1 }))
 const limited = testEffect(layer({ subagentMaxThreads: 2 }))
-const timeout = testEffect(layer({ subagentForegroundTimeoutMs: 10 }))
 const runStateStatuses: SessionStatus.Info[] = []
 const runStateParentID = SessionID.make("ses_parent_status")
 const runStateBackground = { active: true }
@@ -209,7 +208,6 @@ describe("tool.task", () => {
 
         expect(first).toBe(second)
         expect(first).toContain("Prefer a small, purposeful set over speculative fan-out")
-        expect(first).toContain("A long foreground task may be promoted to background automatically")
         expect(first).toContain("Do not poll, sleep, or repeatedly ask for status")
 
         const alpha = first.indexOf("- alpha: Alpha agent")
@@ -638,39 +636,55 @@ describe("tool.task", () => {
     }),
   )
 
-  timeout.instance("automatically backgrounds a foreground subagent after the wait timeout", () =>
+  background.instance("keeps a foreground subagent in the foreground until it completes", () =>
     Effect.gen(function* () {
       const jobs = yield* BackgroundJob.Service
       const { chat, assistant } = yield* seed()
       const tool = yield* TaskTool
       const def = yield* tool.init()
-      const result = yield* def.execute(
-        {
-          description: "slow inspection",
-          prompt: "keep working",
-          subagent_type: "general",
-        },
-        {
-          sessionID: chat.id,
-          messageID: assistant.id,
-          agent: "build",
-          abort: new AbortController().signal,
-          extra: {
-            promptOps: {
-              ...stubOps(),
-              prompt: () => Effect.never,
-            },
+      const ready = yield* Deferred.make<void>()
+      const done = yield* Deferred.make<void>()
+      const fiber = yield* def
+        .execute(
+          {
+            description: "slow inspection",
+            prompt: "keep working",
+            subagent_type: "general",
           },
-          messages: [],
-          metadata: () => Effect.void,
-          ask: () => Effect.void,
-        },
-      )
+          {
+            sessionID: chat.id,
+            messageID: assistant.id,
+            agent: "build",
+            abort: new AbortController().signal,
+            extra: {
+              promptOps: {
+                ...stubOps(),
+                prompt: (input) =>
+                  Effect.gen(function* () {
+                    yield* Deferred.succeed(ready, undefined)
+                    yield* Deferred.await(done)
+                    return reply(input, "foreground done")
+                  }),
+              } satisfies TaskPromptOps,
+            },
+            messages: [],
+            metadata: () => Effect.void,
+            ask: () => Effect.void,
+          },
+        )
+        .pipe(Effect.forkChild)
 
-      expect(result.metadata.background).toBe(true)
-      expect(result.output).toContain('state="running"')
-      expect((yield* jobs.get(result.metadata.sessionId))?.metadata?.background).toBe(true)
-      yield* jobs.cancel(result.metadata.sessionId)
+      yield* Deferred.await(ready)
+      const job = (yield* jobs.list())[0]
+      expect(job?.metadata?.background).toBeUndefined()
+
+      yield* Effect.sleep("20 millis")
+      expect((yield* jobs.get(job?.id ?? ""))?.metadata?.background).toBeUndefined()
+
+      yield* Deferred.succeed(done, undefined)
+      const result = yield* Fiber.join(fiber)
+      expect(result.metadata.background).toBeUndefined()
+      expect(result.output).toContain('state="completed"')
     }),
   )
 

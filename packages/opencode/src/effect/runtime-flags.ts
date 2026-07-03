@@ -53,7 +53,6 @@ export class Service extends ConfigService.Service<Service>()("@opencode/Runtime
   experimentalBackgroundSubagents: enabledByDefault("OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS"),
   subagentMaxThreads: integer("OPENCODE_SUBAGENT_MAX_THREADS", 1, 6),
   subagentMaxDepth: integer("OPENCODE_SUBAGENT_MAX_DEPTH", 0, 1),
-  subagentForegroundTimeoutMs: integer("OPENCODE_SUBAGENT_FOREGROUND_TIMEOUT_MS", 1, 30_000),
   experimentalLspTy: bool("OPENCODE_EXPERIMENTAL_LSP_TY"),
   experimentalLspTool: enabledByExperimental("OPENCODE_EXPERIMENTAL_LSP_TOOL"),
   experimentalOxfmt: enabledByExperimental("OPENCODE_EXPERIMENTAL_OXFMT"),

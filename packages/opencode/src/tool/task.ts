@@ -284,26 +284,9 @@ export const TaskTool = Tool.define(
             const result = yield* Effect.raceFirst(
               background.wait({
                 id: nextSession.id,
-                timeout: flags.experimentalBackgroundSubagents ? flags.subagentForegroundTimeoutMs : undefined,
               }),
               background.waitForPromotion(nextSession.id).pipe(Effect.map((info) => ({ info, timedOut: false }))),
             )
-            if (result.timedOut) {
-              const promoted = yield* background.promote(nextSession.id)
-              if (promoted?.status === "completed")
-                return {
-                  title: params.description,
-                  metadata,
-                  output: renderOutput({
-                    sessionID: nextSession.id,
-                    state: "completed",
-                    text: promoted.output ?? "",
-                  }),
-                }
-              if (promoted?.status === "error") return yield* Effect.fail(new Error(promoted.error ?? "Task failed"))
-              if (promoted?.status === "cancelled") return yield* Effect.fail(new Error("Task cancelled"))
-              return backgroundResult()
-            }
             if (result.info?.metadata?.background === true) return backgroundResult()
             if (result.info?.status === "error")
               return yield* Effect.fail(new Error(result.info.error ?? "Task failed"))

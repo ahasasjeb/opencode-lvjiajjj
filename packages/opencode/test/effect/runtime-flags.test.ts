@@ -54,7 +54,6 @@ describe("RuntimeFlags", () => {
       expect(flags.experimentalBackgroundSubagents).toBe(true)
       expect(flags.subagentMaxThreads).toBe(6)
       expect(flags.subagentMaxDepth).toBe(1)
-      expect(flags.subagentForegroundTimeoutMs).toBe(30_000)
       expect(flags.experimentalLspTy).toBe(false)
       expect(flags.experimentalLspTool).toBe(true)
       expect(flags.experimentalOxfmt).toBe(true)
@@ -125,7 +124,6 @@ describe("RuntimeFlags", () => {
       expect(flags.experimentalBackgroundSubagents).toBe(true)
       expect(flags.subagentMaxThreads).toBe(6)
       expect(flags.subagentMaxDepth).toBe(1)
-      expect(flags.subagentForegroundTimeoutMs).toBe(30_000)
       expect(flags.client).toBe("cli")
     }),
   )
@@ -387,7 +385,6 @@ describe("RuntimeFlags", () => {
             OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS: "false",
             OPENCODE_SUBAGENT_MAX_THREADS: "3",
             OPENCODE_SUBAGENT_MAX_DEPTH: "2",
-            OPENCODE_SUBAGENT_FOREGROUND_TIMEOUT_MS: "15000",
           }),
         ),
       )
@@ -395,7 +392,6 @@ describe("RuntimeFlags", () => {
       expect(flags.experimentalBackgroundSubagents).toBe(false)
       expect(flags.subagentMaxThreads).toBe(3)
       expect(flags.subagentMaxDepth).toBe(2)
-      expect(flags.subagentForegroundTimeoutMs).toBe(15_000)
     }),
   )
 })
