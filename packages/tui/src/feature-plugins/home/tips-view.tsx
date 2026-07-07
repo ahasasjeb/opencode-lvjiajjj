@@ -87,7 +87,16 @@ function configShortcut(api: TuiPluginApi, command: string): TipShortcut {
 
 function commandTip(
   t: Translator,
-  key: "home.tip.editor" | "home.tip.models" | "home.tip.themes" | "home.tip.new_session" | "home.tip.sessions" | "home.tip.export",
+  key:
+    | "home.tip.editor"
+    | "home.tip.models"
+    | "home.tip.themes"
+    | "home.tip.new_session"
+    | "home.tip.sessions"
+    | "home.tip.export"
+    | "home.tip.timeline"
+    | "home.tip.status"
+    | "home.tip.help",
   command: string,
   shortcut: string,
   params?: Record<string, string | number | boolean>,
@@ -199,6 +208,80 @@ const TIP_RESOLVERS: TipResolver[] = [
     return ctx.t("home.tip.session_tree", { parent, first, previous, next })
   },
   (ctx) => ctx.t("home.tip.plugins"),
+  (ctx) => ctx.t("home.tip.config_files"),
+  (ctx) => ctx.t("home.tip.tui_global_config"),
+  (ctx) => ctx.t("home.tip.schema"),
+  (ctx) => ctx.t("home.tip.default_model"),
+  (ctx) => ctx.t("home.tip.keybinds"),
+  (ctx) => ctx.t("home.tip.keybind_none"),
+  (ctx) => ctx.t("home.tip.mcp_config"),
+  (ctx) => ctx.t("home.tip.commands_dir"),
+  (ctx) => ctx.t("home.tip.command_args"),
+  (ctx) => ctx.t("home.tip.shell_backticks"),
+  (ctx) => ctx.t("home.tip.agents_dir"),
+  (ctx) => ctx.t("home.tip.agent_permissions"),
+  (ctx) => ctx.t("home.tip.bash_git_allow"),
+  (ctx) => ctx.t("home.tip.bash_rm_deny"),
+  (ctx) => ctx.t("home.tip.bash_git_push_ask"),
+  (ctx) => ctx.t("home.tip.formatter_enable"),
+  (ctx) => ctx.t("home.tip.formatter_disable"),
+  (ctx) => ctx.t("home.tip.custom_formatters"),
+  (ctx) => ctx.t("home.tip.lsp_enable"),
+  (ctx) => ctx.t("home.tip.tools_dir"),
+  (ctx) => ctx.t("home.tip.tool_scripts"),
+  (ctx) => ctx.t("home.tip.plugin_notify"),
+  (ctx) => ctx.t("home.tip.plugin_sensitive"),
+  (ctx) => ctx.t("home.tip.cli_run"),
+  (ctx) => ctx.t("home.tip.cli_continue"),
+  (ctx) => ctx.t("home.tip.cli_run_file"),
+  (ctx) => ctx.t("home.tip.cli_json"),
+  (ctx) => ctx.t("home.tip.cli_serve"),
+  (ctx) => ctx.t("home.tip.cli_attach"),
+  (ctx) => ctx.t("home.tip.cli_upgrade"),
+  (ctx) => ctx.t("home.tip.cli_auth_list"),
+  (ctx) => ctx.t("home.tip.cli_agent_create"),
+  (ctx) => ctx.t("home.tip.github_opencode"),
+  (ctx) => ctx.t("home.tip.github_install"),
+  (ctx) => ctx.t("home.tip.github_fix"),
+  (ctx) => ctx.t("home.tip.github_oc"),
+  (ctx) => ctx.t("home.tip.theme_system"),
+  (ctx) => ctx.t("home.tip.themes_dir"),
+  (ctx) => ctx.t("home.tip.theme_variants"),
+  (ctx) => ctx.t("home.tip.theme_xterm"),
+  (ctx) => ctx.t("home.tip.config_env"),
+  (ctx) => ctx.t("home.tip.config_file"),
+  (ctx) => ctx.t("home.tip.config_instructions"),
+  (ctx) => ctx.t("home.tip.agent_temperature"),
+  (ctx) => ctx.t("home.tip.agent_steps"),
+  (ctx) => ctx.t("home.tip.tools_disable"),
+  (ctx) => ctx.t("home.tip.mcp_disable"),
+  (ctx) => ctx.t("home.tip.agent_tools_override"),
+  (ctx) => ctx.t("home.tip.share_auto"),
+  (ctx) => ctx.t("home.tip.share_disabled"),
+  (ctx) => ctx.t("home.tip.unshare"),
+  (ctx) => ctx.t("home.tip.perm_doom_loop"),
+  (ctx) => ctx.t("home.tip.perm_external_dir"),
+  (ctx) => ctx.t("home.tip.debug_config"),
+  (ctx) => ctx.t("home.tip.print_logs"),
+  (ctx) => commandTip(ctx.t, "home.tip.timeline", "/timeline", ctx.shortcuts.sessionTimeline()),
+  (ctx) => {
+    const shortcut = ctx.shortcuts.messagesToggleConceal()
+    if (!shortcut) return undefined
+    return ctx.t("home.tip.toggle_conceal", { shortcut })
+  },
+  (ctx) => commandTip(ctx.t, "home.tip.status", "/status", ctx.shortcuts.statusView()),
+  (ctx) => ctx.t("home.tip.scroll_acceleration"),
+  (ctx) => {
+    const shortcut = ctx.shortcuts.commandList()
+    if (!shortcut) return ctx.t("home.tip.toggle_username")
+    return ctx.t("home.tip.toggle_username_shortcut", { shortcut })
+  },
+  (ctx) => ctx.t("home.tip.docker"),
+  (ctx) => ctx.t("home.tip.connect_zen"),
+  (ctx) => ctx.t("home.tip.agents_md"),
+  (ctx) => ctx.t("home.tip.review"),
+  (ctx) => commandTip(ctx.t, "home.tip.help", "/help", ctx.shortcuts.helpShow()),
+  (ctx) => ctx.t("home.tip.rename"),
 ]
 
 export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
@@ -246,7 +329,21 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
     const t = language.t
     const ctx = { shortcuts, t }
     if (props.connected === false) return [t("home.tip.no_models")]
-    return TIP_RESOLVERS.map((resolve) => resolve(ctx)).filter((value): value is string => typeof value === "string")
+    const platformTip =
+      process.platform === "win32"
+        ? (() => {
+            const shortcut = shortcuts.inputUndo()
+            if (!shortcut) return undefined
+            return t("home.tip.input_undo", { shortcut })
+          })()
+        : (() => {
+            const shortcut = shortcuts.terminalSuspend()
+            if (!shortcut) return undefined
+            return t("home.tip.terminal_suspend", { shortcut })
+          })()
+    return [...TIP_RESOLVERS.map((resolve) => resolve(ctx)), platformTip].filter(
+      (value): value is string => typeof value === "string",
+    )
   })
 
   const tip = createMemo(() => {

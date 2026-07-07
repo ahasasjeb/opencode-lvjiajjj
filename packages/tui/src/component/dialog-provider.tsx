@@ -370,8 +370,8 @@ function ApiMethod(props: ApiMethodProps) {
     <DialogPrompt
       title={props.title}
       placeholder={language.t("dialog.providers.api_key")}
-      description={
-        {
+      description={() =>
+        ({
           opencode: (
             <box gap={1}>
               <text fg={theme.textMuted}>{language.t("dialog.providers.opencode_zen_desc")}</text>
@@ -384,7 +384,7 @@ function ApiMethod(props: ApiMethodProps) {
               <text fg={theme.text}>{language.t("dialog.providers.opencode_go_link")}</text>
             </box>
           ),
-        }[props.providerID] ?? undefined
+        })[props.providerID] ?? undefined
       }
       onConfirm={async (value) => {
         if (!value) return

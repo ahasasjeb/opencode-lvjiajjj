@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 Sitzung wird archiviert.",
   "workspace.reset.archived.many": "{{count}} Sitzungen werden archiviert.",
   "workspace.reset.note": "Dadurch wird der Arbeitsbereich auf den Standard-Branch zurückgesetzt.",
-  "home.recentlyClosed": "Kürzlich geschlossen"
+  "home.recentlyClosed": "Kürzlich geschlossen",
+  "command.tab.reopenClosed": "Geschlossenen Tab wieder öffnen",
+  "model.tooltip.context.label": "Kontext",
+  "model.tooltip.inputs": "Eingaben",
+  "model.tooltip.model": "Modell",
+  "model.tooltip.provider": "Anbieter",
+  "model.tooltip.reasoning": "Reasoning"
 }

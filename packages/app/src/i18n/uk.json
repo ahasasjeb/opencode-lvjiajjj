@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 сесію буде заархівовано.",
   "workspace.reset.archived.many": "{{count}} сесій буде заархівовано.",
   "workspace.reset.note": "Це скине робочу область, щоб вона відповідала гілці за замовчуванням.",
-  "home.recentlyClosed": "Нещодавно закриті"
+  "home.recentlyClosed": "Нещодавно закриті",
+  "command.tab.reopenClosed": "Відкрити закриту вкладку",
+  "model.tooltip.context.label": "Контекст",
+  "model.tooltip.inputs": "Вхідні дані",
+  "model.tooltip.model": "Модель",
+  "model.tooltip.provider": "Провайдер",
+  "model.tooltip.reasoning": "Міркування"
 }

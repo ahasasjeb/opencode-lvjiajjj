@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "将归档 1 个会话。",
   "workspace.reset.archived.many": "将归档 {{count}} 个会话。",
   "workspace.reset.note": "这将把工作区重置为与默认分支一致。",
-  "home.recentlyClosed": "最近关闭"
+  "home.recentlyClosed": "最近关闭",
+  "command.tab.reopenClosed": "重新打开已关闭的标签页",
+  "model.tooltip.context.label": "上下文",
+  "model.tooltip.inputs": "输入",
+  "model.tooltip.model": "模型",
+  "model.tooltip.provider": "提供商",
+  "model.tooltip.reasoning": "推理"
 }

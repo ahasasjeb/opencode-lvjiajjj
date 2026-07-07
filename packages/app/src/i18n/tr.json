@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 oturum arşivlenecek.",
   "workspace.reset.archived.many": "{{count}} oturum arşivlenecek.",
   "workspace.reset.note": "Bu işlem çalışma alanını varsayılan dalla eşleşecek şekilde sıfırlayacak.",
-  "home.recentlyClosed": "Yakın zamanda kapatılanlar"
+  "home.recentlyClosed": "Yakın zamanda kapatılanlar",
+  "command.tab.reopenClosed": "Kapatılan sekmeyi yeniden aç",
+  "model.tooltip.context.label": "Bağlam",
+  "model.tooltip.inputs": "Girdiler",
+  "model.tooltip.model": "Model",
+  "model.tooltip.provider": "Sağlayıcı",
+  "model.tooltip.reasoning": "Akıl yürütme"
 }

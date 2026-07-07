@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 session will be archived.",
   "workspace.reset.archived.many": "{{count}} sessions will be archived.",
   "workspace.reset.note": "This will reset the workspace to match the default branch.",
-  "home.recentlyClosed": "Recently closed"
+  "home.recentlyClosed": "Recently closed",
+  "command.tab.reopenClosed": "Reopen closed tab",
+  "model.tooltip.context.label": "Context",
+  "model.tooltip.inputs": "Inputs",
+  "model.tooltip.model": "Model",
+  "model.tooltip.provider": "Provider",
+  "model.tooltip.reasoning": "Reasoning"
 }

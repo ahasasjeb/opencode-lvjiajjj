@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 session sera archivée.",
   "workspace.reset.archived.many": "{{count}} sessions seront archivées.",
   "workspace.reset.note": "Cela réinitialisera l'espace de travail pour correspondre à la branche par défaut.",
-  "home.recentlyClosed": "Fermés récemment"
+  "home.recentlyClosed": "Fermés récemment",
+  "command.tab.reopenClosed": "Rouvrir l'onglet fermé",
+  "model.tooltip.context.label": "Contexte",
+  "model.tooltip.inputs": "Entrées",
+  "model.tooltip.model": "Modèle",
+  "model.tooltip.provider": "Fournisseur",
+  "model.tooltip.reasoning": "Raisonnement"
 }

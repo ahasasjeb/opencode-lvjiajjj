@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "ستتم أرشفة جلسة واحدة.",
   "workspace.reset.archived.many": "ستتم أرشفة {{count}} جلسات.",
   "workspace.reset.note": "سيؤدي هذا إلى إعادة تعيين مساحة العمل لتتطابق مع الفرع الافتراضي.",
-  "home.recentlyClosed": "أُغلقت مؤخراً"
+  "home.recentlyClosed": "أُغلقت مؤخراً",
+  "command.tab.reopenClosed": "إعادة فتح علامة التبويب المغلقة",
+  "model.tooltip.context.label": "السياق",
+  "model.tooltip.inputs": "المدخلات",
+  "model.tooltip.model": "النموذج",
+  "model.tooltip.provider": "المزوّد",
+  "model.tooltip.reasoning": "الاستنتاج"
 }

@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "將封存 1 個工作階段。",
   "workspace.reset.archived.many": "將封存 {{count}} 個工作階段。",
   "workspace.reset.note": "這將把工作區重設為與預設分支一致。",
-  "home.recentlyClosed": "最近關閉"
+  "home.recentlyClosed": "最近關閉",
+  "command.tab.reopenClosed": "重新開啟已關閉的分頁",
+  "model.tooltip.context.label": "上下文",
+  "model.tooltip.inputs": "輸入",
+  "model.tooltip.model": "模型",
+  "model.tooltip.provider": "提供者",
+  "model.tooltip.reasoning": "推理"
 }

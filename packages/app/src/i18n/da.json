@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 session vil blive arkiveret.",
   "workspace.reset.archived.many": "{{count}} sessioner vil blive arkiveret.",
   "workspace.reset.note": "Dette vil nulstille arbejdsområdet til at matche hovedgrenen.",
-  "home.recentlyClosed": "Nyligt lukkede"
+  "home.recentlyClosed": "Nyligt lukkede",
+  "command.tab.reopenClosed": "Genåbn lukket fane",
+  "model.tooltip.context.label": "Kontekst",
+  "model.tooltip.inputs": "Inputs",
+  "model.tooltip.model": "Model",
+  "model.tooltip.provider": "Udbyder",
+  "model.tooltip.reasoning": "Tænkning"
 }

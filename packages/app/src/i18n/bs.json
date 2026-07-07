@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 sesija će biti arhivirana.",
   "workspace.reset.archived.many": "Biće arhivirano {{count}} sesija.",
   "workspace.reset.note": "Ovo će resetovati radni prostor da odgovara podrazumijevanoj grani.",
-  "home.recentlyClosed": "Nedavno zatvoreno"
+  "home.recentlyClosed": "Nedavno zatvoreno",
+  "command.tab.reopenClosed": "Ponovo otvori zatvorenu karticu",
+  "model.tooltip.context.label": "Kontekst",
+  "model.tooltip.inputs": "Ulazi",
+  "model.tooltip.model": "Model",
+  "model.tooltip.provider": "Provajder",
+  "model.tooltip.reasoning": "Rasuđivanje"
 }

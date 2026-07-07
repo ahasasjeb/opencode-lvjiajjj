@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 sesión será archivada.",
   "workspace.reset.archived.many": "{{count}} sesiones serán archivadas.",
   "workspace.reset.note": "Esto restablecerá el espacio de trabajo para coincidir con la rama predeterminada.",
-  "home.recentlyClosed": "Cerrados recientemente"
+  "home.recentlyClosed": "Cerrados recientemente",
+  "command.tab.reopenClosed": "Reabrir pestaña cerrada",
+  "model.tooltip.context.label": "Contexto",
+  "model.tooltip.inputs": "Entradas",
+  "model.tooltip.model": "Modelo",
+  "model.tooltip.provider": "Proveedor",
+  "model.tooltip.reasoning": "Razonamiento"
 }

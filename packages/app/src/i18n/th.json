@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 เซสชันจะถูกจัดเก็บ",
   "workspace.reset.archived.many": "{{count}} เซสชันจะถูกจัดเก็บ",
   "workspace.reset.note": "สิ่งนี้จะรีเซ็ตพื้นที่ทำงานให้ตรงกับสาขาเริ่มต้น",
-  "home.recentlyClosed": "ปิดล่าสุด"
+  "home.recentlyClosed": "ปิดล่าสุด",
+  "command.tab.reopenClosed": "เปิดแท็บที่ปิดอีกครั้ง",
+  "model.tooltip.context.label": "บริบท",
+  "model.tooltip.inputs": "อินพุต",
+  "model.tooltip.model": "โมเดล",
+  "model.tooltip.provider": "ผู้ให้บริการ",
+  "model.tooltip.reasoning": "การใช้เหตุผล"
 }

@@ -969,5 +969,11 @@
   "workspace.reset.archived.one": "1 sessão será arquivada.",
   "workspace.reset.archived.many": "{{count}} sessões serão arquivadas.",
   "workspace.reset.note": "Isso redefinirá o espaço de trabalho para corresponder ao branch padrão.",
-  "home.recentlyClosed": "Fechados recentemente"
+  "home.recentlyClosed": "Fechados recentemente",
+  "command.tab.reopenClosed": "Reabrir aba fechada",
+  "model.tooltip.context.label": "Contexto",
+  "model.tooltip.inputs": "Entradas",
+  "model.tooltip.model": "Modelo",
+  "model.tooltip.provider": "Provedor",
+  "model.tooltip.reasoning": "Raciocínio"
 }
