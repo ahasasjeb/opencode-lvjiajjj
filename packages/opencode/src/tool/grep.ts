@@ -17,6 +17,16 @@ export const Parameters = Schema.Struct({
   }),
 })
 
+/** Detect patterns that are obviously file globs or paths misused as content regex. */
+const looksLikeGlob = (pattern: string): boolean => {
+  const s = pattern.trim()
+  if (!s || !s.includes("*")) return false
+  if (s.includes("**")) return true
+  if (/^[/*]+$/.test(s)) return true
+  if (/^\*\.(?:\w+|\{[^}]+\})(?:\s*,\s*\*\.(?:\w+|\{[^}]+\}))*$/.test(s)) return true
+  return false
+}
+
 export const GrepTool = Tool.define(
   "grep",
   Effect.gen(function* () {
@@ -34,6 +44,14 @@ export const GrepTool = Tool.define(
           }
           if (!params.pattern) {
             throw new Error("pattern is required")
+          }
+
+          if (looksLikeGlob(params.pattern)) {
+            return {
+              title: params.pattern,
+              metadata: { matches: 0, truncated: false },
+              output: `pattern "${params.pattern}" looks like a file glob or path, not a regex over file contents. Use the include parameter for file globs (e.g. "*.ts") and pattern for content regex (e.g. "function\\s+\\w+").`,
+            }
           }
 
           yield* ctx.ask({

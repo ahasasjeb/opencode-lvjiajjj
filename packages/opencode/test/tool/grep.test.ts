@@ -170,6 +170,20 @@ describe("tool.grep", () => {
     }),
   )
 
+  it.instance("rejects glob-like patterns misused as content regex", () =>
+    Effect.gen(function* () {
+      const test = yield* TestInstance
+      yield* Effect.promise(() => Bun.write(path.join(test.directory, "test.txt"), "needle"))
+      const info = yield* GrepTool
+      const grep = yield* info.init()
+      for (const pattern of ["/**", "**/*.ts", "*.js", "*.{ts,tsx}", "/*"]) {
+        const result = yield* grep.execute({ pattern, path: test.directory }, ctx)
+        expect(result.metadata.matches).toBe(0)
+        expect(result.output).toContain("looks like a file glob or path")
+      }
+    }),
+  )
+
   it.instance("does not ask for external_directory when alias path is allowed", () =>
     Effect.gen(function* () {
       if (process.platform === "win32") return

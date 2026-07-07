@@ -34,6 +34,16 @@ export const Input = Schema.Struct({
 export const Output = Schema.Array(FileSystem.Match)
 type ModelOutput = typeof Output.Encoded
 
+/** Detect patterns that are obviously file globs or paths misused as content regex. */
+const looksLikeGlob = (pattern: string): boolean => {
+  const s = pattern.trim()
+  if (!s || !s.includes("*")) return false
+  if (s.includes("**")) return true
+  if (/^[/*]+$/.test(s)) return true
+  if (/^\*\.(?:\w+|\{[^}]+\})(?:\s*,\s*\*\.(?:\w+|\{[^}]+\}))*$/.test(s)) return true
+  return false
+}
+
 /** Format raw search matches into the familiar concise model output. */
 export const toModelOutput = (output: ModelOutput) => {
   const lines = output.length === 0 ? ["No files found"] : [`Found ${output.length} matches`]
@@ -62,7 +72,7 @@ const layer = Layer.effectDiscard(
       .register({
         [name]: Tool.make({
           description:
-            "Search file contents by regular expression within the active Location or an absolute managed tool-output file. Use a path to narrow the search, include to filter files by glob, and limit to bound the match count. Returns concise file resources, line numbers, and bounded line previews.",
+            "Search file contents by regular expression within the active Location or an absolute managed tool-output file. Use a path to narrow the search, include to filter files by glob, and limit to bound the match count. Returns concise file resources, line numbers, and bounded line previews. The pattern is a REGEX over FILE CONTENTS, never a file glob or a path; do not pass globs or paths such as `/**`, `**/*.ts`, `*.js`, or `*.{ts,tsx}` as pattern — use include for file globs and path to narrow the search directory.",
           input: Input,
           output: Output,
           toModelOutput: ({ output }) => [
@@ -78,6 +88,11 @@ const layer = Layer.effectDiscard(
           ],
           execute: (input, context) =>
             Effect.gen(function* () {
+              if (looksLikeGlob(input.pattern)) {
+                return yield* new ToolFailure({
+                  message: `pattern "${input.pattern}" looks like a file glob or path, not a regex over file contents. Use the include parameter for file globs (e.g. "*.ts") and pattern for content regex (e.g. "function\\s+\\w+").`,
+                })
+              }
               yield* permission.assert({
                 action: name,
                 resources: [input.pattern],
