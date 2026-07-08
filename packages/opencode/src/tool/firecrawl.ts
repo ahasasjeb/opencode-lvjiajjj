@@ -1,6 +1,6 @@
 import { ToolCredential } from "./credential"
 import { Effect, Schema } from "effect"
-import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http"
+import { HttpBody, HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http"
 import { Tool } from "./tool"
 import DESCRIPTION from "./firecrawl.txt"
 
@@ -108,12 +108,13 @@ function request(http: HttpClient.HttpClient, key: string, params: Schema.Schema
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     }
+    // jsonUnsafe: Schema.Unknown encoding rejects undefined fields with HttpBodyError
     const request =
       params.action === "crawl_status"
         ? HttpClientRequest.get(`${API}${endpoint}`).pipe(HttpClientRequest.setHeaders(headers))
-        : yield* HttpClientRequest.post(`${API}${endpoint}`).pipe(
+        : HttpClientRequest.post(`${API}${endpoint}`).pipe(
             HttpClientRequest.setHeaders(headers),
-            HttpClientRequest.schemaBodyJson(JsonObject)(body(params)),
+            HttpClientRequest.setBody(HttpBody.jsonUnsafe(body(params))),
           )
     const response = yield* HttpClient.filterStatusOk(http)
       .execute(request)
@@ -130,11 +131,12 @@ function request(http: HttpClient.HttpClient, key: string, params: Schema.Schema
 function body(params: Schema.Schema.Type<typeof Parameters>): Record<string, unknown> {
   const scrapeOptions = scrapeOptionsBody(params)
   if (params.action === "scrape") {
+    const waitFor = scrapeWaitFor(params)
     return {
       url: requireUrl(params.url),
       formats: [params.format],
       onlyMainContent: params.onlyMainContent ?? true,
-      waitFor: scrapeWaitFor(params),
+      ...(waitFor === undefined ? {} : { waitFor }),
     }
   }
   if (params.action === "search") {
