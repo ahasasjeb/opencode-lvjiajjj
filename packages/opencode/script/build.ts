@@ -25,6 +25,7 @@ const plugin = createSolidTransformPlugin()
 const skipEmbedWebUi = process.argv.includes("--skip-embed-web-ui")
 const npmScope = process.env.OPENCODE_NPM_SCOPE ?? "@lzy1234"
 const npmPackageName = `${npmScope}/${pkg.name}`
+const npmBinName = process.env.OPENCODE_NPM_BIN ?? "opencode2"
 
 const createEmbeddedWebUIBundle = async () => {
   console.log(`Building Web UI to embed in the binary`)
@@ -247,7 +248,7 @@ await Bun.file(path.join(metaDir, "package.json")).write(
       license: pkg.license,
       type: "commonjs",
       bin: {
-        opencode: "./bin/opencode",
+        [npmBinName]: "./bin/opencode",
       },
       optionalDependencies: Object.fromEntries(Object.keys(binaries).sort().map((name) => [name, Script.version])),
       publishConfig: {
