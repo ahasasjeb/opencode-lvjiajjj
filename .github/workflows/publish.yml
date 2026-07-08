@@ -39,8 +39,14 @@ jobs:
       - name: Package release assets
         shell: bash
         run: |
+          shopt -s nullglob
           mkdir -p release
-          for directory in packages/opencode/dist/opencode-*; do
+          directories=(packages/opencode/dist/opencode-* packages/opencode/dist/*/opencode-*)
+          if [[ "${#directories[@]}" -eq 0 ]]; then
+            echo "No built CLI binaries found in packages/opencode/dist"
+            exit 1
+          fi
+          for directory in "${directories[@]}"; do
             name="$(basename "$directory")"
             if [[ "$name" == opencode-windows-* ]]; then
               (
