@@ -23,6 +23,8 @@ const skipInstall = process.argv.includes("--skip-install")
 const sourcemapsFlag = process.argv.includes("--sourcemaps")
 const plugin = createSolidTransformPlugin()
 const skipEmbedWebUi = process.argv.includes("--skip-embed-web-ui")
+const npmScope = process.env.OPENCODE_NPM_SCOPE ?? "@lzy1234"
+const npmPackageName = `${npmScope}/${pkg.name}`
 
 const createEmbeddedWebUIBundle = async () => {
   console.log(`Building Web UI to embed in the binary`)
@@ -144,7 +146,7 @@ if (!skipInstall) {
 }
 for (const item of targets) {
   const name = [
-    pkg.name,
+    npmPackageName,
     // changing to win32 flags npm for some reason
     item.os === "win32" ? "windows" : item.os,
     item.arch,
@@ -179,7 +181,7 @@ for (const item of targets) {
       autoloadDotenv: false,
       autoloadTsconfig: true,
       autoloadPackageJson: true,
-      target: name.replace(pkg.name, "bun") as any,
+      target: name.replace(npmPackageName, "bun") as any,
       outfile: `dist/${name}/bin/opencode`,
       execArgv: [`--user-agent=opencode/${Script.version}`, "--use-system-ca", "--"],
       windows: {},
@@ -221,6 +223,9 @@ for (const item of targets) {
         os: [item.os],
         cpu: [item.arch],
         ...(item.abi ? { libc: [item.abi] } : {}),
+        publishConfig: {
+          access: "public",
+        },
       },
       null,
       2,
@@ -228,6 +233,31 @@ for (const item of targets) {
   )
   binaries[name] = Script.version
 }
+
+const metaDir = `dist/${npmPackageName}`
+fs.mkdirSync(path.join(metaDir, "bin"), { recursive: true })
+fs.copyFileSync("bin/opencode", path.join(metaDir, "bin", "opencode"))
+
+await Bun.file(path.join(metaDir, "package.json")).write(
+  JSON.stringify(
+    {
+      name: npmPackageName,
+      version: Script.version,
+      description: pkg.description,
+      license: pkg.license,
+      type: "commonjs",
+      bin: {
+        opencode: "./bin/opencode",
+      },
+      optionalDependencies: Object.fromEntries(Object.keys(binaries).sort().map((name) => [name, Script.version])),
+      publishConfig: {
+        access: "public",
+      },
+    },
+    null,
+    2,
+  ),
+)
 
 if (Script.release) {
   for (const key of Object.keys(binaries)) {
@@ -239,5 +269,3 @@ if (Script.release) {
   }
   await $`gh release upload v${Script.version} ./dist/*.zip ./dist/*.tar.gz --clobber --repo ${process.env.GH_REPO}`
 }
-
-export { binaries }
