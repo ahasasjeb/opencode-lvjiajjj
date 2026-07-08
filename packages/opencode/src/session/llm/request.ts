@@ -12,6 +12,7 @@ import { SystemPrompt } from "../system"
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
 import PROMPT_MERMAID from "../prompt/mermaid.txt"
 import PROMPT_GLM from "../prompt/glm.txt"
+import PROMPT_HY3 from "../prompt/hy3.txt"
 import { Effect, Record } from "effect"
 import { jsonSchema, tool as aiTool, type ModelMessage, type Tool } from "ai"
 import type { Plugin } from "@/plugin"
@@ -62,6 +63,9 @@ export const prepare = Effect.fn("LLMRequestPrep.prepare")(function* (input: Pre
       input.model.id.toLowerCase().includes(name) ||
       input.model.api.id.toLowerCase().includes(name),
   )
+  const hy3 =
+    input.model.id.toLowerCase().includes("hy3") ||
+    input.model.api.id.toLowerCase().includes("hy3")
   const system = [
     [
       ...(input.agent.prompt ? [input.agent.prompt] : SystemPrompt.provider(input.model)),
@@ -69,6 +73,7 @@ export const prepare = Effect.fn("LLMRequestPrep.prepare")(function* (input: Pre
       ...(input.user.system ? [input.user.system] : []),
       PROMPT_MERMAID,
       ...(glm52 ? [PROMPT_GLM] : []),
+      ...(hy3 ? [PROMPT_HY3] : []),
     ]
       .filter((x) => x)
       .join("\n"),
