@@ -2,7 +2,7 @@ import { commandDescriptionKey } from "../config/keybind"
 
 export type Translator = (key: string, params?: Record<string, string | number | boolean>) => string
 
-const I18N_PREFIXES = ["keybind.", "command.", "category.", "home.", "prompt.", "dialog.", "sidebar."] as const
+const I18N_PREFIXES = ["keybind.", "command.", "category.", "home.", "prompt.", "dialog.", "sidebar.","plugin."] as const
 
 const CATEGORY_ALIASES: Record<string, string> = {
   Session: "category.session",
