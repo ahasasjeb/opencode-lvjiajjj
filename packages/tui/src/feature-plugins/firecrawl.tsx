@@ -170,6 +170,7 @@ const tui: TuiPlugin = async (api) => {
         name: "tool.credentials",
         title: "plugin.firecrawl.credentials_command",
         category: "category.system",
+        namespace: "palette",
         slashName: "tools",
         run: () => void showCredentials(),
       },
@@ -177,6 +178,7 @@ const tui: TuiPlugin = async (api) => {
         name: "firecrawl.credits",
         title: "plugin.firecrawl.credits_command",
         category: "category.system",
+        namespace: "palette",
         slashName: "firecrawl",
         run: async () => {
           if (!credential()?.configured) {
