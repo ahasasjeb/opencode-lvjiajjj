@@ -984,5 +984,13 @@
   "workspace.reset.archived.none": "No active sessions will be archived.",
   "workspace.reset.archived.one": "1 session will be archived.",
   "workspace.reset.archived.many": "{{count}} sessions will be archived.",
-  "workspace.reset.note": "This will reset the workspace to match the default branch."
+  "workspace.reset.note": "This will reset the workspace to match the default branch.",
+  "help.openWebsite": "Open the OpenCode website",
+  "help.tabs.popupAria": "Introducing Tabs. A faster, more intuitive way to work.",
+  "help.tabs.dismiss": "Dismiss Tabs information",
+  "help.tabs.title": "Introducing Tabs",
+  "help.tabs.description": "A faster, more intuitive way to work.",
+  "help.tabs.date": "June 16",
+  "help.tabs.navigationTitle": "Introducing Tabs Navigation.",
+  "help.tabs.navigationDescription": "We've introduced tabs as the primary navigation in OpenCode. Your most important sessions are now pinned at the top of your screen at all times. No more hunting through menus or losing your place mid-session. Switch contexts instantly, pick up exactly where you left off, and keep your focus where it belongs: on the sessions."
 }

@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "Не удалось создать постоянные метаданные проекта",
   "error.childStore.persistedProjectIconCreateFailed": "Не удалось создать постоянный значок проекта",
   "error.childStore.storeCreateFailed": "Не удалось создать хранилище",
-  "terminal.connectionLost.abnormalClose": "WebSocket закрыт аварийно: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket закрыт аварийно: {{code}}",
+  "help.openWebsite": "Открыть веб-сайт OpenCode",
+  "help.tabs.popupAria": "Представляем вкладки. Более быстрый и интуитивный способ работы.",
+  "help.tabs.dismiss": "Закрыть информацию о вкладках",
+  "help.tabs.title": "Представляем вкладки",
+  "help.tabs.description": "Более быстрый и интуитивный способ работы.",
+  "help.tabs.date": "16 июня",
+  "help.tabs.navigationTitle": "Представляем навигацию по вкладкам.",
+  "help.tabs.navigationDescription": "Мы сделали вкладки основным способом навигации в OpenCode. Теперь самые важные сеансы всегда закреплены в верхней части экрана. Больше не нужно искать в меню или терять место в середине сеанса. Мгновенно переключайте контекст, продолжайте точно с того места, где остановились, и сосредоточьтесь на главном: на сеансах."
 }

@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "فشل إنشاء بيانات تعريف المشروع الدائمة",
   "error.childStore.persistedProjectIconCreateFailed": "فشل إنشاء أيقونة المشروع الدائمة",
   "error.childStore.storeCreateFailed": "فشل إنشاء المخزن",
-  "terminal.connectionLost.abnormalClose": "تم إغلاق WebSocket بشكل غير طبيعي: {{code}}"
+  "terminal.connectionLost.abnormalClose": "تم إغلاق WebSocket بشكل غير طبيعي: {{code}}",
+  "help.openWebsite": "فتح موقع OpenCode على الويب",
+  "help.tabs.popupAria": "نقدّم علامات التبويب. طريقة أسرع وأكثر سهولة للعمل.",
+  "help.tabs.dismiss": "إغلاق معلومات علامات التبويب",
+  "help.tabs.title": "نقدّم علامات التبويب",
+  "help.tabs.description": "طريقة أسرع وأكثر سهولة للعمل.",
+  "help.tabs.date": "16 يونيو",
+  "help.tabs.navigationTitle": "نقدّم التنقل بعلامات التبويب.",
+  "help.tabs.navigationDescription": "أضفنا علامات التبويب كطريقة التنقل الأساسية في OpenCode. تُثبَّت الآن أهم جلساتك في أعلى الشاشة في جميع الأوقات. لم تعد بحاجة إلى البحث في القوائم أو فقدان موضعك أثناء الجلسة. بدّل السياقات فورًا، وتابع بالضبط من حيث توقفت، وحافظ على تركيزك حيث يجب أن يكون: على الجلسات."
 }

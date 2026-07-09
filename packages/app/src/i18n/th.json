@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "ไม่สามารถสร้างเมตาดาต้าโปรเจกต์ถาวร",
   "error.childStore.persistedProjectIconCreateFailed": "ไม่สามารถสร้างไอคอนโปรเจกต์ถาวร",
   "error.childStore.storeCreateFailed": "ไม่สามารถสร้างที่เก็บ",
-  "terminal.connectionLost.abnormalClose": "WebSocket ปิดอย่างผิดปกติ: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket ปิดอย่างผิดปกติ: {{code}}",
+  "help.openWebsite": "เปิดเว็บไซต์ OpenCode",
+  "help.tabs.popupAria": "ขอแนะนำแท็บ วิธีทำงานที่รวดเร็วและใช้งานง่ายยิ่งขึ้น",
+  "help.tabs.dismiss": "ปิดข้อมูลเกี่ยวกับแท็บ",
+  "help.tabs.title": "ขอแนะนำแท็บ",
+  "help.tabs.description": "วิธีทำงานที่รวดเร็วและใช้งานง่ายยิ่งขึ้น",
+  "help.tabs.date": "16 มิถุนายน",
+  "help.tabs.navigationTitle": "ขอแนะนำการนำทางด้วยแท็บ",
+  "help.tabs.navigationDescription": "เราได้เพิ่มแท็บเป็นการนำทางหลักใน OpenCode เซสชันที่สำคัญที่สุดของคุณจะถูกปักหมุดไว้ด้านบนของหน้าจอตลอดเวลา ไม่ต้องค้นหาในเมนูหรือหลงตำแหน่งระหว่างเซสชันอีกต่อไป สลับบริบทได้ทันที กลับไปทำต่อจากจุดที่หยุดไว้ และจดจ่อกับสิ่งที่สำคัญที่สุด: เซสชัน"
 }

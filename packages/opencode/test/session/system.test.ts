@@ -1,10 +1,11 @@
-import { describe, expect } from "bun:test"
+import { describe, expect, test } from "bun:test"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { Effect, Layer } from "effect"
 import type { Agent } from "../../src/agent/agent"
 import { NamedError } from "@opencode-ai/core/util/error"
 import { Skill } from "../../src/skill"
 import { Permission } from "../../src/permission"
+import type { Provider } from "../../src/provider/provider"
 import { SystemPrompt } from "../../src/session/system"
 import PROMPT_KIMI from "../../src/session/prompt/kimi.txt"
 import { MCP } from "../../src/mcp"
@@ -84,13 +85,15 @@ const it = testEffect(
 )
 
 describe("session.system", () => {
-  it.effect("Kimi prompt explains background subagent lifecycle", () =>
-    Effect.sync(() => {
-      expect(PROMPT_KIMI).toContain("Use `background: true` only for independent work")
-      expect(PROMPT_KIMI).toContain("do not poll, sleep, or duplicate it")
-      expect(PROMPT_KIMI).toContain("Use `task_id` to send follow-up context")
-    }),
-  )
+  test("selects the Meta prompt for Muse Spark model IDs", () => {
+    expect(SystemPrompt.provider({ api: { id: "meta/muse-spark-preview" } } as Provider.Model)[0]).toContain(
+      "Meta Muse Spark",
+    )
+  })
+
+  test("selects the Kimi prompt for Kimi model IDs", () => {
+    expect(SystemPrompt.provider({ api: { id: "moonshot/kimi-k2" } } as Provider.Model)[0]).toBe(PROMPT_KIMI)
+  })
 
   it.effect("skills output is sorted by name and stable across calls", () =>
     Effect.gen(function* () {

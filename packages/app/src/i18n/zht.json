@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "建立持續性專案中繼資料失敗",
   "error.childStore.persistedProjectIconCreateFailed": "建立持續性專案圖示失敗",
   "error.childStore.storeCreateFailed": "建立儲存區失敗",
-  "terminal.connectionLost.abnormalClose": "WebSocket 異常關閉：{{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket 異常關閉：{{code}}",
+  "help.openWebsite": "開啟 OpenCode 網站",
+  "help.tabs.popupAria": "介紹分頁。更快速、更直覺的工作方式。",
+  "help.tabs.dismiss": "關閉分頁介紹",
+  "help.tabs.title": "介紹分頁",
+  "help.tabs.description": "更快速、更直覺的工作方式。",
+  "help.tabs.date": "6 月 16 日",
+  "help.tabs.navigationTitle": "介紹分頁導覽。",
+  "help.tabs.navigationDescription": "我們已將分頁設為 OpenCode 的主要導覽方式。您最重要的工作階段現在會始終釘選在畫面頂端。不必再在選單中尋找，也不會在工作階段中迷失位置。立即切換情境，從上次停下的地方準確接續，並將注意力放在最重要的地方：工作階段。"
 }

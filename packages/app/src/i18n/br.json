@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "Falha ao criar metadados de projeto persistentes",
   "error.childStore.persistedProjectIconCreateFailed": "Falha ao criar ícone de projeto persistente",
   "error.childStore.storeCreateFailed": "Falha ao criar armazenamento",
-  "terminal.connectionLost.abnormalClose": "WebSocket fechado anormalmente: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket fechado anormalmente: {{code}}",
+  "help.openWebsite": "Abrir o site do OpenCode",
+  "help.tabs.popupAria": "Apresentamos as abas. Uma forma mais rápida e intuitiva de trabalhar.",
+  "help.tabs.dismiss": "Fechar informações sobre as abas",
+  "help.tabs.title": "Apresentamos as abas",
+  "help.tabs.description": "Uma forma mais rápida e intuitiva de trabalhar.",
+  "help.tabs.date": "16 de junho",
+  "help.tabs.navigationTitle": "Apresentamos a navegação por abas.",
+  "help.tabs.navigationDescription": "Introduzimos as abas como a navegação principal no OpenCode. Suas sessões mais importantes agora ficam fixadas no topo da tela o tempo todo. Chega de procurar em menus ou perder seu lugar no meio de uma sessão. Alterne contextos instantaneamente, retome exatamente de onde parou e mantenha o foco onde ele deve estar: nas sessões."
 }

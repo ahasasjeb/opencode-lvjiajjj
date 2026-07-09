@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "Dauerhafte Projektmetadaten konnten nicht erstellt werden",
   "error.childStore.persistedProjectIconCreateFailed": "Dauerhaftes Projekticon konnte nicht erstellt werden",
   "error.childStore.storeCreateFailed": "Speicher konnte nicht erstellt werden",
-  "terminal.connectionLost.abnormalClose": "WebSocket abnormal geschlossen: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket abnormal geschlossen: {{code}}",
+  "help.openWebsite": "OpenCode-Website öffnen",
+  "help.tabs.popupAria": "Tabs werden vorgestellt. Eine schnellere, intuitivere Art zu arbeiten.",
+  "help.tabs.dismiss": "Tabs-Information schließen",
+  "help.tabs.title": "Tabs werden vorgestellt",
+  "help.tabs.description": "Eine schnellere, intuitivere Art zu arbeiten.",
+  "help.tabs.date": "16. Juni",
+  "help.tabs.navigationTitle": "Einführung in die Tab-Navigation.",
+  "help.tabs.navigationDescription": "Wir haben Tabs als primäre Navigation in OpenCode eingeführt. Ihre wichtigsten Sitzungen sind jetzt jederzeit oben auf dem Bildschirm angeheftet. Kein Suchen mehr in Menüs und kein Verlieren der Stelle mitten in einer Sitzung. Wechseln Sie sofort den Kontext, machen Sie genau dort weiter, wo Sie aufgehört haben, und konzentrieren Sie sich auf das, was zählt: Ihre Sitzungen."
 }

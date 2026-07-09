@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "Nije uspjelo kreiranje trajnih metapodataka projekta",
   "error.childStore.persistedProjectIconCreateFailed": "Nije uspjelo kreiranje trajne ikone projekta",
   "error.childStore.storeCreateFailed": "Nije uspjelo kreiranje skladišta",
-  "terminal.connectionLost.abnormalClose": "WebSocket zatvoren nenormalno: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket zatvoren nenormalno: {{code}}",
+  "help.openWebsite": "Otvori web-stranicu OpenCodea",
+  "help.tabs.popupAria": "Predstavljamo kartice. Brži i intuitivniji način rada.",
+  "help.tabs.dismiss": "Zatvori informacije o karticama",
+  "help.tabs.title": "Predstavljamo kartice",
+  "help.tabs.description": "Brži i intuitivniji način rada.",
+  "help.tabs.date": "16. juni",
+  "help.tabs.navigationTitle": "Predstavljamo navigaciju karticama.",
+  "help.tabs.navigationDescription": "Uveli smo kartice kao glavnu navigaciju u OpenCodeu. Vaše najvažnije sesije sada su uvijek prikvačene na vrhu ekrana. Nema više traženja po menijima niti gubljenja mjesta usred sesije. Trenutno promijenite kontekst, nastavite tačno tamo gdje ste stali i zadržite fokus tamo gdje treba biti: na sesijama."
 }

@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "永続プロジェクトメタデータの作成に失敗しました",
   "error.childStore.persistedProjectIconCreateFailed": "永続プロジェクトアイコンの作成に失敗しました",
   "error.childStore.storeCreateFailed": "ストアの作成に失敗しました",
-  "terminal.connectionLost.abnormalClose": "WebSocket が異常終了しました: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket が異常終了しました: {{code}}",
+  "help.openWebsite": "OpenCode のウェブサイトを開く",
+  "help.tabs.popupAria": "タブのご紹介。より速く直感的に作業できます。",
+  "help.tabs.dismiss": "タブの案内を閉じる",
+  "help.tabs.title": "タブのご紹介",
+  "help.tabs.description": "より速く直感的に作業できます。",
+  "help.tabs.date": "6月16日",
+  "help.tabs.navigationTitle": "タブナビゲーションのご紹介。",
+  "help.tabs.navigationDescription": "OpenCode の主要なナビゲーションとしてタブを導入しました。最も重要なセッションは常に画面上部に固定されます。メニューを探し回ったり、セッションの途中で場所を見失ったりする必要はありません。すぐにコンテキストを切り替え、離れた場所から正確に再開して、最も大切なこと、つまりセッションに集中できます。"
 }

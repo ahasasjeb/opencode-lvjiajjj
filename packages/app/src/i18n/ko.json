@@ -984,5 +984,13 @@
   "settings.general.row.pinchZoom.title": "핀치로 확대/축소",
   "settings.general.row.pinchZoom.description": "트랙패드 핀치 및 Ctrl+스크롤 제스처로 확대/축소 허용",
   "settings.updates.action.downloading": "다운로드 중...",
-  "settings.updates.action.installing": "설치 중..."
+  "settings.updates.action.installing": "설치 중...",
+  "help.openWebsite": "OpenCode 웹사이트 열기",
+  "help.tabs.popupAria": "탭을 소개합니다. 더 빠르고 직관적인 작업 방식입니다.",
+  "help.tabs.dismiss": "탭 정보 닫기",
+  "help.tabs.title": "탭 소개",
+  "help.tabs.description": "더 빠르고 직관적인 작업 방식입니다.",
+  "help.tabs.date": "6월 16일",
+  "help.tabs.navigationTitle": "탭 탐색을 소개합니다.",
+  "help.tabs.navigationDescription": "탭을 OpenCode의 기본 탐색 방식으로 도입했습니다. 가장 중요한 세션이 이제 항상 화면 상단에 고정됩니다. 더 이상 메뉴를 뒤지거나 세션 중 위치를 잃을 필요가 없습니다. 즉시 컨텍스트를 전환하고, 중단했던 지점에서 정확히 이어가며, 가장 중요한 일인 세션에 집중하세요."
 }

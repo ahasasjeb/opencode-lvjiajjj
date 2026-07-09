@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "Nie udało się utworzyć trwałych metadanych projektu",
   "error.childStore.persistedProjectIconCreateFailed": "Nie udało się utworzyć trwałej ikony projektu",
   "error.childStore.storeCreateFailed": "Nie udało się utworzyć magazynu",
-  "terminal.connectionLost.abnormalClose": "WebSocket zamknięty nieprawidłowo: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket zamknięty nieprawidłowo: {{code}}",
+  "help.openWebsite": "Otwórz witrynę OpenCode",
+  "help.tabs.popupAria": "Przedstawiamy karty. Szybszy i bardziej intuicyjny sposób pracy.",
+  "help.tabs.dismiss": "Zamknij informacje o kartach",
+  "help.tabs.title": "Przedstawiamy karty",
+  "help.tabs.description": "Szybszy i bardziej intuicyjny sposób pracy.",
+  "help.tabs.date": "16 czerwca",
+  "help.tabs.navigationTitle": "Przedstawiamy nawigację kartami.",
+  "help.tabs.navigationDescription": "Wprowadziliśmy karty jako główny sposób nawigacji w OpenCode. Najważniejsze sesje są teraz zawsze przypięte u góry ekranu. Koniec z przeszukiwaniem menu i gubieniem miejsca w środku sesji. Natychmiast przełączaj kontekst, wracaj dokładnie tam, gdzie skończono, i skup się na tym, co najważniejsze: na sesjach."
 }

@@ -984,5 +984,13 @@
   "settings.general.row.pinchZoom.title": "Knib for at zoome",
   "settings.general.row.pinchZoom.description": "Tillad trackpad-knibning og Ctrl-scroll-gestus til zoom",
   "settings.updates.action.downloading": "Laster ned...",
-  "settings.updates.action.installing": "Installerer..."
+  "settings.updates.action.installing": "Installerer...",
+  "help.openWebsite": "Åpne OpenCode-nettstedet",
+  "help.tabs.popupAria": "Vi introduserer faner. En raskere og mer intuitiv måte å arbeide på.",
+  "help.tabs.dismiss": "Lukk informasjon om faner",
+  "help.tabs.title": "Vi introduserer faner",
+  "help.tabs.description": "En raskere og mer intuitiv måte å arbeide på.",
+  "help.tabs.date": "16. juni",
+  "help.tabs.navigationTitle": "Vi introduserer fanenavigasjon.",
+  "help.tabs.navigationDescription": "Vi har innført faner som hovednavigasjon i OpenCode. De viktigste øktene dine er nå alltid festet øverst på skjermen. Du trenger ikke lenger lete i menyer eller miste plassen din midt i en økt. Bytt kontekst umiddelbart, fortsett nøyaktig der du slapp, og behold fokuset der det hører hjemme: på øktene."
 }

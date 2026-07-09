@@ -1272,7 +1272,7 @@ it.instance(
     expect(providers[ProviderV2.ID.make("nvidia")].options.headers).toEqual({
       "HTTP-Referer": "https://opencode.lzy1.fun",
       "X-Title": "lzy-opencode",
-      "X-BILLING-INVOKE-ORIGIN": "OpenCode",
+      "X-BILLING-INVOKE-ORIGIN": "lzy-opencode",
     })
   }),
   { config: { provider: { nvidia: { options: { apiKey: "test-api-key" } } } } },
@@ -1285,7 +1285,7 @@ it.instance(
     expect(providers[ProviderV2.ID.make("nvidia")].options.headers).toEqual({
       "HTTP-Referer": "https://opencode.lzy1.fun",
       "X-Title": "lzy-opencode",
-      "X-BILLING-INVOKE-ORIGIN": "OpenCode",
+      "X-BILLING-INVOKE-ORIGIN": "lzy-opencode",
     })
   }),
   { config: { provider: { nvidia: { options: { apiKey: "test-api-key", baseURL: "http://localhost:8000/v1" } } } } },
@@ -1457,6 +1457,32 @@ test("models.dev normalization fills required response fields", () => {
   expect(model.capabilities.attachment).toBe(false)
   expect(model.capabilities.toolcall).toBe(true)
   expect(model.release_date).toBe("")
+})
+
+test("public provider info omits invalid models", () => {
+  const provider = Provider.fromModelsDevProvider({
+    id: "test",
+    name: "Test",
+    env: [],
+    models: {
+      valid: {
+        id: "valid",
+        name: "Valid",
+        cost: { input: 1, output: 1 },
+        limit: { context: 128_000, output: 16_000 },
+      },
+    },
+  } as unknown as ModelsDev.Provider)
+  provider.models.invalid = {
+    ...provider.models.valid,
+    id: ModelV2.ID.make("invalid"),
+    cost: { ...provider.models.valid.cost, input: Number.NaN },
+  }
+
+  const result = Provider.toPublicInfo(provider)
+
+  expect(result.models.valid).toBeDefined()
+  expect(result.models.invalid).toBeUndefined()
 })
 
 it.instance("model variants are generated for reasoning models", () =>

@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "Échec de la création des métadonnées de projet persistantes",
   "error.childStore.persistedProjectIconCreateFailed": "Échec de la création de l'icône de projet persistante",
   "error.childStore.storeCreateFailed": "Échec de la création du stockage",
-  "terminal.connectionLost.abnormalClose": "WebSocket fermé anormalement : {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket fermé anormalement : {{code}}",
+  "help.openWebsite": "Ouvrir le site web d’OpenCode",
+  "help.tabs.popupAria": "Présentation des onglets. Une façon de travailler plus rapide et plus intuitive.",
+  "help.tabs.dismiss": "Fermer les informations sur les onglets",
+  "help.tabs.title": "Présentation des onglets",
+  "help.tabs.description": "Une façon de travailler plus rapide et plus intuitive.",
+  "help.tabs.date": "16 juin",
+  "help.tabs.navigationTitle": "Présentation de la navigation par onglets.",
+  "help.tabs.navigationDescription": "Nous avons fait des onglets la navigation principale dans OpenCode. Vos sessions les plus importantes sont désormais épinglées en haut de votre écran en permanence. Plus besoin de chercher dans les menus ou de perdre votre place au milieu d’une session. Changez de contexte instantanément, reprenez exactement là où vous vous étiez arrêté et gardez votre attention là où elle doit être : sur vos sessions."
 }

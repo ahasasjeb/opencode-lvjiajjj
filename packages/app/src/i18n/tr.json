@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "Kalıcı proje meta verileri oluşturulamadı",
   "error.childStore.persistedProjectIconCreateFailed": "Kalıcı proje simgesi oluşturulamadı",
   "error.childStore.storeCreateFailed": "Depo oluşturulamadı",
-  "terminal.connectionLost.abnormalClose": "WebSocket anormal şekilde kapandı: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket anormal şekilde kapandı: {{code}}",
+  "help.openWebsite": "OpenCode web sitesini aç",
+  "help.tabs.popupAria": "Sekmeleri tanıtıyoruz. Daha hızlı ve daha sezgisel bir çalışma yöntemi.",
+  "help.tabs.dismiss": "Sekmeler hakkındaki bilgileri kapat",
+  "help.tabs.title": "Sekmeleri tanıtıyoruz",
+  "help.tabs.description": "Daha hızlı ve daha sezgisel bir çalışma yöntemi.",
+  "help.tabs.date": "16 Haziran",
+  "help.tabs.navigationTitle": "Sekme gezintisini tanıtıyoruz.",
+  "help.tabs.navigationDescription": "Sekmeleri OpenCode'da birincil gezinme yöntemi olarak ekledik. En önemli oturumlarınız artık her zaman ekranın üst kısmına sabitlenir. Artık menülerde aramanıza veya bir oturumun ortasında yerinizi kaybetmenize gerek yok. Anında bağlam değiştirin, kaldığınız yerden tam olarak devam edin ve odağınızı olması gereken yerde tutun: oturumlarda."
 }

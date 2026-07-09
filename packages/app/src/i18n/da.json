@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "Kunne ikke oprette vedvarende projektmetadata",
   "error.childStore.persistedProjectIconCreateFailed": "Kunne ikke oprette vedvarende projektikon",
   "error.childStore.storeCreateFailed": "Kunne ikke oprette lager",
-  "terminal.connectionLost.abnormalClose": "WebSocket lukkede unormalt: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket lukkede unormalt: {{code}}",
+  "help.openWebsite": "Åbn OpenCode-webstedet",
+  "help.tabs.popupAria": "Vi introducerer faner. En hurtigere og mere intuitiv måde at arbejde på.",
+  "help.tabs.dismiss": "Luk oplysninger om faner",
+  "help.tabs.title": "Vi introducerer faner",
+  "help.tabs.description": "En hurtigere og mere intuitiv måde at arbejde på.",
+  "help.tabs.date": "16. juni",
+  "help.tabs.navigationTitle": "Vi introducerer fanenavigation.",
+  "help.tabs.navigationDescription": "Vi har introduceret faner som den primære navigation i OpenCode. Dine vigtigste sessioner er nu altid fastgjort øverst på skærmen. Du behøver ikke længere lede gennem menuer eller miste din plads midt i en session. Skift kontekst med det samme, fortsæt præcis hvor du slap, og hold fokus, hvor det hører hjemme: på sessionerne."
 }

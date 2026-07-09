@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "创建持久化项目元数据失败",
   "error.childStore.persistedProjectIconCreateFailed": "创建持久化项目图标失败",
   "error.childStore.storeCreateFailed": "创建存储失败",
-  "terminal.connectionLost.abnormalClose": "WebSocket 异常关闭：{{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket 异常关闭：{{code}}",
+  "help.openWebsite": "打开 OpenCode 网站",
+  "help.tabs.popupAria": "标签页介绍。更快、更直观的工作方式。",
+  "help.tabs.dismiss": "关闭标签页介绍",
+  "help.tabs.title": "标签页介绍",
+  "help.tabs.description": "更快、更直观的工作方式。",
+  "help.tabs.date": "6月16日",
+  "help.tabs.navigationTitle": "介绍标签页导航。",
+  "help.tabs.navigationDescription": "我们已将标签页作为 OpenCode 的主要导航方式。您最重要的会话现在始终固定在屏幕顶部。无需再在菜单中翻找，也不会在会话中迷失位置。即刻切换上下文，准确从上次停下的地方继续，并将注意力集中在最重要的地方：会话。"
 }

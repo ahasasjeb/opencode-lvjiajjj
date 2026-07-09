@@ -984,5 +984,13 @@
   "error.childStore.persistedProjectMetadataCreateFailed": "Error al crear metadatos de proyecto persistentes",
   "error.childStore.persistedProjectIconCreateFailed": "Error al crear icono de proyecto persistente",
   "error.childStore.storeCreateFailed": "Error al crear almacén",
-  "terminal.connectionLost.abnormalClose": "WebSocket cerrado anormalmente: {{code}}"
+  "terminal.connectionLost.abnormalClose": "WebSocket cerrado anormalmente: {{code}}",
+  "help.openWebsite": "Abrir el sitio web de OpenCode",
+  "help.tabs.popupAria": "Presentamos las pestañas. Una forma de trabajar más rápida e intuitiva.",
+  "help.tabs.dismiss": "Cerrar la información sobre las pestañas",
+  "help.tabs.title": "Presentamos las pestañas",
+  "help.tabs.description": "Una forma de trabajar más rápida e intuitiva.",
+  "help.tabs.date": "16 de junio",
+  "help.tabs.navigationTitle": "Presentamos la navegación por pestañas.",
+  "help.tabs.navigationDescription": "Hemos introducido las pestañas como la navegación principal de OpenCode. Tus sesiones más importantes ahora permanecen fijadas en la parte superior de la pantalla en todo momento. Ya no tendrás que buscar en los menús ni perder tu lugar a mitad de una sesión. Cambia de contexto al instante, retoma exactamente donde lo dejaste y mantén el foco donde corresponde: en las sesiones."
 }
