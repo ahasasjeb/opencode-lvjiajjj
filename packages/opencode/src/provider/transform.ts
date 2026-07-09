@@ -734,7 +734,6 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
       high: { reasoningEffort: "high" },
     }
   }
-  if (id.includes("grok")) return {}
 
   switch (model.api.npm) {
     case "@openrouter/ai-sdk-provider":
@@ -1128,9 +1127,11 @@ export function options(input: {
   }
 
   if (
-    input.model.providerID === "openai" ||
-    input.model.providerID === "chatgpt" ||
-    input.providerOptions?.setCacheKey
+    input.providerOptions?.setCacheKey !== false &&
+    (input.model.providerID === "openai" ||
+      input.model.providerID === "chatgpt" ||
+      input.model.api.npm === "@ai-sdk/xai" ||
+      input.providerOptions?.setCacheKey)
   ) {
     result["promptCacheKey"] = input.sessionID
   }
