@@ -43,14 +43,25 @@ jobs:
           OPENCODE_NPM_SCOPE: "@lzy1234"
         run: bun run --cwd packages/opencode build
 
-      - name: Publish platform packages
+      - name: Publish platform packages in parallel
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TAG: ${{ inputs.tag }}
+          NPM_PUBLISH_CONCURRENCY: "12"
         run: |
           set -euo pipefail
-          for dir in packages/opencode/dist/@lzy1234/opencode-*; do
-            npm publish "$dir" --access public --tag "${{ inputs.tag }}"
-          done
+
+          find packages/opencode/dist/@lzy1234 \
+            -mindepth 1 \
+            -maxdepth 1 \
+            -type d \
+            -name "opencode-*" \
+            -print0 | xargs -0 -r -P "$NPM_PUBLISH_CONCURRENCY" -I {} bash -c '
+              set -euo pipefail
+              dir="$1"
+              echo "Publishing ${dir}"
+              npm publish "$dir" --access public --tag "$NPM_TAG"
+            ' _ {}
 
       - name: Publish main package
         env:
