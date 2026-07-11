@@ -17,18 +17,34 @@ permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: publish-npm-${{ inputs.version }}
+  cancel-in-progress: false
+
 jobs:
-  publish:
+  build:
+    name: Build ${{ matrix.target }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        target:
+          - linux-arm64
+          - linux-x64
+          - linux-x64-baseline
+          - linux-arm64-musl
+          - linux-x64-musl
+          - linux-x64-baseline-musl
+          - darwin-arm64
+          - darwin-x64
+          - darwin-x64-baseline
+          - windows-arm64
+          - windows-x64
+          - windows-x64-baseline
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-          package-manager-cache: false
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -36,23 +52,148 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - name: Build scoped binary packages
+      - name: Build ${{ matrix.target }} package
         env:
           OPENCODE_VERSION: ${{ inputs.version }}
           OPENCODE_CHANNEL: latest
           OPENCODE_NPM_SCOPE: "@lzy1234"
-        run: bun run --cwd packages/opencode build
+        run: >-
+          bun run packages/opencode/script/build.ts
+          --target=${{ matrix.target }}
+          --skip-meta
 
-      - name: Publish platform packages
+      - name: Upload ${{ matrix.target }} package
+        uses: actions/upload-artifact@v7
+        with:
+          name: opencode-${{ matrix.target }}
+          path: packages/opencode/dist/@lzy1234/opencode-${{ matrix.target }}
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  publish:
+    name: Publish all npm packages
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Download all platform packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: opencode-*
+          path: packages/opencode/dist/@lzy1234
+
+      - name: Restore executable permissions
+        run: find packages/opencode/dist/@lzy1234 -type f -path '*/bin/*' -exec chmod 755 {} +
+
+      - name: Generate main package
+        env:
+          OPENCODE_VERSION: ${{ inputs.version }}
+          OPENCODE_NPM_SCOPE: "@lzy1234"
+          OPENCODE_NPM_BIN: "opencode2"
+        run: |
+          node --input-type=commonjs <<'NODE'
+          const fs = require("node:fs")
+          const path = require("node:path")
+
+          const scope = process.env.OPENCODE_NPM_SCOPE
+          const version = process.env.OPENCODE_VERSION
+          const binName = process.env.OPENCODE_NPM_BIN
+          const scopeDir = path.resolve("packages/opencode/dist", scope)
+          const sourcePkg = JSON.parse(fs.readFileSync("packages/opencode/package.json", "utf8"))
+
+          const platformPackages = fs
+            .readdirSync(scopeDir, { withFileTypes: true })
+            .filter((entry) => entry.isDirectory() && entry.name.startsWith("opencode-"))
+            .map((entry) => {
+              const packageJsonPath = path.join(scopeDir, entry.name, "package.json")
+              const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))
+              if (packageJson.version !== version) {
+                throw new Error(`${packageJson.name} has version ${packageJson.version}, expected ${version}`)
+              }
+              return packageJson.name
+            })
+            .sort()
+
+          if (platformPackages.length !== 12) {
+            throw new Error(`Expected 12 platform packages, found ${platformPackages.length}`)
+          }
+
+          const metaDir = path.join(scopeDir, "opencode")
+          fs.mkdirSync(path.join(metaDir, "bin"), { recursive: true })
+          fs.copyFileSync("packages/opencode/bin/opencode", path.join(metaDir, "bin", "opencode"))
+          fs.chmodSync(path.join(metaDir, "bin", "opencode"), 0o755)
+
+          fs.writeFileSync(
+            path.join(metaDir, "package.json"),
+            JSON.stringify(
+              {
+                name: `${scope}/opencode`,
+                version,
+                description: sourcePkg.description,
+                license: sourcePkg.license,
+                type: "commonjs",
+                bin: {
+                  [binName]: "./bin/opencode",
+                },
+                optionalDependencies: Object.fromEntries(platformPackages.map((name) => [name, version])),
+                publishConfig: {
+                  access: "public",
+                },
+              },
+              null,
+              2,
+            ),
+          )
+          NODE
+
+      - name: Publish platform packages in parallel
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          for dir in packages/opencode/dist/@lzy1234/opencode-*; do
-            npm publish "$dir" --access public --tag "${{ inputs.tag }}"
-          done
+
+          publish_package() {
+            local dir="$1"
+            local name version
+            name="$(node -p "require('./${dir}/package.json').name")"
+            version="$(node -p "require('./${dir}/package.json').version")"
+
+            if npm view "${name}@${version}" version >/dev/null 2>&1; then
+              echo "${name}@${version} already exists; updating dist-tag only"
+              npm dist-tag add "${name}@${version}" "${NPM_TAG}"
+            else
+              npm publish "${dir}" --access public --tag "${NPM_TAG}"
+            fi
+          }
+          export -f publish_package
+
+          find packages/opencode/dist/@lzy1234 \
+            -mindepth 1 -maxdepth 1 -type d -name 'opencode-*' -print0 \
+            | xargs -0 -n1 -P6 bash -c 'publish_package "$1"' _
 
       - name: Publish main package
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish packages/opencode/dist/@lzy1234/opencode --access public --tag "${{ inputs.tag }}"
+          NPM_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          dir="packages/opencode/dist/@lzy1234/opencode"
+          name="$(node -p "require('./${dir}/package.json').name")"
+          version="$(node -p "require('./${dir}/package.json').version")"
+
+          if npm view "${name}@${version}" version >/dev/null 2>&1; then
+            echo "${name}@${version} already exists; updating dist-tag only"
+            npm dist-tag add "${name}@${version}" "${NPM_TAG}"
+          else
+            npm publish "${dir}" --access public --tag "${NPM_TAG}"
+          fi

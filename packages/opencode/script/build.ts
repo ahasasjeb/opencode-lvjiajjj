@@ -23,6 +23,8 @@ const skipInstall = process.argv.includes("--skip-install")
 const sourcemapsFlag = process.argv.includes("--sourcemaps")
 const plugin = createSolidTransformPlugin()
 const skipEmbedWebUi = process.argv.includes("--skip-embed-web-ui")
+const skipMeta = process.argv.includes("--skip-meta")
+const targetFlag = process.argv.find((arg) => arg.startsWith("--target="))?.slice("--target=".length)
 const npmScope = process.env.OPENCODE_NPM_SCOPE ?? "@lzy1234"
 const npmPackageName = `${npmScope}/${pkg.name}`
 const npmBinName = process.env.OPENCODE_NPM_BIN ?? "opencode2"
@@ -116,26 +118,44 @@ const allTargets: {
   },
 ]
 
-const targets = singleFlag
-  ? allTargets.filter((item) => {
-      if (item.os !== process.platform || item.arch !== process.arch) {
-        return false
-      }
+const targetName = (item: (typeof allTargets)[number]) =>
+  [
+    item.os === "win32" ? "windows" : item.os,
+    item.arch,
+    item.avx2 === false ? "baseline" : undefined,
+    item.abi,
+  ]
+    .filter(Boolean)
+    .join("-")
 
-      // When building for the current platform, prefer a single native binary by default.
-      // Baseline binaries require additional Bun artifacts and can be flaky to download.
-      if (item.avx2 === false) {
-        return baselineFlag
-      }
+const targets = targetFlag
+  ? allTargets.filter((item) => targetName(item) === targetFlag)
+  : singleFlag
+    ? allTargets.filter((item) => {
+        if (item.os !== process.platform || item.arch !== process.arch) {
+          return false
+        }
 
-      // also skip abi-specific builds for the same reason
-      if (item.abi !== undefined) {
-        return false
-      }
+        // When building for the current platform, prefer a single native binary by default.
+        // Baseline binaries require additional Bun artifacts and can be flaky to download.
+        if (item.avx2 === false) {
+          return baselineFlag
+        }
 
-      return true
-    })
-  : allTargets
+        // also skip abi-specific builds for the same reason
+        if (item.abi !== undefined) {
+          return false
+        }
+
+        return true
+      })
+    : allTargets
+
+if (targetFlag && targets.length !== 1) {
+  console.error(`Unknown build target: ${targetFlag}`)
+  console.error(`Available targets: ${allTargets.map(targetName).join(", ")}`)
+  process.exit(1)
+}
 
 await $`rm -rf dist`
 
@@ -235,30 +255,32 @@ for (const item of targets) {
   binaries[name] = Script.version
 }
 
-const metaDir = `dist/${npmPackageName}`
-fs.mkdirSync(path.join(metaDir, "bin"), { recursive: true })
-fs.copyFileSync("bin/opencode", path.join(metaDir, "bin", "opencode"))
+if (!skipMeta) {
+  const metaDir = `dist/${npmPackageName}`
+  fs.mkdirSync(path.join(metaDir, "bin"), { recursive: true })
+  fs.copyFileSync("bin/opencode", path.join(metaDir, "bin", "opencode"))
 
-await Bun.file(path.join(metaDir, "package.json")).write(
-  JSON.stringify(
-    {
-      name: npmPackageName,
-      version: Script.version,
-      description: pkg.description,
-      license: pkg.license,
-      type: "commonjs",
-      bin: {
-        [npmBinName]: "./bin/opencode",
+  await Bun.file(path.join(metaDir, "package.json")).write(
+    JSON.stringify(
+      {
+        name: npmPackageName,
+        version: Script.version,
+        description: pkg.description,
+        license: pkg.license,
+        type: "commonjs",
+        bin: {
+          [npmBinName]: "./bin/opencode",
+        },
+        optionalDependencies: Object.fromEntries(Object.keys(binaries).sort().map((name) => [name, Script.version])),
+        publishConfig: {
+          access: "public",
+        },
       },
-      optionalDependencies: Object.fromEntries(Object.keys(binaries).sort().map((name) => [name, Script.version])),
-      publishConfig: {
-        access: "public",
-      },
-    },
-    null,
-    2,
-  ),
-)
+      null,
+      2,
+    ),
+  )
+}
 
 if (Script.release) {
   for (const key of Object.keys(binaries)) {
