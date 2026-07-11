@@ -1,5 +1,6 @@
 import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
 import { For, Show } from "solid-js"
+import { useI18n } from "../context/i18n"
 import { catalogSlug, formatCatalogLabName, type ModelCatalogEntry } from "./model-catalog"
 
 export type ComparisonModelRef = {
@@ -57,6 +58,7 @@ export function ComparisonCardsSection(props: {
   compact?: boolean
   variant?: "panel" | "featured"
 }) {
+  const i18n = useI18n()
   const featured = () => props.variant === "featured"
   const pairs = () => (featured() ? props.pairs.slice(0, 4) : props.pairs)
 
@@ -68,8 +70,8 @@ export function ComparisonCardsSection(props: {
         data-variant={!featured() && props.compact ? "compact" : undefined}
       >
         <p data-slot="section-title">
-          <strong>{props.title ?? "Model Comparisons"}.</strong>{" "}
-          <span>{props.description ?? "Compare usage, cost, limits, and features."}</span>
+          <strong>{props.title ?? i18n.t("compare.cardsTitle")}.</strong>{" "}
+          <span>{props.description ?? i18n.t("compare.cardsDescription")}</span>
         </p>
         <div data-component={featured() ? "compare-home-card-grid" : "comparison-card-grid"}>
           <For each={pairs()}>
@@ -123,6 +125,7 @@ function ComparisonCardIcon() {
 }
 
 function ComparisonPanelCard(props: { pair: ComparisonPair }) {
+  const i18n = useI18n()
   return (
     <a data-component="comparison-card" href={canonicalComparisonHref(props.pair.first, props.pair.second)}>
       <span>{props.pair.detail}</span>
@@ -136,7 +139,7 @@ function ComparisonPanelCard(props: { pair: ComparisonPair }) {
       </p>
       <Show when={props.pair.first.metric || props.pair.second.metric}>
         <small>
-          {props.pair.first.metric ?? "Listed"} / {props.pair.second.metric ?? "Listed"}
+          {props.pair.first.metric ?? i18n.t("compare.listed")} / {props.pair.second.metric ?? i18n.t("compare.listed")}
         </small>
       </Show>
     </a>

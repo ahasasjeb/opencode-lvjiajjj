@@ -45,27 +45,17 @@ import {
   type ResolvedComparisonFamily,
 } from "../lib/comparison-pages"
 import { baseUrl } from "../lib/language"
+import { useI18n } from "../context/i18n"
+import type { Key } from "../i18n"
 
-const compareHeaderLinks: readonly HeaderLink[] = [
-  { href: `${import.meta.env.BASE_URL}#top-models`, label: "Top Models" },
-  { href: `${import.meta.env.BASE_URL}#leaderboard`, label: "Leaderboard" },
-  { href: `${import.meta.env.BASE_URL}#market-share`, label: "Market Share" },
-  { href: `${import.meta.env.BASE_URL}#token-cost`, label: "Token Cost" },
-  { href: `${import.meta.env.BASE_URL}#session-cost`, label: "Session Cost" },
-]
-const compareFooterLinks: readonly HeaderLink[] = [
-  { href: import.meta.env.BASE_URL, label: "Data Home" },
-  { href: `${import.meta.env.BASE_URL}compare`, label: "Model Compare" },
-  { href: `${import.meta.env.BASE_URL}#top-models`, label: "Top Models" },
-  { href: `${import.meta.env.BASE_URL}#token-cost`, label: "Token Cost" },
-]
+const usageBarLimit = 60
+const comparisonModelLimit = 6
 const heroLabs = [
   { lab: "deepseek", label: "DeepSeek" },
   { lab: "openai", label: "OpenAI" },
   { lab: "anthropic", label: "Anthropic" },
 ] as const
-const usageBarLimit = 60
-const comparisonModelLimit = 6
+type Translate = (key: Key, params?: Record<string, string | number>) => string
 
 type ComparisonModel = {
   name: string
@@ -113,6 +103,7 @@ const getComparisonData = query(async (models: StatsModelComparisonInput[]) => {
 }, "getStatsModelComparisonDetailData")
 
 export default function ModelCompareDetailPage(props: ModelCompareDetailPageProps = {}) {
+  const i18n = useI18n()
   const event = getRequestEvent()
   event?.response.headers.set("Cache-Control", "public, max-age=60, s-maxage=300, stale-while-revalidate=86400")
   const params = useParams()
@@ -181,8 +172,8 @@ export default function ModelCompareDetailPage(props: ModelCompareDetailPageProp
     return canonicalModelComparisonPath(comparisonCatalogEntry(models()[0]), comparisonCatalogEntry(models()[1]))
   })
   const canonicalUrl = createMemo(() => new URL(canonicalPath(), baseUrl).toString())
-  const detailSections = createMemo(() => buildComparisonDetailSections(models()))
-  const relatedPairs = createMemo(() => buildRelatedPairs(catalog(), models()[0], models()[1]))
+  const detailSections = createMemo(() => buildComparisonDetailSections(models(), i18n.t))
+  const relatedPairs = createMemo(() => buildRelatedPairs(catalog(), models()[0], models()[1], i18n.t))
   const selectorModels = createMemo(() =>
     uniqueCatalogModels([...models().map(comparisonCatalogEntry), ...(catalog()?.models ?? [])]),
   )
@@ -192,6 +183,19 @@ export default function ModelCompareDetailPage(props: ModelCompareDetailPageProp
       models().length < comparisonModelLimit &&
       selectorModels().some((model) => !selectedCatalogModels().some((selected) => selected.id === model.id)),
   )
+  const compareHeaderLinks = createMemo<readonly HeaderLink[]>(() => [
+    { href: `${import.meta.env.BASE_URL}#top-models`, label: i18n.t("nav.topModels") },
+    { href: `${import.meta.env.BASE_URL}#leaderboard`, label: i18n.t("nav.leaderboard") },
+    { href: `${import.meta.env.BASE_URL}#market-share`, label: i18n.t("nav.marketShare") },
+    { href: `${import.meta.env.BASE_URL}#token-cost`, label: i18n.t("nav.tokenCost") },
+    { href: `${import.meta.env.BASE_URL}#session-cost`, label: i18n.t("nav.sessionCost") },
+  ])
+  const compareFooterLinks = createMemo<readonly HeaderLink[]>(() => [
+    { href: import.meta.env.BASE_URL, label: i18n.t("nav.dataHome") },
+    { href: `${import.meta.env.BASE_URL}compare`, label: i18n.t("nav.modelCompare") },
+    { href: `${import.meta.env.BASE_URL}#top-models`, label: i18n.t("nav.topModels") },
+    { href: `${import.meta.env.BASE_URL}#token-cost`, label: i18n.t("nav.tokenCost") },
+  ])
   const navigateToModels = (next: ModelCatalogEntry[]) => {
     if (typeof window === "undefined" || next.length < 2) return
     window.location.href = comparisonModelsHref(next)
@@ -246,7 +250,11 @@ export default function ModelCompareDetailPage(props: ModelCompareDetailPageProp
         <Meta name="twitter:description" content={description()} />
         <script type="application/ld+json">{structuredData()}</script>
       </Show>
-      <Header githubStars={githubStars() ?? "150K"} links={compareHeaderLinks} brandHref={import.meta.env.BASE_URL} />
+      <Header
+        githubStars={githubStars() ?? "150K"}
+        links={compareHeaderLinks()}
+        brandHref={import.meta.env.BASE_URL}
+      />
       <div data-component="container">
         <div data-component="content">
           <ComparisonHero
@@ -259,7 +267,7 @@ export default function ModelCompareDetailPage(props: ModelCompareDetailPageProp
           <Show when={addingModel()}>
             <CompareModelSelectModal
               blockedIds={selectedCatalogModels().map((model) => model.id)}
-              label="Add model"
+              label={i18n.t("compare.addModel")}
               models={selectorModels()}
               onClose={() => setAddingModel(false)}
               onSelect={(model) => {
@@ -295,16 +303,16 @@ export default function ModelCompareDetailPage(props: ModelCompareDetailPageProp
           </div>
           <ComparisonCardsSection
             pairs={relatedPairs()}
-            title="Related comparisons"
-            description="Other model pairs to check."
+            title={i18n.t("compare.relatedTitle")}
+            description={i18n.t("compare.relatedDescription")}
             variant="featured"
           />
         </div>
         <Footer
           themePreference={themePreference()}
           onThemePreferenceChange={updateThemePreference}
-          links={compareFooterLinks}
-          bridge={{ href: "#comparison", label: "MODEL COMPARISON" }}
+          links={compareFooterLinks()}
+          bridge={{ href: "#comparison", label: i18n.t("compare.modelComparisonUpper") }}
         />
       </div>
     </main>
@@ -318,22 +326,23 @@ function ComparisonHero(props: {
   onAddModel: () => void
   onHighlightBestChange: () => void
 }) {
+  const i18n = useI18n()
   return (
     <section id="overview" data-section="compare-detail-hero">
-      <nav data-component="compare-home-breadcrumb" aria-label="Breadcrumb">
+      <nav data-component="compare-home-breadcrumb" aria-label={i18n.t("compare.breadcrumb")}>
         <a data-slot="compare-home-crumb" href={import.meta.env.BASE_URL}>
-          Data
+          {i18n.t("compare.breadcrumbData")}
         </a>
         <span data-slot="compare-home-separator">/</span>
         <a data-slot="compare-home-crumb" href={`${import.meta.env.BASE_URL}compare`}>
-          Compare
+          {i18n.t("compare.breadcrumbCompare")}
         </a>
       </nav>
       <div data-slot="compare-detail-hero-grid">
-        <h1 aria-label={`Compare ${props.models.map((model) => model.name).join(", ")}`}>
-          <span>Compare</span>
+        <h1 aria-label={`${i18n.t("compare.heroCompare")} ${props.models.map((model) => model.name).join(", ")}`}>
+          <span>{i18n.t("compare.heroCompare")}</span>
           <HeroModelStack />
-          <span>AI models</span>
+          <span>{i18n.t("compare.heroAiModels")}</span>
         </h1>
         <div data-slot="compare-detail-actions">
           <button
@@ -347,7 +356,7 @@ function ComparisonHero(props: {
               <i />
               <i />
             </span>
-            <span>Highlight best</span>
+            <span>{i18n.t("compare.highlightBest")}</span>
           </button>
           <button
             type="button"
@@ -359,7 +368,7 @@ function ComparisonHero(props: {
             <span data-slot="compare-home-plus" aria-hidden="true">
               +
             </span>
-            <span>Add model</span>
+            <span>{i18n.t("compare.addModel")}</span>
           </button>
         </div>
       </div>
@@ -383,6 +392,7 @@ function HeroModelStack() {
 }
 
 function ComparisonPairSelector(props: { catalogModels: ModelCatalogEntry[]; models: readonly ComparisonModel[] }) {
+  const i18n = useI18n()
   const [activeIndex, setActiveIndex] = createSignal<number>()
   const selectedModels = createMemo(() => props.models.map(comparisonCatalogEntry))
   const activeSelected = createMemo(() => {
@@ -403,14 +413,14 @@ function ComparisonPairSelector(props: { catalogModels: ModelCatalogEntry[]; mod
   }
 
   return (
-    <section data-section="compare-detail-selector" aria-label="Selected models">
+    <section data-section="compare-detail-selector" aria-label={i18n.t("compare.selectedModels")}>
       <div data-component="compare-detail-selector-grid">
         <div data-slot="compare-detail-selector-spacer" aria-hidden="true" />
         <For each={props.models}>
           {(model, index) => (
             <CompareDetailSelectButton
               model={model}
-              label={`Model ${index() + 1}`}
+              label={i18n.t("compare.modelN", { n: index() + 1 })}
               column={index()}
               last={index() === props.models.length - 1}
               expanded={activeIndex() === index()}
@@ -423,7 +433,7 @@ function ComparisonPairSelector(props: { catalogModels: ModelCatalogEntry[]; mod
         {(selected) => (
           <CompareModelSelectModal
             blockedIds={blockedIds()}
-            label={`Choose model ${(activeIndex() ?? 0) + 1}`}
+            label={i18n.t("compare.chooseModelN", { n: (activeIndex() ?? 0) + 1 })}
             models={props.catalogModels}
             selected={selected()}
             onClose={() => setActiveIndex(undefined)}
@@ -474,6 +484,7 @@ function CompareModelSelectModal(props: {
   onClose: () => void
   onSelect: (model: ModelCatalogEntry) => void
 }) {
+  const i18n = useI18n()
   let searchInput: HTMLInputElement | undefined
   const [search, setSearch] = createSignal("")
   const [previewId, setPreviewId] = createSignal(props.selected?.id ?? "")
@@ -527,8 +538,8 @@ function CompareModelSelectModal(props: {
             <input
               ref={searchInput}
               value={search()}
-              placeholder="Search models"
-              aria-label="Search models"
+              placeholder={i18n.t("compare.searchModels")}
+              aria-label={i18n.t("compare.searchModels")}
               onInput={(event) => setSearch(event.currentTarget.value)}
             />
           </label>
@@ -537,8 +548,8 @@ function CompareModelSelectModal(props: {
               when={filteredModels().length > 0}
               fallback={
                 <div data-slot="compare-model-modal-empty">
-                  <strong>No models found</strong>
-                  <span>Try another search.</span>
+                  <strong>{i18n.t("compare.emptyTitle")}</strong>
+                  <span>{i18n.t("compare.tryAnotherSearch")}</span>
                 </div>
               }
             >
@@ -557,7 +568,7 @@ function CompareModelSelectModal(props: {
                       <span>{model.name}</span>
                     </span>
                     <Show when={isFreeModel(model)}>
-                      <span data-slot="compare-model-modal-badge">Free</span>
+                      <span data-slot="compare-model-modal-badge">{i18n.t("compare.free")}</span>
                     </Show>
                   </button>
                 )}
@@ -573,6 +584,8 @@ function CompareModelSelectModal(props: {
 }
 
 function CompareModelDetail(props: { model: ModelCatalogEntry }) {
+  const i18n = useI18n()
+  const unknown = () => i18n.t("compare.unknown")
   return (
     <aside data-slot="compare-model-modal-detail">
       <header data-slot="compare-model-modal-detail-header">
@@ -582,16 +595,32 @@ function CompareModelDetail(props: { model: ModelCatalogEntry }) {
       <div data-slot="compare-model-modal-description">
         <p>
           {props.model.description ??
-            `${props.model.name} is an AI model from ${formatCatalogLabName(props.model.lab)}.`}
+            i18n.t("compare.modelFromLab", {
+              name: props.model.name,
+              lab: formatCatalogLabName(props.model.lab),
+            })}
         </p>
         <span aria-hidden="true" />
       </div>
       <dl data-slot="compare-model-modal-facts">
-        <CompareModelFact label="Release" value={formatCatalogDate(props.model.releaseDate)} />
-        <CompareModelFact label="Context" value={formatCatalogLimit(props.model.limit?.context)} />
-        <CompareModelFact label="Input" value={formatCatalogUnitPrice(props.model.cost?.input)} />
-        <CompareModelFact label="Output" value={formatCatalogUnitPrice(props.model.cost?.output)} />
-        <CompareModelFact label="URL" value={formatModelUrl(props.model)} href={modelHref(props.model)} />
+        <CompareModelFact label={i18n.t("compare.fact.release")} value={formatCatalogDate(props.model.releaseDate, unknown())} />
+        <CompareModelFact
+          label={i18n.t("compare.fact.context")}
+          value={formatCatalogLimit(props.model.limit?.context, unknown())}
+        />
+        <CompareModelFact
+          label={i18n.t("compare.fact.input")}
+          value={formatCatalogUnitPrice(props.model.cost?.input, unknown())}
+        />
+        <CompareModelFact
+          label={i18n.t("compare.fact.output")}
+          value={formatCatalogUnitPrice(props.model.cost?.output, unknown())}
+        />
+        <CompareModelFact
+          label={i18n.t("compare.fact.url")}
+          value={formatModelUrl(props.model)}
+          href={modelHref(props.model)}
+        />
       </dl>
     </aside>
   )
@@ -615,8 +644,9 @@ function ComparisonDetailMatrix(props: {
   highlightBest: boolean
   modelCount: number
 }) {
+  const i18n = useI18n()
   return (
-    <section id="comparison" data-section="compare-detail-matrix" aria-label="Model comparison">
+    <section id="comparison" data-section="compare-detail-matrix" aria-label={i18n.t("compare.modelComparison")}>
       <div data-component="compare-detail-matrix">
         <For each={props.sections}>
           {(section) => (
@@ -870,81 +900,81 @@ function uniqueCatalogModels(models: ModelCatalogEntry[]) {
   )
 }
 
-function buildComparisonDetailSections(models: readonly ComparisonModel[]): ComparisonDetailSection[] {
+function buildComparisonDetailSections(models: readonly ComparisonModel[], t: Translate): ComparisonDetailSection[] {
   return [
     {
-      title: "Overview",
+      title: t("compare.section.overview"),
       rows: [
         comparisonDetailRow(
-          "Author",
+          t("compare.row.author"),
           models.map((model) => linkedTextCell(model.stats?.author ?? model.labName, labHref(model.lab))),
         ),
         comparisonDetailRow(
-          "Context length",
-          models.map((model) => limitCell(model.catalog?.limit?.context)),
+          t("compare.row.contextLength"),
+          models.map((model) => limitCell(model.catalog?.limit?.context, t)),
           "higher",
         ),
         comparisonDetailRow(
-          "Reasoning",
-          models.map((model) => booleanDetailCell(model.catalog?.reasoning)),
+          t("compare.row.reasoning"),
+          models.map((model) => booleanDetailCell(model.catalog?.reasoning, t)),
           "higher",
         ),
         comparisonDetailRow(
-          "Input modalities",
-          models.map((model) => textCell(formatCatalogModalities(model.catalog?.modalities.input ?? []))),
+          t("compare.row.inputModalities"),
+          models.map((model) => textCell(formatCatalogModalities(model.catalog?.modalities.input ?? [], t("compare.unknown")))),
         ),
         comparisonDetailRow(
-          "Output modalities",
-          models.map((model) => textCell(formatCatalogModalities(model.catalog?.modalities.output ?? []))),
+          t("compare.row.outputModalities"),
+          models.map((model) => textCell(formatCatalogModalities(model.catalog?.modalities.output ?? [], t("compare.unknown")))),
         ),
         comparisonDetailRow(
-          "Providers",
+          t("compare.row.providers"),
           models.map((model) => linkedTextCell(model.labName, labHref(model.lab))),
         ),
       ],
     },
     {
-      title: "Pricing",
+      title: t("compare.section.pricing"),
       rows: [
         comparisonDetailRow(
-          "Input",
-          models.map((model) => priceCell(model.catalog?.cost?.input)),
+          t("compare.row.input"),
+          models.map((model) => priceCell(model.catalog?.cost?.input, t)),
           "lower",
         ),
         comparisonDetailRow(
-          "Output",
-          models.map((model) => priceCell(model.catalog?.cost?.output)),
+          t("compare.row.output"),
+          models.map((model) => priceCell(model.catalog?.cost?.output, t)),
           "lower",
         ),
         comparisonDetailRow(
-          "Cached input",
-          models.map((model) => priceCell(model.catalog?.cost?.cacheRead)),
+          t("compare.row.cachedInput"),
+          models.map((model) => priceCell(model.catalog?.cost?.cacheRead, t)),
           "lower",
         ),
       ],
     },
     {
-      title: "Momentum",
-      badge: "Last 2 mo",
+      title: t("compare.section.momentum"),
+      badge: t("compare.badge.last2mo"),
       rows: [
         comparisonDetailRow(
-          "Unique users",
-          models.map((model) => usageMetricCell(model.stats?.totals.uniqueUsers)),
+          t("compare.row.uniqueUsers"),
+          models.map((model) => usageMetricCell(model.stats?.totals.uniqueUsers, "compact", t)),
           "higher",
         ),
         comparisonDetailRow(
-          "Completed sessions",
-          models.map((model) => usageMetricCell(model.stats?.totals.sessions, "integer")),
+          t("compare.row.completedSessions"),
+          models.map((model) => usageMetricCell(model.stats?.totals.sessions, "integer", t)),
           "higher",
         ),
         comparisonDetailRow(
-          "Token share",
-          models.map((model) => percentCell(model.stats?.tokenShare)),
+          t("compare.row.tokenShare"),
+          models.map((model) => percentCell(model.stats?.tokenShare, t)),
           "higher",
         ),
         comparisonDetailRow(
-          "Tokens",
-          models.map((model) => tokenCell(model.stats?.totals.tokens, model.stats?.tokenChange)),
+          t("compare.row.tokens"),
+          models.map((model) => tokenCell(model.stats?.totals.tokens, model.stats?.tokenChange, t)),
           "higher",
         ),
       ],
@@ -977,8 +1007,9 @@ function buildRelatedPairs(
   catalog: ModelCatalog | undefined,
   first: ComparisonModel,
   second: ComparisonModel,
+  t: Translate,
 ): ComparisonPair[] {
-  const current = [comparisonRef(first), comparisonRef(second)] as const
+  const current = [comparisonRef(first, t), comparisonRef(second, t)] as const
   const alternatives = (catalog?.models ?? [])
     .filter((model) => model.id !== first.catalog?.id && model.id !== second.catalog?.id)
     .slice(0, 4)
@@ -986,19 +1017,27 @@ function buildRelatedPairs(
 
   return uniqueComparisonPairs(
     alternatives.slice(0, 3).flatMap((model, index) => [
-      { first: current[0], second: model, detail: index === 0 ? "Nearby alternative" : "Related comparison" },
-      { first: current[1], second: model, detail: index === 0 ? "Nearby alternative" : "Related comparison" },
+      {
+        first: current[0],
+        second: model,
+        detail: index === 0 ? t("compare.nearbyAlternative") : t("compare.relatedComparison"),
+      },
+      {
+        first: current[1],
+        second: model,
+        detail: index === 0 ? t("compare.nearbyAlternative") : t("compare.relatedComparison"),
+      },
     ]),
   ).slice(0, 6)
 }
 
-function comparisonRef(model: ComparisonModel): ComparisonModelRef {
+function comparisonRef(model: ComparisonModel, t: Translate): ComparisonModelRef {
   return {
     name: model.name,
     lab: model.lab,
     slug: model.slug,
     labName: model.labName,
-    metric: model.stats ? `#${model.stats.rank}` : "Catalog",
+    metric: model.stats ? `#${model.stats.rank}` : t("compare.catalog"),
   }
 }
 
@@ -1010,30 +1049,36 @@ function linkedTextCell(value: string, href: string): ComparisonDetailCell {
   return { value, href }
 }
 
-function booleanDetailCell(value: boolean | undefined): ComparisonDetailCell {
-  if (value === undefined) return { value: "Unknown" }
-  return { value: value ? "True" : "False", kind: "boolean", score: value ? 1 : 0 }
+function booleanDetailCell(value: boolean | undefined, t: Translate): ComparisonDetailCell {
+  if (value === undefined) return { value: t("compare.unknown") }
+  return { value: value ? t("compare.true") : t("compare.false"), kind: "boolean", score: value ? 1 : 0 }
 }
 
-function limitCell(value: number | undefined): ComparisonDetailCell {
-  return value === undefined ? { value: "Unknown" } : { value: formatTokens(value), score: value }
+function limitCell(value: number | undefined, t: Translate): ComparisonDetailCell {
+  return value === undefined ? { value: t("compare.unknown") } : { value: formatTokens(value), score: value }
 }
 
-function priceCell(value: number | undefined): ComparisonDetailCell {
-  return value === undefined ? { value: "Unknown" } : { value: formatModelPrice(value), unit: "/ 1M", score: value }
+function priceCell(value: number | undefined, t: Translate): ComparisonDetailCell {
+  return value === undefined
+    ? { value: t("compare.unknown") }
+    : { value: formatModelPrice(value), unit: "/ 1M", score: value }
 }
 
-function usageMetricCell(value: number | undefined, format: "compact" | "integer" = "compact"): ComparisonDetailCell {
-  if (value === undefined) return { value: "No usage" }
+function usageMetricCell(
+  value: number | undefined,
+  format: "compact" | "integer" = "compact",
+  t?: Translate,
+): ComparisonDetailCell {
+  if (value === undefined) return { value: t ? t("compare.noUsage") : "No usage" }
   return { value: format === "integer" ? formatInteger(value) : formatTokens(value), score: value }
 }
 
-function percentCell(value: number | undefined): ComparisonDetailCell {
-  return value === undefined ? { value: "No usage" } : { value: formatPercent(value), score: value }
+function percentCell(value: number | undefined, t: Translate): ComparisonDetailCell {
+  return value === undefined ? { value: t("compare.noUsage") } : { value: formatPercent(value), score: value }
 }
 
-function tokenCell(value: number | undefined, trend: number | undefined): ComparisonDetailCell {
-  if (value === undefined) return { value: "No usage" }
+function tokenCell(value: number | undefined, trend: number | undefined, t: Translate): ComparisonDetailCell {
+  if (value === undefined) return { value: t("compare.noUsage") }
   return { value: formatTokens(value), score: value, trend }
 }
 
@@ -1064,12 +1109,12 @@ function formatParamName(value: string) {
     .trim()
 }
 
-function formatCatalogLimit(value: number | undefined) {
-  return value === undefined ? "Unknown" : formatTokens(value)
+function formatCatalogLimit(value: number | undefined, unknown = "Unknown") {
+  return value === undefined ? unknown : formatTokens(value)
 }
 
-function formatCatalogUnitPrice(value: number | undefined) {
-  if (value === undefined) return "Unknown"
+function formatCatalogUnitPrice(value: number | undefined, unknown = "Unknown") {
+  if (value === undefined) return unknown
   return `${formatModelPrice(value)} / 1M`
 }
 
@@ -1078,15 +1123,15 @@ function formatModelPrice(value: number) {
   return formatMoney(value)
 }
 
-function formatCatalogModalities(values: string[]) {
-  if (values.length === 0) return "Unknown"
+function formatCatalogModalities(values: string[], unknown = "Unknown") {
+  if (values.length === 0) return unknown
   return values
     .map((value) => value.replace(/[-_]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()))
     .join(", ")
 }
 
-function formatCatalogDate(value: string | undefined) {
-  if (!value) return "Unknown"
+function formatCatalogDate(value: string | undefined, unknown = "Unknown") {
+  if (!value) return unknown
   const match = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(value)
   if (!match) return value
   const year = Number(match[1])

@@ -1,4 +1,6 @@
 import { createMemo, createSignal, For, Show, type JSX } from "solid-js"
+import { useI18n } from "../context/i18n"
+import type { Key } from "../i18n"
 import type { ModelCatalogBenchmark, ModelCatalogEntry } from "./model-catalog"
 
 const radarRingCount = 5
@@ -30,8 +32,9 @@ type RadarPoint = {
 }
 
 export function ComparisonRadar(props: ComparisonRadarProps) {
+  const i18n = useI18n()
   const [activeAxis, setActiveAxis] = createSignal<number>()
-  const axes = createMemo(() => buildRadarAxes(props.catalogModels))
+  const axes = createMemo(() => buildRadarAxes(props.catalogModels, (key) => i18n.t(key)))
   const series = createMemo(() =>
     props.models.map((model, index) => ({
       name: model.name,
@@ -45,7 +48,7 @@ export function ComparisonRadar(props: ComparisonRadarProps) {
       .map(
         (model) =>
           `${model.name}: ${axes()
-            .map((axis, index) => `${axis.label} ${formatRadarScore(model.scores[index])}`)
+            .map((axis, index) => `${axis.label} ${formatRadarScore(model.scores[index], i18n.t("compare.noData"))}`)
             .join(", ")}`,
       )
       .join(". "),
@@ -53,7 +56,7 @@ export function ComparisonRadar(props: ComparisonRadarProps) {
   const clearActiveAxis = (index: number) => setActiveAxis((active) => (active === index ? undefined : active))
 
   return (
-    <section data-section="compare-radar" aria-label="Model capabilities">
+    <section data-section="compare-radar" aria-label={i18n.t("compare.capabilities")}>
       <ol data-slot="compare-radar-legend">
         <For each={series()}>
           {(model) => (
@@ -182,7 +185,7 @@ export function ComparisonRadar(props: ComparisonRadarProps) {
   )
 }
 
-function buildRadarAxes(catalogModels: readonly ModelCatalogEntry[]): RadarAxis[] {
+function buildRadarAxes(catalogModels: readonly ModelCatalogEntry[], t: (key: Key) => string): RadarAxis[] {
   const benchmarks = benchmarkScoreGroups(catalogModels)
   const toolUseBenchmarks = benchmarkScoreGroups(catalogModels, true)
   const costs = catalogModels.flatMap((model) => {
@@ -195,19 +198,19 @@ function buildRadarAxes(catalogModels: readonly ModelCatalogEntry[]): RadarAxis[
   // Speed and safety stay out until the catalog exposes comparable values for them.
   return [
     {
-      label: "Reasoning",
-      description: "Ability to solve complex, multi-step problems. Based on reasoning benchmarks when available.",
+      label: t("compare.radar.reasoning"),
+      description: t("compare.radar.reasoningDesc"),
       score: (model) =>
         benchmarkPercentile(model, benchmarks, reasoningBenchmarkPattern) ?? (model.reasoning ? 100 : 0),
     },
     {
-      label: "Coding",
-      description: "Performance on software engineering and coding benchmarks.",
+      label: t("compare.radar.coding"),
+      description: t("compare.radar.codingDesc"),
       score: (model) => benchmarkPercentile(model, benchmarks, codingBenchmarkPattern),
     },
     {
-      label: "Cost efficiency",
-      description: "Relative input and output pricing. Lower-cost models score higher.",
+      label: t("compare.radar.cost"),
+      description: t("compare.radar.costDesc"),
       score: (model) => {
         const cost = modelCost(model)
         if (cost === undefined) return
@@ -216,8 +219,8 @@ function buildRadarAxes(catalogModels: readonly ModelCatalogEntry[]): RadarAxis[
       },
     },
     {
-      label: "Context window",
-      description: "How much input the model can process at once. Larger context windows score higher.",
+      label: t("compare.radar.context"),
+      description: t("compare.radar.contextDesc"),
       score: (model) => {
         const context = model.limit?.context
         if (context === undefined) return
@@ -225,16 +228,16 @@ function buildRadarAxes(catalogModels: readonly ModelCatalogEntry[]): RadarAxis[
       },
     },
     {
-      label: "Multimodal",
-      description: "Support for non-text input and output, including images, audio, and video.",
+      label: t("compare.radar.multimodal"),
+      description: t("compare.radar.multimodalDesc"),
       score: (model) => {
         if (multimodalMaximum === 0) return
         return (multimodalFeatureCount(model) / multimodalMaximum) * 100
       },
     },
     {
-      label: "Tool use",
-      description: "Performance on agent benchmarks including Terminal-Bench, Tau3, and Claw-Eval.",
+      label: t("compare.radar.toolUse"),
+      description: t("compare.radar.toolUseDesc"),
       score: (model) =>
         benchmarkPercentile(model, toolUseBenchmarks, toolUseBenchmarkPattern, {
           aggregate: "average",
@@ -386,6 +389,6 @@ function roundRadarCoordinate(value: number) {
   return Math.round(value * 1000) / 1000
 }
 
-function formatRadarScore(score: number | undefined) {
-  return score === undefined ? "No data" : `${Math.round(score)}/100`
+function formatRadarScore(score: number | undefined, noData = "No data") {
+  return score === undefined ? noData : `${Math.round(score)}/100`
 }

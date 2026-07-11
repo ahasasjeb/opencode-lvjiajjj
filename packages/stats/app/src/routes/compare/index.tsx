@@ -29,9 +29,6 @@ import {
 } from "../stats-shell"
 
 const comparePath = "/data/compare"
-const compareTitle = "AI Model Comparison"
-const compareDescription =
-  "Compare AI models on key metrics including benchmarks, price, context length, and other model features."
 const statsUnfurlPath = "banner.png"
 const uptimeBars = Array.from({ length: 10 }, (_, index) => index)
 const heroLabs = [
@@ -39,30 +36,10 @@ const heroLabs = [
   { lab: "openai", label: "OpenAI" },
   { lab: "anthropic", label: "Anthropic" },
 ] as const
-const categoryTemplates = [
-  {
-    title: "Flagship models",
-    description: "The latest top-tier model from major labs.",
-    kind: "flagship",
-  },
-  {
-    title: "Most affordable",
-    description: "Compact, lower-cost picks for high-throughput use.",
-    kind: "affordable",
-  },
-  {
-    title: "Best for code",
-    description: "Frequently chosen for programming tasks.",
-    kind: "code",
-  },
-  {
-    title: "Image generation",
-    description: "Compare top image models on cost and quality.",
-    kind: "image",
-  },
-] as const
+const categoryKinds = ["flagship", "affordable", "code", "image"] as const
 
 type CompareSlot = "first" | "second"
+type Translate = ReturnType<typeof useI18n>["t"]
 
 export default function ModelCompareIndex() {
   const i18n = useI18n()
@@ -75,7 +52,9 @@ export default function ModelCompareIndex() {
   const compareUrl = createMemo(() => localizedUrl(language.locale(), comparePath))
   const statsUnfurlUrl = new URL(statsUnfurlPath, localizedUrl("en", "/data/")).toString()
   const featuredModels = createMemo(() => (catalog()?.models ?? []).slice(0, 120))
-  const categories = createMemo(() => buildComparisonCategories(featuredModels()))
+  const categories = createMemo(() => buildComparisonCategories(featuredModels(), i18n.t))
+  const compareTitle = () => i18n.t("compare.title")
+  const compareDescription = () => i18n.t("compare.description")
   const compareHeaderLinks = createMemo<readonly HeaderLink[]>(() => [
     { href: `${import.meta.env.BASE_URL}#top-models`, label: i18n.t("nav.topModels") },
     { href: `${import.meta.env.BASE_URL}#leaderboard`, label: i18n.t("nav.leaderboard") },
@@ -107,13 +86,13 @@ export default function ModelCompareIndex() {
 
   return (
     <main data-page="stats" data-theme={themePreference()}>
-      <Title>{compareTitle}</Title>
-      <Meta name="description" content={compareDescription} />
+      <Title>{compareTitle()}</Title>
+      <Meta name="description" content={compareDescription()} />
       <LocaleLinks path={comparePath} />
       <Meta property="og:type" content="website" />
       <Meta property="og:site_name" content="OpenCode" />
-      <Meta property="og:title" content={compareTitle} />
-      <Meta property="og:description" content={compareDescription} />
+      <Meta property="og:title" content={compareTitle()} />
+      <Meta property="og:description" content={compareDescription()} />
       <Meta property="og:url" content={compareUrl()} />
       <Meta property="og:image" content={statsUnfurlUrl} />
       <Meta property="og:image:type" content="image/png" />
@@ -121,40 +100,40 @@ export default function ModelCompareIndex() {
       <Meta property="og:image:height" content="630" />
       <Meta property="og:image:alt" content={i18n.t("app.unfurlAlt")} />
       <Meta name="twitter:card" content="summary_large_image" />
-      <Meta name="twitter:title" content={compareTitle} />
-      <Meta name="twitter:description" content={compareDescription} />
+      <Meta name="twitter:title" content={compareTitle()} />
+      <Meta name="twitter:description" content={compareDescription()} />
       <Meta name="twitter:image" content={statsUnfurlUrl} />
       <Meta name="twitter:image:alt" content={i18n.t("app.unfurlAlt")} />
       <Header githubStars={githubStars() ?? "150K"} links={compareHeaderLinks()} brandHref={import.meta.env.BASE_URL} />
       <div data-component="container">
         <div data-component="content">
           <section id="compare-tool" data-section="compare-home-hero">
-            <nav data-component="compare-home-breadcrumb" aria-label="Breadcrumb">
+            <nav data-component="compare-home-breadcrumb" aria-label={i18n.t("compare.breadcrumb")}>
               <a data-slot="compare-home-crumb" href={language.route(import.meta.env.BASE_URL)}>
-                Data
+                {i18n.t("compare.breadcrumbData")}
               </a>
               <span data-slot="compare-home-separator">/</span>
               <span data-slot="compare-home-crumb" data-current="true">
-                Compare
+                {i18n.t("compare.breadcrumbCompare")}
               </span>
             </nav>
             <div data-slot="compare-home-hero-grid">
-              <h1 aria-label="Compare AI models">
-                <span>Compare</span>
+              <h1 aria-label={i18n.t("compare.heroAria")}>
+                <span>{i18n.t("compare.heroCompare")}</span>
                 <HeroModelStack />
-                <span>AI models</span>
+                <span>{i18n.t("compare.heroAiModels")}</span>
               </h1>
-              <p>{compareDescription}</p>
+              <p>{compareDescription()}</p>
             </div>
             <div data-slot="compare-home-pattern" aria-hidden="true" />
           </section>
-          <section data-section="compare-home-selector" aria-label="Choose models to compare">
+          <section data-section="compare-home-selector" aria-label={i18n.t("compare.selectorAria")}>
             <Show
               when={featuredModels().length > 1}
               fallback={
                 <div data-component="empty-state" data-compact="true">
-                  <strong>No models found</strong>
-                  <p>The model list could not be loaded.</p>
+                  <strong>{i18n.t("compare.emptyTitle")}</strong>
+                  <p>{i18n.t("compare.emptyDescription")}</p>
                 </div>
               }
             >
@@ -163,8 +142,8 @@ export default function ModelCompareIndex() {
           </section>
           <ComparisonCardsSection
             pairs={categories()}
-            title="Related comparisons"
-            description="Other model pairs to check."
+            title={i18n.t("compare.relatedTitle")}
+            description={i18n.t("compare.relatedDescription")}
             variant="featured"
           />
         </div>
@@ -180,6 +159,7 @@ export default function ModelCompareIndex() {
 }
 
 function CompareHomeSelector(props: { models: ModelCatalogEntry[] }) {
+  const i18n = useI18n()
   const [firstId, setFirstId] = createSignal("")
   const [secondId, setSecondId] = createSignal("")
   const [activeSlot, setActiveSlot] = createSignal<CompareSlot>()
@@ -209,18 +189,18 @@ function CompareHomeSelector(props: { models: ModelCatalogEntry[] }) {
   return (
     <form
       data-component="compare-home-selector"
-      aria-label="Model comparison selector"
+      aria-label={i18n.t("compare.selectorLabel")}
       onSubmit={(event) => event.preventDefault()}
     >
       <CompareHomeSelect
         selected={first()}
-        label="First model"
+        label={i18n.t("compare.firstModel")}
         expanded={activeSlot() === "first"}
         onOpen={() => setActiveSlot("first")}
       />
       <CompareHomeSelect
         selected={second()}
-        label="Second model"
+        label={i18n.t("compare.secondModel")}
         expanded={activeSlot() === "second"}
         onOpen={() => setActiveSlot("second")}
       />
@@ -230,7 +210,7 @@ function CompareHomeSelector(props: { models: ModelCatalogEntry[] }) {
             models={props.models}
             selected={activeSelected()}
             blockedId={activeBlockedId()}
-            label={slot() === "first" ? "Choose first model" : "Choose second model"}
+            label={slot() === "first" ? i18n.t("compare.chooseFirst") : i18n.t("compare.chooseSecond")}
             onClose={() => setActiveSlot(undefined)}
             onSelect={(model) => {
               if (slot() === "first") setFirstId(model.id)
@@ -250,6 +230,7 @@ function CompareHomeSelect(props: {
   expanded: boolean
   onOpen: () => void
 }) {
+  const i18n = useI18n()
   return (
     <button
       type="button"
@@ -265,7 +246,7 @@ function CompareHomeSelect(props: {
           +
         </span>
         <Show when={props.selected}>{(model) => <ModelAvatar model={model()} size="tiny" />}</Show>
-        <span data-slot="compare-home-select-name">{props.selected?.name ?? "Select a model"}</span>
+        <span data-slot="compare-home-select-name">{props.selected?.name ?? i18n.t("compare.selectModel")}</span>
       </span>
     </button>
   )
@@ -279,6 +260,7 @@ function CompareModelSelectModal(props: {
   onClose: () => void
   onSelect: (model: ModelCatalogEntry) => void
 }) {
+  const i18n = useI18n()
   let searchInput: HTMLInputElement | undefined
   const [search, setSearch] = createSignal("")
   const [previewId, setPreviewId] = createSignal(props.selected?.id ?? "")
@@ -334,8 +316,8 @@ function CompareModelSelectModal(props: {
             <input
               ref={searchInput}
               value={search()}
-              placeholder="Search models"
-              aria-label="Search models"
+              placeholder={i18n.t("compare.searchModels")}
+              aria-label={i18n.t("compare.searchModels")}
               onInput={(event) => setSearch(event.currentTarget.value)}
             />
           </label>
@@ -344,8 +326,8 @@ function CompareModelSelectModal(props: {
               when={filteredModels().length > 0}
               fallback={
                 <div data-slot="compare-model-modal-empty">
-                  <strong>No models found</strong>
-                  <span>Try another search.</span>
+                  <strong>{i18n.t("compare.emptyTitle")}</strong>
+                  <span>{i18n.t("compare.tryAnotherSearch")}</span>
                 </div>
               }
             >
@@ -364,7 +346,7 @@ function CompareModelSelectModal(props: {
                       <span>{model.name}</span>
                     </span>
                     <Show when={isFreeModel(model)}>
-                      <span data-slot="compare-model-modal-badge">Free</span>
+                      <span data-slot="compare-model-modal-badge">{i18n.t("compare.free")}</span>
                     </Show>
                   </button>
                 )}
@@ -380,6 +362,8 @@ function CompareModelSelectModal(props: {
 }
 
 function CompareModelDetail(props: { model: ModelCatalogEntry }) {
+  const i18n = useI18n()
+  const unknown = () => i18n.t("compare.unknown")
   return (
     <aside data-slot="compare-model-modal-detail">
       <header data-slot="compare-model-modal-detail-header">
@@ -389,23 +373,35 @@ function CompareModelDetail(props: { model: ModelCatalogEntry }) {
       <div data-slot="compare-model-modal-description">
         <p>
           {props.model.description ??
-            `${props.model.name} is an AI model from ${formatCatalogLabName(props.model.lab)}.`}
+            i18n.t("compare.modelFromLab", {
+              name: props.model.name,
+              lab: formatCatalogLabName(props.model.lab),
+            })}
         </p>
         <span aria-hidden="true" />
       </div>
       <dl data-slot="compare-model-modal-facts">
-        <CompareModelFact label="Release" value={formatCatalogDate(props.model.releaseDate)} />
-        <CompareModelFact label="Context" value={formatCatalogLimit(props.model.limit?.context)} />
-        <CompareModelFact label="Input" value={formatCatalogUnitPrice(props.model.cost?.input)} />
-        <CompareModelFact label="Output" value={formatCatalogUnitPrice(props.model.cost?.output)} />
+        <CompareModelFact label={i18n.t("compare.fact.release")} value={formatCatalogDate(props.model.releaseDate, unknown())} />
+        <CompareModelFact
+          label={i18n.t("compare.fact.context")}
+          value={formatCatalogLimit(props.model.limit?.context, unknown())}
+        />
+        <CompareModelFact
+          label={i18n.t("compare.fact.input")}
+          value={formatCatalogUnitPrice(props.model.cost?.input, unknown())}
+        />
+        <CompareModelFact
+          label={i18n.t("compare.fact.output")}
+          value={formatCatalogUnitPrice(props.model.cost?.output, unknown())}
+        />
         <div data-slot="compare-model-modal-fact">
-          <dt>Uptime</dt>
+          <dt>{i18n.t("compare.uptime")}</dt>
           <dd data-slot="compare-model-modal-uptime">
             <For each={uptimeBars}>{(bar) => <span data-active={bar < 7 ? "true" : undefined} />}</For>
           </dd>
         </div>
         <div data-slot="compare-model-modal-fact">
-          <dt>URL</dt>
+          <dt>{i18n.t("compare.fact.url")}</dt>
           <dd>
             <a href={modelHref(props.model)}>{formatModelUrl(props.model)}</a>
           </dd>
@@ -452,18 +448,20 @@ function LabLogo(props: { lab: string; label: string; size: "large" | "small" | 
   )
 }
 
-function buildComparisonCategories(models: ModelCatalogEntry[]): ComparisonPair[] {
-  return categoryTemplates.reduce<{ keys: Set<string>; categories: ComparisonPair[] }>(
-    (result, template, index) => {
-      const candidates = categoryCandidates(template.kind, models)
+function buildComparisonCategories(models: ModelCatalogEntry[], t: Translate): ComparisonPair[] {
+  return categoryKinds.reduce<{ keys: Set<string>; categories: ComparisonPair[] }>(
+    (result, kind, index) => {
+      const candidates = categoryCandidates(kind, models)
       const pair = categoryPair(candidates, models, index, result.keys)
       if (!pair) return result
       result.keys.add(comparisonKey(pair.first, pair.second))
       const first = modelRefFromCatalog(pair.first)
       const second = modelRefFromCatalog(pair.second)
+      const titleKey = `compare.category.${kind}.title` as const
+      const descriptionKey = `compare.category.${kind}.description` as const
       result.categories.push({
-        detail: template.title,
-        description: template.description,
+        detail: t(titleKey),
+        description: t(descriptionKey),
         first,
         second,
       })
@@ -491,7 +489,7 @@ function categoryPair(
     .find((pair) => !usedKeys.has(pair.key))
 }
 
-function categoryCandidates(kind: (typeof categoryTemplates)[number]["kind"], models: ModelCatalogEntry[]) {
+function categoryCandidates(kind: (typeof categoryKinds)[number], models: ModelCatalogEntry[]) {
   if (kind === "affordable")
     return models
       .filter((model) => model.cost)
@@ -546,12 +544,12 @@ function formatModelUrl(model: ModelCatalogEntry) {
   return `.../${model.slug}`
 }
 
-function formatCatalogLimit(value: number | undefined) {
-  return value === undefined ? "Unknown" : formatTokens(value)
+function formatCatalogLimit(value: number | undefined, unknown = "Unknown") {
+  return value === undefined ? unknown : formatTokens(value)
 }
 
-function formatCatalogUnitPrice(value: number | undefined) {
-  if (value === undefined) return "Unknown"
+function formatCatalogUnitPrice(value: number | undefined, unknown = "Unknown") {
+  if (value === undefined) return unknown
   return `${formatModelPrice(value)} / 1M`
 }
 
@@ -566,8 +564,8 @@ function formatMoney(value: number) {
   return `$${value.toFixed(value >= 10 ? 0 : 2)}`
 }
 
-function formatCatalogDate(value: string | undefined) {
-  if (!value) return "Unknown"
+function formatCatalogDate(value: string | undefined, unknown = "Unknown") {
+  if (!value) return unknown
   const match = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(value)
   if (!match) return value
   return new Intl.DateTimeFormat("en", {
