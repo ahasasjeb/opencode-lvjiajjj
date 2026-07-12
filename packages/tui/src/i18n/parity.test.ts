@@ -30,6 +30,10 @@ const languageKeys = [
 ] as const
 const locales = [zh, zht, ko, de, es, fr, da, ja, pl, ru, uk, ar, no, br, bs, th, tr]
 
+function templateParameters(value: string) {
+  return [...value.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]).sort()
+}
+
 describe("i18n parity", () => {
   test("zh locale translates targeted keys", () => {
     for (const key of keys) {
@@ -49,6 +53,18 @@ describe("i18n parity", () => {
       for (const key of languageKeys) {
         expect(locale[key]).toBeDefined()
         expect(locale[key]).not.toBe(en[key])
+      }
+    }
+  })
+
+  test("all locales have the same keys and template parameters as English", () => {
+    const enKeys = Object.keys(en).sort()
+    for (const locale of locales) {
+      expect(Object.keys(locale).sort()).toEqual(enKeys)
+      for (const key of enKeys) {
+        expect(templateParameters(locale[key as keyof typeof locale])).toEqual(
+          templateParameters(en[key as keyof typeof en]),
+        )
       }
     }
   })

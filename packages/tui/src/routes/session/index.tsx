@@ -1705,9 +1705,14 @@ function ReasoningHeader(props: {
   )
 }
 
+const mermaidMarkdownRenderNodes = new WeakMap<RenderContext, ReturnType<typeof createMermaidMarkdownRenderer>>()
+
 function mermaidMarkdownRenderNode(renderer: RenderContext) {
+  const cached = mermaidMarkdownRenderNodes.get(renderer)
+  if (cached) return cached
   const renderNode = createMermaidMarkdownRenderer(renderer)
   Object.assign(renderNode, { codeBlockOnly: true })
+  mermaidMarkdownRenderNodes.set(renderer, renderNode)
   return renderNode
 }
 
@@ -1718,7 +1723,7 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
   const streaming = createMemo(() => !props.message.time.completed && props.last)
   const content = createMemo(() => props.part.text.trim())
 
-  const mermaidRenderNode = createMemo(() => mermaidMarkdownRenderNode(renderer))
+  const mermaidRenderNode = mermaidMarkdownRenderNode(renderer)
 
   return (
     <Show when={content()}>
@@ -1738,7 +1743,7 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
           conceal={ctx.conceal()}
           fg={theme.markdownText}
           bg={theme.background}
-          renderNode={mermaidRenderNode()}
+          renderNode={mermaidRenderNode}
         />
       </box>
     </Show>

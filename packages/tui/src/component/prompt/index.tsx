@@ -820,12 +820,14 @@ export function Prompt(props: PromptProps) {
       target: inputTarget,
       enabled: (() => {
         cursorVersion()
+        const target = inputTarget()
         return (
-          inputTarget() !== undefined &&
+          target !== undefined &&
+          !target.isDestroyed &&
           !props.disabled &&
           store.mode === "normal" &&
           !auto()?.visible &&
-          input?.visualCursor.offset === 0
+          target.visualCursor.offset === 0
         )
       })(),
       bindings: [
@@ -855,7 +857,8 @@ export function Prompt(props: PromptProps) {
       target: inputTarget,
       enabled: (() => {
         cursorVersion()
-        return inputTarget() !== undefined && store.mode === "shell" && input?.visualCursor.offset === 0
+        const target = inputTarget()
+        return target !== undefined && !target.isDestroyed && store.mode === "shell" && target.visualCursor.offset === 0
       })(),
       bindings: [{ key: "backspace", desc: "Exit shell mode", group: "Prompt", cmd: () => setStore("mode", "normal") }],
     }
@@ -874,6 +877,7 @@ export function Prompt(props: PromptProps) {
           title: "keybind.history_previous",
           category: "category.prompt",
           run() {
+            if (input.isDestroyed) return false
             if (input.cursorOffset !== 0) {
               if (input.scrollY + input.visualCursor.visualRow === 0) input.cursorOffset = 0
               return false
@@ -906,6 +910,7 @@ export function Prompt(props: PromptProps) {
           title: "keybind.history_next",
           category: "category.prompt",
           run() {
+            if (input.isDestroyed) return false
             if (input.cursorOffset !== input.plainText.length) {
               if (
                 input.scrollY + input.visualCursor.visualRow ===
@@ -1183,12 +1188,14 @@ export function Prompt(props: PromptProps) {
   }
 
   async function pasteInputText(text: string) {
+    if (input.isDestroyed) return
     const normalizedText = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
     const pastedContent = normalizedText.trim()
     const filepath = pastedFilepath(pastedContent, terminalEnvironment.platform)
     const isUrl = /^(https?):\/\//.test(filepath)
     if (!isUrl) {
       const attachment = await readLocalAttachment(filepath)
+      if (input.isDestroyed) return
       const filename = path.basename(filepath)
       if (attachment?.type === "text") {
         pasteText(attachment.content, `[SVG: ${filename ?? "image"}]`)
@@ -1224,6 +1231,7 @@ export function Prompt(props: PromptProps) {
   }
 
   async function pasteAttachment(file: { filename?: string; filepath?: string; content: string; mime: string }) {
+    if (input.isDestroyed) return
     const currentOffset = input.cursorOffset
     const extmarkStart = currentOffset
     const pdf = file.mime === "application/pdf"
@@ -1379,6 +1387,7 @@ export function Prompt(props: PromptProps) {
               minHeight={1}
               maxHeight={maxHeight()}
               onContentChange={() => {
+                if (input.isDestroyed) return
                 const value = input.plainText
                 setStore("prompt", "input", value)
                 auto()?.onInput(value)

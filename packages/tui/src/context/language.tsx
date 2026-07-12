@@ -145,7 +145,7 @@ const localeMatchers: Array<{ locale: TuiLocale; match: (language: string) => bo
 ]
 
 function detectLocale(): TuiLocale {
-  const env = process.env.OPENCODE_LOCALE ?? process.env.LANG ?? process.env.LC_ALL
+  const env = process.env.OPENCODE_LOCALE ?? process.env.LC_ALL ?? process.env.LC_MESSAGES ?? process.env.LANG
   if (!env) return "en"
   const language = env.split(".")[0]?.toLowerCase() ?? ""
   const match = localeMatchers.find((entry) => entry.match(language))
