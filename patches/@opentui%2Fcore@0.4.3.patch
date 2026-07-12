@@ -1,0 +1,19 @@
+diff --git a/index-xt9f071j.js b/index-xt9f071j.js
+index 04f075a..b30cb16 100644
+--- a/index-xt9f071j.js
++++ b/index-xt9f071j.js
+@@ -6167,13 +6167,13 @@ class EditBufferRenderable extends Renderable {
+       this._ctx.setCursorPosition(0, 0, false);
+       this.blur();
+     }
++    super.destroy();
+     if (this.nativeRenderable) {
+       resolveRenderLib().destroyNativeRenderable(this.nativeRenderable);
+       this.nativeRenderable = null;
+     }
+     this.editorView.destroy();
+     this.editBuffer.destroy();
+-    super.destroy();
+   }
+   set onCursorChange(handler) {
+     this._cursorChangeListener = handler;
