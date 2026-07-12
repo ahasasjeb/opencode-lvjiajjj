@@ -1,6 +1,7 @@
 import type { Message } from "@opencode-ai/sdk/v2"
 import { describe, expect, test } from "bun:test"
 import {
+  codexUsageDiagnostic,
   parseCodexResetResponse,
   parseCodexUsageResponse,
 } from "../../src/feature-plugins/llm-cny/codex-usage"
@@ -91,5 +92,32 @@ describe("LLM CNY Codex integration", () => {
       outcome: "already_redeemed",
       windowsReset: 0,
     })
+  })
+  test("redacts OAuth credentials from Codex usage diagnostics", () => {
+    const diagnostic = codexUsageDiagnostic({
+      operation: "usage",
+      stage: "final_failure",
+      status: 401,
+      refreshed: true,
+      cred: {
+        type: "oauth",
+        access: "access-secret",
+        refresh: "refresh-secret",
+        expires: Date.now() + 60_000,
+        accountId: "account-secret",
+      },
+    })
+
+    expect(diagnostic).toMatchObject({
+      operation: "usage",
+      stage: "final_failure",
+      status: 401,
+      refreshed: true,
+      hasAccessToken: true,
+      hasRefreshToken: true,
+      hasAccountId: true,
+      accessTokenExpired: false,
+    })
+    expect(JSON.stringify(diagnostic)).not.toContain("secret")
   })
 })

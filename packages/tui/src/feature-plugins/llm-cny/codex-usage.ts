@@ -36,6 +36,9 @@ type OAuthCredential = {
   accountId?: string
 }
 
+type CodexRequestOperation = "usage" | "reset"
+type CodexRequestStage = "initial_auth_failure" | "final_failure"
+
 type AuthFile = Record<string, { type: string; access?: string; refresh?: string; expires?: number; accountId?: string }>
 type AccountFile = {
   version?: number
@@ -237,6 +240,7 @@ export function parseCodexResetResponse(body: string): CodexResetResult {
 
 async function requestCodex(
   stateDir: string,
+  operation: CodexRequestOperation,
   request: (accessToken: string, accountId?: string) => Promise<Response>,
 ) {
   const cred = await readCodexOAuth(stateDir)
@@ -254,26 +258,53 @@ async function requestCodex(
 
   if (cred.expires > 0 && cred.expires < Date.now()) await refresh()
   let response = await request(cred.access, cred.accountId)
+  let refreshed = false
   if (response.status === 401 || response.status === 403) {
-    if (await refresh()) response = await request(cred.access, cred.accountId)
+    console.warn("[llm-cny.codex-usage] authentication failed; refreshing OAuth credential", {
+      ...codexUsageDiagnostic({ operation, stage: "initial_auth_failure", status: response.status, cred }),
+    })
+    refreshed = await refresh()
+    if (refreshed) response = await request(cred.access, cred.accountId)
   }
 
   if (!response.ok) {
+    console.warn("[llm-cny.codex-usage] request failed", {
+      ...codexUsageDiagnostic({ operation, stage: "final_failure", status: response.status, refreshed, cred }),
+    })
     return { ok: false as const, message: `HTTP ${response.status}` }
   }
   return { ok: true as const, body: await response.text() }
 }
 
 export async function fetchCodexUsage(stateDir: string): Promise<CodexUsageResult> {
-  const response = await requestCodex(stateDir, fetchUsageRaw)
+  const response = await requestCodex(stateDir, "usage", fetchUsageRaw)
   if (!response.ok) return response
   return parseCodexUsageResponse(response.body)
 }
 
 export async function consumeCodexResetCredit(stateDir: string, redeemRequestID: string): Promise<CodexResetResult> {
-  const response = await requestCodex(stateDir, (accessToken, accountId) =>
+  const response = await requestCodex(stateDir, "reset", (accessToken, accountId) =>
     consumeResetRaw(accessToken, redeemRequestID, accountId),
   )
   if (!response.ok) return response
   return parseCodexResetResponse(response.body)
+}
+
+export function codexUsageDiagnostic(input: {
+  operation: CodexRequestOperation
+  stage: CodexRequestStage
+  status: number
+  refreshed?: boolean
+  cred: OAuthCredential
+}) {
+  return {
+    operation: input.operation,
+    stage: input.stage,
+    status: input.status,
+    refreshed: input.refreshed ?? false,
+    hasAccessToken: Boolean(input.cred.access),
+    hasRefreshToken: Boolean(input.cred.refresh),
+    hasAccountId: Boolean(input.cred.accountId),
+    accessTokenExpired: input.cred.expires > 0 && input.cred.expires < Date.now(),
+  }
 }
