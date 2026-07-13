@@ -1,6 +1,10 @@
-import { readFile, writeFile } from "node:fs/promises"
 import { homedir } from "node:os"
 import { dirname, join } from "node:path"
+
+export type OAuthCredentialSource<T> = {
+  credential: T
+  filePath?: string
+}
 
 export function authCandidatePaths(stateDir: string) {
   const candidates = new Set<string>([join(stateDir, "account.json"), join(stateDir, "auth.json")])
@@ -23,28 +27,41 @@ export function authCandidatePaths(stateDir: string) {
 }
 
 export async function readOAuthCredential<T>(stateDir: string, parse: (value: unknown) => T | null): Promise<T | null> {
-  const fromEnv = parse(JSON.parse(process.env.OPENCODE_AUTH_CONTENT ?? "null"))
-  if (fromEnv) return fromEnv
-
-  for (const filePath of authCandidatePaths(stateDir)) {
-    try {
-      const parsed = parse(JSON.parse(await readFile(filePath, "utf-8")))
-      if (parsed) return parsed
-    } catch {
-      continue
-    }
-  }
-
-  return null
+  return (await readOAuthCredentialSources(stateDir, parse))[0]?.credential ?? null
 }
 
-export async function writeOAuthCredential(stateDir: string, update: (value: unknown) => unknown | null): Promise<boolean> {
-  for (const filePath of authCandidatePaths(stateDir)) {
+export async function readOAuthCredentialSources<T>(
+  stateDir: string,
+  parse: (value: unknown) => T | null,
+): Promise<OAuthCredentialSource<T>[]> {
+  const fromEnv = parse(JSON.parse(process.env.OPENCODE_AUTH_CONTENT ?? "null"))
+  if (fromEnv) return [{ credential: fromEnv }]
+
+  return (
+    await Promise.all(
+      authCandidatePaths(stateDir).map((filePath) =>
+        Bun.file(filePath)
+          .json()
+          .then((value): OAuthCredentialSource<T> | null => {
+            const credential = parse(value)
+            return credential === null ? null : { credential, filePath }
+          })
+          .catch(() => null),
+      ),
+    )
+  ).filter((item) => item !== null)
+}
+
+export async function writeOAuthCredential(
+  stateDir: string,
+  update: (value: unknown) => unknown | null,
+  targetPath?: string,
+): Promise<boolean> {
+  for (const filePath of targetPath ? [targetPath] : authCandidatePaths(stateDir)) {
     try {
-      const raw = await readFile(filePath, "utf-8")
-      const next = update(JSON.parse(raw))
+      const next = update(await Bun.file(filePath).json())
       if (!next) continue
-      await writeFile(filePath, JSON.stringify(next, null, 2), "utf-8")
+      await Bun.write(filePath, JSON.stringify(next, null, 2))
       return true
     } catch {
       continue

@@ -1,4 +1,4 @@
-import { readOAuthCredential, writeOAuthCredential } from "./oauth.js"
+import { readOAuthCredentialSources, writeOAuthCredential, type OAuthCredentialSource } from "./oauth.js"
 
 const CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
 const TOKEN_URL = "https://auth.openai.com/oauth/token"
@@ -65,7 +65,7 @@ function parseWindowLimit(obj: unknown): WindowLimit | null {
 }
 
 export async function readCodexOAuth(stateDir: string): Promise<OAuthCredential | null> {
-  return readOAuthCredential(stateDir, parseCredential)
+  return (await readCodexOAuthSource(stateDir))?.credential ?? null
 }
 
 async function refreshToken(refreshToken: string): Promise<{ access: string; refresh: string; expires: number; accountId?: string } | null> {
@@ -91,8 +91,9 @@ async function refreshToken(refreshToken: string): Promise<{ access: string; ref
   }
 }
 
-async function saveRefreshedToken(stateDir: string, cred: OAuthCredential): Promise<void> {
-  await writeOAuthCredential(stateDir, (raw) => updateStoredCredential(raw, cred))
+async function saveRefreshedToken(stateDir: string, cred: OAuthCredential, filePath?: string): Promise<void> {
+  if (!filePath) return
+  await writeOAuthCredential(stateDir, (raw) => updateStoredCredential(raw, cred), filePath)
 }
 
 function parseCredential(value: unknown): OAuthCredential | null {
@@ -243,8 +244,10 @@ async function requestCodex(
   operation: CodexRequestOperation,
   request: (accessToken: string, accountId?: string) => Promise<Response>,
 ) {
-  const cred = await readCodexOAuth(stateDir)
-  if (!cred) return { ok: false as const, message: "未找到 ChatGPT OAuth 凭证" }
+  const source = await readCodexOAuthSource(stateDir)
+  if (!source) return { ok: false as const, message: "未找到 ChatGPT OAuth 凭证" }
+  const cred = source.credential
+  const diagnosticSource = source.filePath?.split(/[\\/]/).at(-1) ?? "environment"
 
   const refresh = async () => {
     const result = await refreshToken(cred.refresh)
@@ -252,7 +255,7 @@ async function requestCodex(
     cred.access = result.access
     cred.refresh = result.refresh
     cred.expires = result.expires
-    await saveRefreshedToken(stateDir, cred)
+    await saveRefreshedToken(stateDir, cred, source.filePath)
     return true
   }
 
@@ -261,7 +264,7 @@ async function requestCodex(
   let refreshed = false
   if (response.status === 401 || response.status === 403) {
     console.warn("[llm-cny.codex-usage] authentication failed; refreshing OAuth credential", {
-      ...codexUsageDiagnostic({ operation, stage: "initial_auth_failure", status: response.status, cred }),
+      ...codexUsageDiagnostic({ operation, stage: "initial_auth_failure", status: response.status, source: diagnosticSource, cred }),
     })
     refreshed = await refresh()
     if (refreshed) response = await request(cred.access, cred.accountId)
@@ -269,7 +272,7 @@ async function requestCodex(
 
   if (!response.ok) {
     console.warn("[llm-cny.codex-usage] request failed", {
-      ...codexUsageDiagnostic({ operation, stage: "final_failure", status: response.status, refreshed, cred }),
+      ...codexUsageDiagnostic({ operation, stage: "final_failure", status: response.status, refreshed, source: diagnosticSource, cred }),
     })
     return { ok: false as const, message: `HTTP ${response.status}` }
   }
@@ -295,6 +298,7 @@ export function codexUsageDiagnostic(input: {
   stage: CodexRequestStage
   status: number
   refreshed?: boolean
+  source?: string
   cred: OAuthCredential
 }) {
   return {
@@ -302,9 +306,18 @@ export function codexUsageDiagnostic(input: {
     stage: input.stage,
     status: input.status,
     refreshed: input.refreshed ?? false,
+    source: input.source ?? "unknown",
     hasAccessToken: Boolean(input.cred.access),
     hasRefreshToken: Boolean(input.cred.refresh),
     hasAccountId: Boolean(input.cred.accountId),
     accessTokenExpired: input.cred.expires > 0 && input.cred.expires < Date.now(),
   }
+}
+
+async function readCodexOAuthSource(stateDir: string) {
+  return selectCodexOAuthSource(await readOAuthCredentialSources(stateDir, parseCredential))
+}
+
+export function selectCodexOAuthSource(sources: OAuthCredentialSource<OAuthCredential>[]) {
+  return sources.toSorted((left, right) => right.credential.expires - left.credential.expires)[0] ?? null
 }

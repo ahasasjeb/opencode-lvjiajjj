@@ -4,6 +4,7 @@ import {
   codexUsageDiagnostic,
   parseCodexResetResponse,
   parseCodexUsageResponse,
+  selectCodexOAuthSource,
 } from "../../src/feature-plugins/llm-cny/codex-usage"
 import {
   hasChatGPTOAuthProvider,
@@ -99,6 +100,7 @@ describe("LLM CNY Codex integration", () => {
       stage: "final_failure",
       status: 401,
       refreshed: true,
+      source: "auth.json",
       cred: {
         type: "oauth",
         access: "access-secret",
@@ -113,11 +115,39 @@ describe("LLM CNY Codex integration", () => {
       stage: "final_failure",
       status: 401,
       refreshed: true,
+      source: "auth.json",
       hasAccessToken: true,
       hasRefreshToken: true,
       hasAccountId: true,
       accessTokenExpired: false,
     })
     expect(JSON.stringify(diagnostic)).not.toContain("secret")
+  })
+
+  test("selects the newest Codex OAuth credential across storage formats", () => {
+    const selected = selectCodexOAuthSource([
+      {
+        filePath: "account.json",
+        credential: {
+          type: "oauth",
+          access: "stale-access",
+          refresh: "stale-refresh",
+          expires: 1,
+        },
+      },
+      {
+        filePath: "auth.json",
+        credential: {
+          type: "oauth",
+          access: "current-access",
+          refresh: "current-refresh",
+          expires: 2,
+          accountId: "current-account",
+        },
+      },
+    ])
+
+    expect(selected?.filePath).toBe("auth.json")
+    expect(selected?.credential.expires).toBe(2)
   })
 })
