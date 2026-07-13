@@ -3,6 +3,7 @@ import { readOAuthCredentialSources, writeOAuthCredential, type OAuthCredentialS
 const CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
 const TOKEN_URL = "https://auth.openai.com/oauth/token"
 const USAGE_URL = "https://chatgpt.com/backend-api/wham/usage"
+const RESET_CREDITS_URL = "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits"
 const RESET_URL = "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits/consume"
 
 export type WindowLimit = {
@@ -15,11 +16,24 @@ export type CodexUsage = {
   planType: string
   primary: WindowLimit | null
   secondary: WindowLimit | null
-  resetCredits: number | null
+  resetCredits: CodexResetCredits | null
+}
+
+export type CodexResetCredit = {
+  expiresAt: number
+}
+
+export type CodexResetCredits = {
+  availableCount: number
+  credits: CodexResetCredit[]
 }
 
 export type CodexUsageResult =
   | { ok: true; usage: CodexUsage }
+  | { ok: false; message: string }
+
+export type CodexResetCreditsResult =
+  | { ok: true; resetCredits: CodexResetCredits }
   | { ok: false; message: string }
 
 export type CodexResetOutcome = "reset" | "nothing_to_reset" | "no_credit" | "already_redeemed"
@@ -36,7 +50,7 @@ type OAuthCredential = {
   accountId?: string
 }
 
-type CodexRequestOperation = "usage" | "reset"
+type CodexRequestOperation = "usage" | "reset_credits" | "reset"
 type CodexRequestStage = "initial_auth_failure" | "final_failure"
 
 type AuthFile = Record<string, { type: string; access?: string; refresh?: string; expires?: number; accountId?: string }>
@@ -62,6 +76,13 @@ function parseWindowLimit(obj: unknown): WindowLimit | null {
   const resetAt = typeof record.reset_at === "number" ? record.reset_at : 0
   if (usedPercent === 0 && windowSeconds === 0) return null
   return { usedPercent, windowSeconds, resetAt }
+}
+
+function parseTimestamp(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value > 10_000_000_000 ? value / 1000 : value
+  if (typeof value !== "string") return null
+  const parsed = Date.parse(value)
+  return Number.isNaN(parsed) ? null : parsed / 1000
 }
 
 export async function readCodexOAuth(stateDir: string): Promise<OAuthCredential | null> {
@@ -189,6 +210,17 @@ async function fetchUsageRaw(accessToken: string, accountId?: string): Promise<R
   return fetch(USAGE_URL, { headers })
 }
 
+async function fetchResetCreditsRaw(accessToken: string, accountId?: string): Promise<Response> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${accessToken}`,
+    Accept: "application/json",
+    "OpenAI-Beta": "codex-1",
+    "User-Agent": "opencode-codex-usage/1.0",
+  }
+  if (accountId) headers["ChatGPT-Account-Id"] = accountId
+  return fetch(RESET_CREDITS_URL, { headers })
+}
+
 function consumeResetRaw(accessToken: string, redeemRequestID: string, accountId?: string): Promise<Response> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${accessToken}`,
@@ -211,8 +243,30 @@ export function parseCodexUsageResponse(body: string): CodexUsageResult {
     const primary = parseWindowLimit(rateLimit?.primary_window)
     const secondary = parseWindowLimit(rateLimit?.secondary_window)
     const reset = data.rate_limit_reset_credits as Record<string, unknown> | undefined
-    const resetCredits = typeof reset?.available_count === "number" ? reset.available_count : null
+    const resetCredits =
+      typeof reset?.available_count === "number"
+        ? { availableCount: reset.available_count, credits: [] }
+        : null
     return { ok: true, usage: { planType, primary, secondary, resetCredits } }
+  } catch {
+    return { ok: false, message: "响应格式解析失败" }
+  }
+}
+
+export function parseCodexResetCreditsResponse(body: string): CodexResetCreditsResult {
+  try {
+    const data = JSON.parse(body) as Record<string, unknown>
+    const credits = Array.isArray(data.credits)
+      ? data.credits
+          .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+          .filter((item) => item.status === "available")
+          .map((item) => parseTimestamp(item.expires_at))
+          .filter((expiresAt): expiresAt is number => expiresAt !== null)
+          .map((expiresAt) => ({ expiresAt }))
+          .toSorted((left, right) => left.expiresAt - right.expiresAt)
+      : []
+    const availableCount = typeof data.available_count === "number" ? data.available_count : credits.length
+    return { ok: true, resetCredits: { availableCount, credits } }
   } catch {
     return { ok: false, message: "响应格式解析失败" }
   }
@@ -282,7 +336,13 @@ async function requestCodex(
 export async function fetchCodexUsage(stateDir: string): Promise<CodexUsageResult> {
   const response = await requestCodex(stateDir, "usage", fetchUsageRaw)
   if (!response.ok) return response
-  return parseCodexUsageResponse(response.body)
+  const usage = parseCodexUsageResponse(response.body)
+  if (!usage.ok || !usage.usage.resetCredits || usage.usage.resetCredits.availableCount <= 0) return usage
+  const details = await requestCodex(stateDir, "reset_credits", fetchResetCreditsRaw)
+  if (!details.ok) return usage
+  const resetCredits = parseCodexResetCreditsResponse(details.body)
+  if (!resetCredits.ok) return usage
+  return { ok: true, usage: { ...usage.usage, resetCredits: resetCredits.resetCredits } }
 }
 
 export async function consumeCodexResetCredit(stateDir: string, redeemRequestID: string): Promise<CodexResetResult> {

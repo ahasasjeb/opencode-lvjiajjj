@@ -1,6 +1,6 @@
 import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { RGBA } from "@opentui/core"
-import { createSignal, Match, Show, Switch } from "solid-js"
+import { createSignal, For, Match, Show, Switch } from "solid-js"
 import type { CodexUsage, WindowLimit } from "../codex-usage.js"
 import { formatWindowLabel } from "./codex-format.js"
 import type { Translator } from "./i18n.js"
@@ -23,6 +23,17 @@ function formatResetTime(unixSeconds: number, locale: string): string {
     return date.toLocaleTimeString(locale, { hour12: false, hour: "2-digit", minute: "2-digit" })
   }
   return date.toLocaleString(locale, {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })
+}
+
+function formatExpirationTime(unixSeconds: number, locale: string) {
+  return new Date(unixSeconds * 1000).toLocaleString(locale, {
+    year: "numeric",
     month: "numeric",
     day: "numeric",
     hour: "2-digit",
@@ -98,6 +109,7 @@ export function CodexUsagePanel(props: {
     const raw = props.state.usage.planType.toLowerCase()
     return map[raw] ?? props.state.usage.planType
   }
+  const resetCredits = () => (props.state.status === "ready" ? props.state.usage.resetCredits : null)
 
   return (
     <box gap={1}>
@@ -132,32 +144,44 @@ export function CodexUsagePanel(props: {
             <Show when={props.state.status === "ready" && props.state.usage.secondary}>
               {(secondary) => <LimitRow limit={secondary()} theme={props.theme} t={props.t} locale={props.locale} />}
             </Show>
-            <Show when={props.state.status === "ready" && props.state.usage.resetCredits !== null}>
-              <box flexDirection="row" justifyContent="space-between">
-                <text fg={props.theme.textMuted}>
-                  {props.t("plugin.llmCny.codex.resetCredits", {
-                    count: props.state.status === "ready" ? (props.state.usage.resetCredits ?? 0) : 0,
-                  })}
-                </text>
-                <Show when={props.state.status === "ready" && (props.state.usage.resetCredits ?? 0) > 0}>
-                  <text
-                    fg={props.resetting ? props.theme.textMuted : props.theme.primary}
-                    bg={resetHovered() && resetInteractive() ? props.theme.borderSubtle : undefined}
-                    selectable={false}
-                    onMouseOver={() => setResetHovered(true)}
-                    onMouseOut={() => setResetHovered(false)}
-                    onMouseUp={() => {
-                      if (resetInteractive()) props.onReset()
-                    }}
-                  >
-                    {" "}
-                    {props.t(
-                      props.resetting ? "plugin.llmCny.codex.resetting" : "plugin.llmCny.codex.resetAction",
+            <Show when={resetCredits()}>
+              {(resetCredits) => (
+                <box gap={0}>
+                  <box flexDirection="row" justifyContent="space-between">
+                    <text fg={props.theme.textMuted}>
+                      {props.t("plugin.llmCny.codex.resetCredits", { count: resetCredits().availableCount })}
+                    </text>
+                    <Show when={resetCredits().availableCount > 0}>
+                      <text
+                        fg={props.resetting ? props.theme.textMuted : props.theme.primary}
+                        bg={resetHovered() && resetInteractive() ? props.theme.borderSubtle : undefined}
+                        selectable={false}
+                        onMouseOver={() => setResetHovered(true)}
+                        onMouseOut={() => setResetHovered(false)}
+                        onMouseUp={() => {
+                          if (resetInteractive()) props.onReset()
+                        }}
+                      >
+                        {" "}
+                        {props.t(
+                          props.resetting ? "plugin.llmCny.codex.resetting" : "plugin.llmCny.codex.resetAction",
+                        )}
+                        {" "}
+                      </text>
+                    </Show>
+                  </box>
+                  <For each={resetCredits().credits}>
+                    {(credit, index) => (
+                      <text fg={props.theme.textMuted}>
+                        {props.t("plugin.llmCny.codex.resetExpiry", {
+                          index: index() + 1,
+                          date: formatExpirationTime(credit.expiresAt, props.locale),
+                        })}
+                      </text>
                     )}
-                    {" "}
-                  </text>
-                </Show>
-              </box>
+                  </For>
+                </box>
+              )}
             </Show>
           </Show>
         </Match>

@@ -666,6 +666,7 @@
   "plugin.llmCny.codex.failed": "Failed to load limits",
   "plugin.llmCny.codex.empty": "No limit data available",
   "plugin.llmCny.codex.resetCredits": "Manual resets available: {{count}}",
+  "plugin.llmCny.codex.resetExpiry": "Reset #{{index}} expires: {{date}}",
   "plugin.llmCny.codex.resetAction": "Reset limits",
   "plugin.llmCny.codex.resetting": "Resetting...",
   "plugin.llmCny.codex.resetConfirmTitle": "Reset Codex limits?",

@@ -666,6 +666,7 @@
   "plugin.llmCny.codex.failed": "查询失败",
   "plugin.llmCny.codex.empty": "暂无限额数据",
   "plugin.llmCny.codex.resetCredits": "可用手动重置：{{count}} 次",
+  "plugin.llmCny.codex.resetExpiry": "第 {{index}} 次重置到期：{{date}}",
   "plugin.llmCny.codex.resetAction": "手动重置",
   "plugin.llmCny.codex.resetting": "正在重置...",
   "plugin.llmCny.codex.resetConfirmTitle": "重置 Codex 限额？",

@@ -2,6 +2,7 @@ import type { Message } from "@opencode-ai/sdk/v2"
 import { describe, expect, test } from "bun:test"
 import {
   codexUsageDiagnostic,
+  parseCodexResetCreditsResponse,
   parseCodexResetResponse,
   parseCodexUsageResponse,
   selectCodexOAuthSource,
@@ -67,7 +68,34 @@ describe("LLM CNY Codex integration", () => {
           windowSeconds: 604_800,
           resetAt: 456,
         },
-        resetCredits: 2,
+        resetCredits: {
+          availableCount: 2,
+          credits: [],
+        },
+      },
+    })
+  })
+
+  test("parses and orders multiple available reset expirations", () => {
+    expect(
+      parseCodexResetCreditsResponse(
+        JSON.stringify({
+          credits: [
+            { status: "available", expires_at: "2026-08-12T18:04:36Z" },
+            { status: "redeemed", expires_at: "2026-07-01T00:00:00Z" },
+            { status: "available", expires_at: "2026-08-01T10:00:00Z" },
+          ],
+          available_count: 2,
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      resetCredits: {
+        availableCount: 2,
+        credits: [
+          { expiresAt: Date.parse("2026-08-01T10:00:00Z") / 1000 },
+          { expiresAt: Date.parse("2026-08-12T18:04:36Z") / 1000 },
+        ],
       },
     })
   })
