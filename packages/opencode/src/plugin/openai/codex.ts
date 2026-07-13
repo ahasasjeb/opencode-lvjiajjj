@@ -327,8 +327,10 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
         if (currentAuth?.type !== "oauth") return provider.models
 
         const available = Object.entries(provider.models).filter(([, model]) => {
+          if (model.options?.reasoningMode === "pro") return false
           if (ALLOWED_MODELS.has(model.api.id)) return true
           if (DISALLOWED_MODELS.has(model.api.id)) return false
+          if (model.api.id === "gpt-5.6") return false
           const match = model.api.id.match(/^gpt-(\d+\.\d+)/)
           return match ? parseFloat(match[1]) > 5.4 : false
         })
@@ -348,7 +350,13 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
                     input: 272_000,
                     output: 128_000,
                   }
-                : model.limit,
+                : model.id.includes("gpt-5.6")
+                  ? {
+                      context: 500_000,
+                      input: 372_000,
+                      output: 128_000,
+                    }
+                  : model.limit,
             },
           ]),
         )
@@ -554,6 +562,7 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
 
             const requestInit = {
               ...init,
+              body: init?.body,
               headers,
             }
             if (websocketFetch && parsed.pathname.endsWith("/responses")) return websocketFetch(url, requestInit)
@@ -709,6 +718,10 @@ export async function OpenAIAuthPlugin(): Promise<Hooks> {
           type: "api",
         },
       ],
+    },
+    "chat.params": async (input, output) => {
+      if (input.model.providerID !== "openai") return
+      output.maxOutputTokens = undefined
     },
   }
 }

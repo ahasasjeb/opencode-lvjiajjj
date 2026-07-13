@@ -113,7 +113,7 @@ export default function ModelCompareIndex() {
                 {i18n.t("compare.breadcrumbData")}
               </a>
               <span data-slot="compare-home-separator">/</span>
-              <span data-slot="compare-home-crumb" data-current="true">
+              <span data-slot="compare-home-crumb" data-current="true" aria-current="page">
                 {i18n.t("compare.breadcrumbCompare")}
               </span>
             </nav>
