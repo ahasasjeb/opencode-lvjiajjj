@@ -1,12 +1,10 @@
 import path from "path"
-import { isDeepStrictEqual } from "node:util"
 import { onMount } from "solid-js"
 import { createStore, produce, unwrap } from "solid-js/store"
 import type { AgentPart, FilePart, TextPart } from "@opencode-ai/sdk/v2"
 import { createSimpleContext } from "../context/helper"
 import { useTuiPaths } from "../context/runtime"
 import { appendText, readText, writeText } from "../util/persistence"
-import { displayCharAt, displaySlice } from "./display"
 
 export type PromptInfo = {
   input: string
@@ -28,43 +26,13 @@ export type PromptInfo = {
 
 export const MAX_HISTORY_ENTRIES = 50
 
-export function compactPromptHistoryEntry(item: PromptInfo) {
-  const inlineFiles = item.parts.filter(isInlineFile)
-  if (inlineFiles.length === 0) return item
-
-  const ranges = inlineFiles
-    .flatMap((part) => {
-      if (!part.source?.text) return []
-      return [
-        {
-          start: part.source.text.start,
-          end: part.source.text.end + (displayCharAt(item.input, part.source.text.end) === " " ? 1 : 0),
-        },
-      ]
-    })
-    .sort((a, b) => b.start - a.start)
-
-  return {
-    ...item,
-    input: ranges.reduce(
-      (input, range) => displaySlice(input, 0, range.start) + displaySlice(input, range.end),
-      item.input,
-    ),
-    parts: item.parts.filter((part) => !isInlineFile(part)),
-  }
-}
-
-function isInlineFile(part: PromptInfo["parts"][number]): part is Omit<FilePart, "id" | "messageID" | "sessionID"> {
-  return part.type === "file" && part.url.startsWith("data:")
-}
-
 export function parsePromptHistory(text: string) {
   return text
     .split("\n")
     .filter(Boolean)
     .map((line) => {
       try {
-        return compactPromptHistoryEntry(JSON.parse(line) as PromptInfo)
+        return JSON.parse(line) as PromptInfo
       } catch {
         return undefined
       }
@@ -75,11 +43,7 @@ export function parsePromptHistory(text: string) {
 
 export function isDuplicateEntry(previous: PromptInfo | undefined, next: PromptInfo): boolean {
   if (!previous) return false
-  return isDeepStrictEqual(unwrap(previous), next)
-}
-
-function serializePromptHistory(entries: PromptInfo[]) {
-  return entries.map((entry) => JSON.stringify(compactPromptHistoryEntry(entry))).join("\n") + "\n"
+  return JSON.stringify(previous) === JSON.stringify(next)
 }
 
 export const { use: usePromptHistory, provider: PromptHistoryProvider } = createSimpleContext({
@@ -92,7 +56,8 @@ export const { use: usePromptHistory, provider: PromptHistoryProvider } = create
       setStore("history", lines)
 
       // Rewrite valid retained entries to self-heal corruption and enforce the limit.
-      if (lines.length > 0) writeText(historyPath, serializePromptHistory(lines)).catch(() => {})
+      if (lines.length > 0)
+        writeText(historyPath, lines.map((line) => JSON.stringify(line)).join("\n") + "\n").catch(() => {})
     })
 
     const [store, setStore] = createStore({
@@ -136,10 +101,10 @@ export const { use: usePromptHistory, provider: PromptHistoryProvider } = create
         )
 
         if (trimmed) {
-          writeText(historyPath, serializePromptHistory(store.history)).catch(() => {})
+          writeText(historyPath, store.history.map((line) => JSON.stringify(line)).join("\n") + "\n").catch(() => {})
           return
         }
-        appendText(historyPath, JSON.stringify(compactPromptHistoryEntry(entry)) + "\n").catch(() => {})
+        appendText(historyPath, JSON.stringify(entry) + "\n").catch(() => {})
       },
     }
   },

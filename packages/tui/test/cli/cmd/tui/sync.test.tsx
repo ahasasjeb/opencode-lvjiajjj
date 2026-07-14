@@ -23,6 +23,54 @@ function branchEvent(branch: string, workspace?: string): GlobalEvent {
 }
 
 describe("tui sync", () => {
+  test("adds a freshly created session before later updates arrive", async () => {
+    await using tmp = await tmpdir()
+    await Bun.write(`${tmp.path}/kv.json`, "{}")
+    const { app, emit, sync } = await mount(undefined, tmp.path)
+    const session = {
+      id: "ses_fresh",
+      slug: "fresh-session",
+      version: "1.17.20",
+      projectID: "proj_test",
+      directory: "/tmp/opencode/packages/tui",
+      title: "New session",
+      time: { created: 1, updated: 1 },
+    }
+
+    try {
+      emit({
+        directory: session.directory,
+        project: session.projectID,
+        payload: {
+          id: "evt_session_created",
+          type: "session.created",
+          properties: { sessionID: session.id, info: session },
+        },
+      })
+
+      await wait(() => sync.session.get(session.id)?.id === session.id)
+      expect(sync.session.get(session.id)).toEqual(session)
+
+      emit({
+        directory: session.directory,
+        project: session.projectID,
+        payload: {
+          id: "evt_session_updated",
+          type: "session.updated",
+          properties: {
+            sessionID: session.id,
+            info: { ...session, title: "Generated title", time: { ...session.time, updated: 2 } },
+          },
+        },
+      })
+
+      await wait(() => sync.session.get(session.id)?.title === "Generated title")
+      expect(sync.data.session.filter((item) => item.id === session.id)).toHaveLength(1)
+    } finally {
+      app.renderer.destroy()
+    }
+  })
+
   test("refresh scopes sessions by default and lists project sessions when disabled", async () => {
     await using tmp = await tmpdir()
     await Bun.write(`${tmp.path}/kv.json`, "{}")
