@@ -336,6 +336,7 @@ export const {
           }
           break
         }
+        //防止携带图片创建对话时黑屏
         case "session.created":
         case "session.updated": {
           const result = search(store.session, event.properties.info.id, (s) => s.id)
