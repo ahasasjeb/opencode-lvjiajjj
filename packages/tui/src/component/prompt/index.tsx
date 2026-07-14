@@ -1044,6 +1044,7 @@ export function Prompt(props: PromptProps) {
 
     // Filter out text parts (pasted content) since they're now expanded inline
     const nonTextParts = store.prompt.parts.filter((part) => part.type !== "text")
+    const hasAttachment = nonTextParts.some((part) => part.type === "file")
 
     // Capture mode before it gets reset
     const currentMode = store.mode
@@ -1148,9 +1149,11 @@ export function Prompt(props: PromptProps) {
           type: "session",
           sessionID,
         })
+        if (hasAttachment) repaintPromptTransition()
       }, 50)
     }
     input.clear()
+    if (hasAttachment) repaintPromptTransition()
     if (finishMoveProgress) move.finishSubmit()
     return true
   }
@@ -1187,6 +1190,16 @@ export function Prompt(props: PromptProps) {
         draft.extmarkToPartIndex.set(extmarkId, partIndex)
       }),
     )
+  }
+
+  function repaintPromptTransition() {
+    setTimeout(() => {
+      if (renderer.isDestroyed) return
+      if (input && !input.isDestroyed) input.getLayoutNode().markDirty()
+      // Reapplying the background invalidates OpenTUI's frame buffer. A regular
+      // requestRender can retain a stale diff across attachment-driven changes.
+      renderer.setBackgroundColor(theme.background)
+    }, 0)
   }
 
   async function pasteInputText(text: string) {
@@ -1278,6 +1291,7 @@ export function Prompt(props: PromptProps) {
         draft.extmarkToPartIndex.set(extmarkId, partIndex)
       }),
     )
+    repaintPromptTransition()
     return
   }
 
