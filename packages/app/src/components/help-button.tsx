@@ -1,12 +1,13 @@
 import { Icon as IconV2 } from "@opencode-ai/ui/v2/icon"
 import { IconButtonV2 } from "@opencode-ai/ui/v2/icon-button-v2"
 import { createSignal, Show } from "solid-js"
-import { createStore } from "solid-js/store"
 import { Drawer, DrawerClose, DrawerContent } from "@/components/ui/drawer"
 import { useLanguage } from "@/context/language"
 import { usePlatform } from "@/context/platform"
+import { useSettings } from "@/context/settings"
 import introducingTabsVideo from "@/assets/help/introducing-tabs.mp4"
-import { Persist, persisted } from "@/utils/persist"
+import homeImage from "@/assets/help/home.png"
+import tabsImage from "@/assets/help/tabs.png"
 
 const helpIcon = (
   <svg
@@ -57,15 +58,13 @@ export function HelpButton() {
 // can remove this after the tabs rollout has been out for a while
 export function TabsInfoPopup() {
   const language = useLanguage()
-  if (import.meta.env.VITE_OPENCODE_CHANNEL !== "dev") return null
-
-  const [state, setState] = persisted(Persist.global("tabsInfoPopup"), createStore({ dismissed: false }))
-  // setState({ dismissed: false }) // for testing
+  const settings = useSettings()
+  const platform = usePlatform()
   const [drawerOpen, setDrawerOpen] = createSignal(false)
 
   return (
     <Drawer open={drawerOpen()} onOpenChange={setDrawerOpen} side="right">
-      <Show when={!state.dismissed}>
+      <Show when={settings.general.shouldDisplayTabsToast()}>
         <div
           class="fixed bottom-14 right-5 z-50 h-[240px] w-[192px] rounded-[8px] bg-v2-background-bg-base p-1 shadow-[var(--v2-elevation-floating)]"
           aria-label={language.t("help.tabs.popupAria")}
@@ -74,7 +73,7 @@ export function TabsInfoPopup() {
             type="button"
             aria-label={language.t("help.tabs.dismiss")}
             class="absolute top-3 right-3 z-10 size-5 flex items-center justify-center rounded-[4px] bg-[rgba(0,0,0,0.4)]"
-            onClick={() => setState("dismissed", true)}
+            onClick={settings.general.dismissTabsToast}
           >
             <svg
               width="16"
@@ -91,7 +90,7 @@ export function TabsInfoPopup() {
             type="button"
             class="relative block h-[232px] w-[184px] cursor-pointer overflow-hidden rounded-[4px] text-left"
             onClick={() => {
-              setState("dismissed", true)
+              settings.general.dismissTabsToast()
               setDrawerOpen(true)
             }}
           >
@@ -121,22 +120,31 @@ export function TabsInfoPopup() {
           <p class="min-h-0 min-w-0 flex-1 text-[13px] font-[530] leading-5 tracking-[-0.04px] tabular-nums text-v2-text-text-muted">
             {language.t("help.tabs.date")}
           </p>
-          <DrawerClose
-            as={IconButtonV2}
-            type="button"
-            size="small"
-            variant="ghost-muted"
-            aria-label={language.t("common.close")}
-            icon={<IconV2 name="xmark-small" />}
-          />
+          <Show when={platform.platform !== "desktop" || platform.os !== "windows"}>
+            <DrawerClose
+              as={IconButtonV2}
+              type="button"
+              size="small"
+              variant="ghost-muted"
+              aria-label={language.t("common.close")}
+              icon={<IconV2 name="xmark-small" />}
+            />
+          </Show>
         </div>
-        <div class="relative flex w-full flex-col items-start gap-6 p-8">
+        <div class="relative flex min-h-0 w-full flex-1 flex-col items-start gap-6 overflow-y-auto p-8">
           <p class="w-full shrink-0 self-stretch text-[21px] font-[610] leading-6 tracking-[-0.37px] tabular-nums text-v2-text-text-base">
-            {language.t("help.tabs.navigationTitle")}
+            {language.t("help.tabs.title")}
           </p>
-          <p class="w-full flex-1 text-[13px] font-[440] leading-5 tracking-[-0.04px] text-v2-text-text-base">
-            {language.t("help.tabs.navigationDescription")}
-          </p>
+          <div class="flex w-full flex-1 flex-col gap-4 text-[13px] font-[440] leading-5 tracking-[-0.04px] text-v2-text-text-base">
+            <p>{language.t("help.tabs.content.overview")}</p>
+            <img src={tabsImage} alt="" class="aspect-video w-full rounded-[6px] object-cover" />
+            <p>{language.t("help.tabs.content.start")}</p>
+            <p>{language.t("help.tabs.content.organize")}</p>
+            <p>{language.t("help.tabs.content.home")}</p>
+            <img src={homeImage} alt="" class="aspect-video w-full rounded-[6px] object-cover" />
+            <p>{language.t("help.tabs.content.reopen")}</p>
+            <p>{language.t("help.tabs.content.worktrees")}</p>
+          </div>
         </div>
       </DrawerContent>
     </Drawer>

@@ -51,7 +51,8 @@ export default function ModelCompareIndex() {
   const [themePreference, setThemePreference] = createSignal<ThemePreference>("system")
   const compareUrl = createMemo(() => localizedUrl(language.locale(), comparePath))
   const statsUnfurlUrl = new URL(statsUnfurlPath, localizedUrl("en", "/data/")).toString()
-  const featuredModels = createMemo(() => (catalog()?.models ?? []).slice(0, 120))
+  const models = createMemo(() => catalog()?.models ?? [])
+  const featuredModels = createMemo(() => models().slice(0, 120))
   const categories = createMemo(() => buildComparisonCategories(featuredModels(), i18n.t))
   const compareTitle = () => i18n.t("compare.title")
   const compareDescription = () => i18n.t("compare.description")
@@ -129,7 +130,7 @@ export default function ModelCompareIndex() {
           </section>
           <section data-section="compare-home-selector" aria-label={i18n.t("compare.selectorAria")}>
             <Show
-              when={featuredModels().length > 1}
+              when={models().length > 1}
               fallback={
                 <div data-component="empty-state" data-compact="true">
                   <strong>{i18n.t("compare.emptyTitle")}</strong>
@@ -137,7 +138,7 @@ export default function ModelCompareIndex() {
                 </div>
               }
             >
-              <CompareHomeSelector models={featuredModels()} />
+              <CompareHomeSelector models={models()} />
             </Show>
           </section>
           <ComparisonCardsSection
