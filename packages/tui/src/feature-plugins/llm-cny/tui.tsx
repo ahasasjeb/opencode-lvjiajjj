@@ -6,6 +6,7 @@ import { fetchDisplayBalance } from "./balance.js"
 import { fetchCopilotUsage, type CopilotQuota } from "./copilot-usage.js"
 import { consumeCodexResetCredit, fetchCodexUsage, type CodexResetOutcome, type CodexUsage } from "./codex-usage.js"
 import { fetchUsdCnyRate } from "./exchange-rate.js"
+import { fetchKimiUsage, type KimiUsage } from "./kimi-usage.js"
 import { calculateTrackedSession, supportsBalance, type BalanceProviderID } from "./pricing.js"
 import {
   ActivationPrompt,
@@ -17,6 +18,7 @@ import {
 } from "./tui/components.js"
 import { CodexUsagePanel } from "./tui/codex-components.js"
 import { CopilotQuotaPanel } from "./tui/copilot-components.js"
+import { KimiUsagePanel } from "./tui/kimi-components.js"
 import { errorMessage } from "./tui/format.js"
 import { parseOptions, type Options } from "./tui/options.js"
 import { randomCodexRefreshMs } from "./tui/refresh.js"
@@ -29,7 +31,9 @@ import {
   hasOpenAIApiKeyProvider,
   hasChatGPTOAuthProvider,
   hasChatGPTUsage,
+  hasKimiForCodingUsage,
   isSubagentSession,
+  kimiForCodingApiKey,
   mergeMessages,
   providerTokens,
   taskChildSessionIDs,
@@ -47,6 +51,12 @@ type CodexState =
 type CopilotState =
   | { status: "idle" | "loading" }
   | { status: "ready"; quota: CopilotQuota }
+  | { status: "error"; message: string }
+  | { status: "no-auth" }
+
+type KimiState =
+  | { status: "idle" | "loading" }
+  | { status: "ready"; usage: KimiUsage }
   | { status: "error"; message: string }
   | { status: "no-auth" }
 
@@ -79,7 +89,9 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
   const copilotEnabled = createMemo(
     () => hasCopilotOAuthProvider(props.api.state.provider) && hasCopilotUsage(usageMessages()),
   )
-  const activated = createMemo(() => hasTrackedUsage() || codexEnabled() || copilotEnabled())
+  const kimiEnabled = createMemo(() => hasKimiForCodingUsage(usageMessages()))
+  const kimiApiKey = createMemo(() => kimiForCodingApiKey(props.api))
+  const activated = createMemo(() => hasTrackedUsage() || codexEnabled() || copilotEnabled() || kimiEnabled())
   const completedTrackedReplies = createMemo(() => completedTrackedReplyKey(costMessages()))
   const childRefreshKey = createMemo(() =>
     childUsageRefreshKey({
@@ -95,6 +107,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
   const [codexState, setCodexState] = createSignal<CodexState>({ status: "idle" })
   const [codexResetting, setCodexResetting] = createSignal(false)
   const [copilotState, setCopilotState] = createSignal<CopilotState>({ status: "idle" })
+  const [kimiState, setKimiState] = createSignal<KimiState>({ status: "idle" })
 
   const controllers = new Map<BalanceProviderID, AbortController>()
   let previousTokenSignature = tokenSignature(tokens())
@@ -188,6 +201,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
 
   let codexRequest = 0
   let copilotRequest = 0
+  let kimiRequest = 0
   const clearCodexRefreshTimer = () => {
     clearTimeout(codexRefreshTimer)
     codexRefreshTimer = undefined
@@ -308,6 +322,46 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     }
   }
 
+  let kimiRefreshTimer: ReturnType<typeof setTimeout> | undefined
+
+  const clearKimiRefreshTimer = () => {
+    clearTimeout(kimiRefreshTimer)
+    kimiRefreshTimer = undefined
+  }
+
+  const scheduleKimiRefresh = () => {
+    if (disposed || !kimiEnabled() || !kimiApiKey()) return
+    kimiRefreshTimer = setTimeout(() => {
+      void refreshKimiUsage()
+    }, randomCodexRefreshMs())
+  }
+
+  const refreshKimiUsage = async () => {
+    clearKimiRefreshTimer()
+    if (disposed) return
+    const apiKey = kimiApiKey()
+    if (!kimiEnabled() || !apiKey) {
+      setKimiState({ status: "no-auth" })
+      return
+    }
+    const request = ++kimiRequest
+    setKimiState((prev) => (prev.status === "ready" ? prev : { status: "loading" }))
+    try {
+      const result = await fetchKimiUsage(apiKey)
+      if (disposed || request !== kimiRequest) return
+      if (result.ok) {
+        setKimiState({ status: "ready", usage: result.usage })
+        return
+      }
+      setKimiState({ status: "error", message: localizeMessage(t, result.message) })
+    } catch (cause) {
+      if (disposed || request !== kimiRequest) return
+      setKimiState({ status: "error", message: errorMessage(cause) })
+    } finally {
+      if (!disposed && request === kimiRequest && kimiEnabled() && kimiApiKey()) scheduleKimiRefresh()
+    }
+  }
+
   createEffect(() => {
     const current = tokenSignature(tokens())
     if (current === previousTokenSignature) return
@@ -353,6 +407,16 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     void refreshCopilotUsage()
   })
 
+  createEffect(() => {
+    if (!kimiEnabled() || !kimiApiKey()) {
+      clearKimiRefreshTimer()
+      setKimiState({ status: "no-auth" })
+      return
+    }
+
+    void refreshKimiUsage()
+  })
+
   onMount(() => {
     const interval = setInterval(() => {
       if (activated()) refreshActive()
@@ -366,6 +430,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     disposed = true
     clearCodexRefreshTimer()
     clearCopilotRefreshTimer()
+    clearKimiRefreshTimer()
     for (const controller of controllers.values()) {
       controller.abort()
     }
@@ -391,6 +456,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
             (hasTrackedUsage() && activeBalanceProviders().some((item) => tokens()[item.id] !== undefined)) ||
             codexEnabled() ||
             copilotEnabled() ||
+            (kimiEnabled() && kimiApiKey() !== undefined) ||
             needsUsdCnyRate()
           }
           onRefresh={() => {
@@ -398,6 +464,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
             refreshUsdCnyRate()
             void refreshCodexUsage()
             void refreshCopilotUsage()
+            void refreshKimiUsage()
           }}
         />
         <Show when={activated()} fallback={<ActivationPrompt theme={props.api.theme.current} t={t} />}>
@@ -422,7 +489,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
               resetting={codexResetting()}
               onReset={confirmCodexReset}
             />
-            <Show when={hasTrackedUsage() || copilotEnabled()}>
+            <Show when={hasTrackedUsage() || copilotEnabled() || kimiEnabled()}>
               <Divider theme={props.api.theme.current} />
             </Show>
           </Show>
@@ -432,6 +499,17 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
               t={t}
               locale={props.api.i18n.locale}
               state={copilotState()}
+            />
+            <Show when={hasTrackedUsage() || kimiEnabled()}>
+              <Divider theme={props.api.theme.current} />
+            </Show>
+          </Show>
+          <Show when={kimiEnabled()}>
+            <KimiUsagePanel
+              theme={props.api.theme.current}
+              t={t}
+              locale={props.api.i18n.locale}
+              state={kimiState()}
             />
             <Show when={hasTrackedUsage()}>
               <Divider theme={props.api.theme.current} />

@@ -14,6 +14,7 @@ export function localizeMessage(t: Translator, message: string) {
     "未找到 GitHub Copilot OAuth 凭证": "plugin.llmCny.error.copilotAuth",
     "认证失败或无权限访问 Copilot 额度": "plugin.llmCny.error.copilotUnauthorized",
     "Copilot 额度接口不可用（可能非 Copilot 用户）": "plugin.llmCny.error.copilotUnavailable",
+    "Kimi Code API Key 无效或无权查询额度": "plugin.llmCny.error.kimiUnauthorized",
     "余额接口返回格式不符合预期": "plugin.llmCny.error.balanceFormat",
   }
   const key = keys[message]

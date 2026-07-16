@@ -73,6 +73,29 @@ export function hasCopilotUsage(messages: ReadonlyArray<Message>) {
   })
 }
 
+export function kimiForCodingApiKey(api: {
+  state: {
+    provider: ReadonlyArray<ProviderAuthLike>
+    config?: unknown
+  }
+}) {
+  const provider = api.state.provider.find((item) => item.id === "kimi-for-coding")
+  return [
+    provider?.key,
+    readString(provider?.options, "apiKey"),
+    ...(provider?.env?.map((name) => process.env[name]) ?? []),
+    process.env.KIMI_API_KEY,
+    readProviderConfigString(api.state.config, "kimi-for-coding", "apiKey"),
+  ].find((item) => typeof item === "string" && item.trim() !== "")?.trim()
+}
+
+export function hasKimiForCodingUsage(messages: ReadonlyArray<Message>) {
+  return messages.some((item) => {
+    if (item.role === "user") return item.model.providerID.toLowerCase() === "kimi-for-coding"
+    return item.providerID.toLowerCase() === "kimi-for-coding"
+  })
+}
+
 export function completedTrackedReplyKey(messages: ReadonlyArray<Message>) {
   return messages
     .flatMap((item) => {

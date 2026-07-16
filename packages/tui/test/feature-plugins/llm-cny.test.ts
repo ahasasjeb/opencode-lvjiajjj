@@ -7,10 +7,13 @@ import {
   parseCodexUsageResponse,
   selectCodexOAuthSource,
 } from "../../src/feature-plugins/llm-cny/codex-usage"
+import { parseKimiUsageResponse } from "../../src/feature-plugins/llm-cny/kimi-usage"
 import {
   hasChatGPTOAuthProvider,
   hasChatGPTUsage,
+  hasKimiForCodingUsage,
   hasOpenAIApiKeyProvider,
+  kimiForCodingApiKey,
 } from "../../src/feature-plugins/llm-cny/tui/session"
 
 function assistantMessage(providerID: string): Message {
@@ -23,13 +26,70 @@ function assistantMessage(providerID: string): Message {
   } as Message
 }
 
-describe("LLM CNY Codex integration", () => {
+describe("LLM CNY quota integration", () => {
   test("keeps OpenAI API billing separate from ChatGPT OAuth limits", () => {
     expect(hasOpenAIApiKeyProvider([{ id: "openai", key: "sk-test" }])).toBe(true)
     expect(hasChatGPTOAuthProvider([{ id: "openai", key: "sk-test" }])).toBe(false)
     expect(hasChatGPTOAuthProvider([{ id: "chatgpt" }])).toBe(true)
     expect(hasChatGPTUsage([assistantMessage("openai")])).toBe(false)
     expect(hasChatGPTUsage([assistantMessage("chatgpt")])).toBe(true)
+  })
+
+  test("detects Kimi For Coding usage separately from Moonshot API usage", () => {
+    expect(hasKimiForCodingUsage([assistantMessage("kimi-for-coding")])).toBe(true)
+    expect(hasKimiForCodingUsage([assistantMessage("moonshotai")])).toBe(false)
+  })
+
+  test("reads the Kimi For Coding key exposed from local provider auth", () => {
+    expect(
+      kimiForCodingApiKey({
+        state: {
+          provider: [{ id: "kimi-for-coding", key: "sk-kimi-local", env: [], options: {} }],
+          config: {},
+        },
+      }),
+    ).toBe("sk-kimi-local")
+  })
+
+  test("parses Kimi cycle, rolling window, monthly, and parallel quotas", () => {
+    expect(
+      parseKimiUsageResponse(
+        JSON.stringify({
+          user: { membership: { level: "LEVEL_BASIC" } },
+          usage: { limit: "100", used: "20", remaining: "80", resetTime: "2026-07-23T21:35:08Z" },
+          limits: [
+            {
+              window: { duration: 300, timeUnit: "TIME_UNIT_MINUTE" },
+              detail: { limit: "100", used: "40", resetTime: "2026-07-17T02:35:08Z" },
+            },
+          ],
+          parallel: { limit: "10" },
+          totalQuota: { limit: "100", remaining: "99" },
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      usage: {
+        membershipLevel: "LEVEL_BASIC",
+        usage: {
+          limit: 100,
+          used: 20,
+          remaining: 80,
+          resetAt: Date.parse("2026-07-23T21:35:08Z") / 1000,
+        },
+        limits: [
+          {
+            limit: 100,
+            used: 40,
+            remaining: 60,
+            resetAt: Date.parse("2026-07-17T02:35:08Z") / 1000,
+            windowSeconds: 18_000,
+          },
+        ],
+        totalQuota: { limit: 100, remaining: 99 },
+        parallelLimit: 10,
+      },
+    })
   })
 
   test("parses earned reset credits from the usage response", () => {
