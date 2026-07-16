@@ -846,6 +846,53 @@ it.instance("retries default title generation with full conversation history", (
   }),
 )
 
+it.instance("generates the title with the current model instead of the small model", () =>
+  Effect.gen(function* () {
+    const { llm } = yield* useServerConfig((url) => {
+      const config = providerCfg(url)
+      return {
+        ...config,
+        small_model: "test/small-model",
+        provider: {
+          test: {
+            ...config.provider.test,
+            models: {
+              ...config.provider.test.models,
+              "small-model": {
+                ...config.provider.test.models["test-model"],
+                id: "small-model",
+                name: "Small Model",
+              },
+            },
+          },
+        },
+      }
+    })
+    const prompt = yield* SessionPrompt.Service
+    const sessions = yield* Session.Service
+    const session = yield* sessions.create({})
+
+    yield* prompt.prompt({
+      sessionID: session.id,
+      agent: "build",
+      noReply: true,
+      parts: [{ type: "text", text: "use the active model for the title" }],
+    })
+    yield* llm.text("done")
+    yield* prompt.loop({ sessionID: session.id })
+
+    const titleHit = yield* pollWithTimeout(
+      Effect.gen(function* () {
+        return (yield* llm.hits).find((hit) =>
+          JSON.stringify(hit.body).includes("Generate a title for this conversation"),
+        )
+      }),
+      "timed out waiting for title generation",
+    )
+    expect(titleHit.body.model).toBe("test-model")
+  }),
+)
+
 it.instance("loop continues when finish is tool-calls", () =>
   Effect.gen(function* () {
     const { llm } = yield* useServerConfig(providerCfg)

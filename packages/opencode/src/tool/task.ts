@@ -108,6 +108,17 @@ export const TaskTool = Tool.define(
         )
       }
 
+      const parent = yield* sessions.get(ctx.sessionID)
+      const session = params.task_id
+        ? yield* sessions.get(SessionID.make(params.task_id)).pipe(Effect.catchCause(() => Effect.succeed(undefined)))
+        : undefined
+      const maxDepth = cfg.subagent_depth ?? flags.subagentMaxDepth
+      if (!session && (yield* depth(ctx.sessionID)) >= maxDepth) {
+        return yield* Effect.fail(
+          new Error(`Subagent depth limit reached (${maxDepth}). Increase "subagent_depth" to allow nested subagents.`),
+        )
+      }
+
       if (!ctx.extra?.bypassAgentCheck) {
         yield* ctx.ask({
           permission: id,
@@ -125,17 +136,6 @@ export const TaskTool = Tool.define(
         return yield* Effect.fail(new Error(`Unknown agent type: ${params.subagent_type} is not a valid agent type`))
       }
 
-      const session = params.task_id
-        ? yield* sessions.get(SessionID.make(params.task_id)).pipe(Effect.catchCause(() => Effect.succeed(undefined)))
-        : undefined
-      if (!session && (yield* depth(ctx.sessionID)) >= flags.subagentMaxDepth) {
-        return yield* Effect.fail(
-          new Error(
-            `Subagent depth limit reached (${flags.subagentMaxDepth}). Finish this task without spawning another subagent.`,
-          ),
-        )
-      }
-      const parent = yield* sessions.get(ctx.sessionID)
       const childPermission = deriveSubagentSessionPermission({
         parentSessionPermission: parent.permission ?? [],
         subagent: next,

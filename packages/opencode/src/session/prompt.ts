@@ -216,8 +216,7 @@ const layer = Layer.effect(
       if (!ag) return
       const mdl = ag.model
         ? yield* provider.getModel(ag.model.providerID, ag.model.modelID)
-        : ((yield* provider.getSmallModel(input.providerID)) ??
-          (yield* provider.getModel(input.providerID, input.modelID)))
+        : yield* provider.getModel(input.providerID, input.modelID)
       const msgs = onlySubtasks
         ? [
             ...(yield* MessageV2.toModelMessagesEffect(context.slice(0, idx), mdl)),
