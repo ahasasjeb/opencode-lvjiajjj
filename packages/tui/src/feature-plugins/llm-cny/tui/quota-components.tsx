@@ -8,7 +8,7 @@ const BAR_WIDTH = 20
 const FILL_CHAR = "█"
 const EMPTY_CHAR = "░"
 
-export function QuotaProgressBar(props: { usedPercent: number; theme: Theme }) {
+export function QuotaProgressBar(props: { usedPercent: number; theme: Theme; value?: string; spread?: boolean }) {
   const remaining = () => Math.max(0, Math.min(100, 100 - props.usedPercent))
   const filled = () => Math.round((remaining() / 100) * BAR_WIDTH)
   const empty = () => BAR_WIDTH - filled()
@@ -20,13 +20,13 @@ export function QuotaProgressBar(props: { usedPercent: number; theme: Theme }) {
   }
 
   return (
-    <box flexDirection="row" gap={1}>
+    <box flexDirection="row" justifyContent={props.spread ? "space-between" : undefined} gap={1}>
       <text fg={barColor()}>
         {FILL_CHAR.repeat(filled())}
         {EMPTY_CHAR.repeat(empty())}
       </text>
       <text fg={barColor()}>
-        <b>{remaining()}%</b>
+        <b>{props.value ?? `${remaining()}%`}</b>
       </text>
     </box>
   )

@@ -1,13 +1,11 @@
 import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
-import type { RGBA } from "@opentui/core"
 import { For, Match, Show, Switch } from "solid-js"
 import type { KimiQuotaLimit, KimiUsage, KimiWindowLimit } from "../kimi-usage.js"
 import { formatWindowLabel } from "./codex-format.js"
 import type { Translator } from "./i18n.js"
+import { QuotaProgressBar } from "./quota-components.js"
 
 type Theme = TuiPluginApi["theme"]["current"]
-
-const BAR_WIDTH = 20
 
 function usedPercent(limit: KimiQuotaLimit) {
   if (limit.limit <= 0) return 0
@@ -19,9 +17,7 @@ function formatResetTime(unixSeconds: number | null, locale: string) {
   const date = new Date(unixSeconds * 1000)
   const now = new Date()
   const isToday =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
+    date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()
   if (isToday) {
     return date.toLocaleTimeString(locale, { hour12: false, hour: "2-digit", minute: "2-digit" })
   }
@@ -34,31 +30,6 @@ function formatResetTime(unixSeconds: number | null, locale: string) {
   })
 }
 
-function ProgressBar(props: { limit: KimiQuotaLimit; theme: Theme; locale: string }) {
-  const percent = () => usedPercent(props.limit)
-  const remainingPercent = () => Math.round(100 - percent())
-  const filled = () => Math.round((remainingPercent() / 100) * BAR_WIDTH)
-  const tone = (): string | RGBA => {
-    if (remainingPercent() <= 10) return props.theme.error
-    if (remainingPercent() <= 30) return props.theme.warning
-    return props.theme.success
-  }
-
-  return (
-    <box flexDirection="row" justifyContent="space-between" gap={1}>
-      <text fg={tone()}>
-        {"█".repeat(filled())}
-        {"░".repeat(BAR_WIDTH - filled())}
-      </text>
-      <text fg={tone()}>
-        <b>
-          {props.limit.remaining.toLocaleString(props.locale)} / {props.limit.limit.toLocaleString(props.locale)}
-        </b>
-      </text>
-    </box>
-  )
-}
-
 function QuotaRow(props: { label: string; limit: KimiQuotaLimit; theme: Theme; locale: string }) {
   return (
     <box gap={0}>
@@ -68,7 +39,12 @@ function QuotaRow(props: { label: string; limit: KimiQuotaLimit; theme: Theme; l
           <text fg={props.theme.textMuted}>{formatResetTime(props.limit.resetAt, props.locale)}</text>
         </Show>
       </box>
-      <ProgressBar limit={props.limit} theme={props.theme} locale={props.locale} />
+      <QuotaProgressBar
+        usedPercent={100 - Math.round(100 - usedPercent(props.limit))}
+        theme={props.theme}
+        value={`${props.limit.remaining.toLocaleString(props.locale)} / ${props.limit.limit.toLocaleString(props.locale)}`}
+        spread
+      />
     </box>
   )
 }
@@ -109,9 +85,7 @@ export function KimiUsagePanel(props: {
     <box gap={1}>
       <text fg={props.theme.textMuted}>
         {props.t("plugin.llmCny.kimi.title")}
-        <Show when={membershipLabel(usage()?.membershipLevel ?? "")}>
-          {(label) => <span> ({label()})</span>}
-        </Show>
+        <Show when={membershipLabel(usage()?.membershipLevel ?? "")}>{(label) => <span> ({label()})</span>}</Show>
       </text>
       <Switch>
         <Match when={props.state.status === "no-auth"}>
