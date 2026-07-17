@@ -1,24 +1,18 @@
 import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
-import type { RGBA } from "@opentui/core"
 import { createSignal, For, Match, Show, Switch } from "solid-js"
 import type { CodexUsage, WindowLimit } from "../codex-usage.js"
 import { formatWindowLabel } from "./codex-format.js"
 import type { Translator } from "./i18n.js"
+import { QuotaProgressBar } from "./quota-components.js"
 
 type Theme = TuiPluginApi["theme"]["current"]
-
-const BAR_WIDTH = 20
-const FILL_CHAR = "█"
-const EMPTY_CHAR = "░"
 
 function formatResetTime(unixSeconds: number, locale: string): string {
   if (unixSeconds <= 0) return ""
   const date = new Date(unixSeconds * 1000)
   const now = new Date()
   const isToday =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
+    date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()
   if (isToday) {
     return date.toLocaleTimeString(locale, { hour12: false, hour: "2-digit", minute: "2-digit" })
   }
@@ -42,31 +36,6 @@ function formatExpirationTime(unixSeconds: number, locale: string) {
   })
 }
 
-function ProgressBar(props: { percent: number; theme: Theme }) {
-  const remaining = () => Math.max(0, Math.min(100, 100 - props.percent))
-  const filled = () => Math.round((remaining() / 100) * BAR_WIDTH)
-  const empty = () => BAR_WIDTH - filled()
-
-  const barColor = (): string | RGBA => {
-    const r = remaining()
-    if (r <= 10) return props.theme.error
-    if (r <= 30) return props.theme.warning
-    return props.theme.success
-  }
-
-  return (
-    <box flexDirection="row" gap={1}>
-      <text fg={barColor()}>
-        {FILL_CHAR.repeat(filled())}
-        {EMPTY_CHAR.repeat(empty())}
-      </text>
-      <text fg={barColor()}>
-        <b>{remaining()}%</b>
-      </text>
-    </box>
-  )
-}
-
 function LimitRow(props: { limit: WindowLimit; theme: Theme; t: Translator; locale: string }) {
   return (
     <box gap={0}>
@@ -74,7 +43,7 @@ function LimitRow(props: { limit: WindowLimit; theme: Theme; t: Translator; loca
         <text fg={props.theme.textMuted}>{formatWindowLabel(props.limit, props.t)}</text>
         <text fg={props.theme.textMuted}>{formatResetTime(props.limit.resetAt, props.locale)}</text>
       </box>
-      <ProgressBar percent={props.limit.usedPercent} theme={props.theme} />
+      <QuotaProgressBar usedPercent={props.limit.usedPercent} theme={props.theme} />
     </box>
   )
 }
@@ -86,10 +55,10 @@ export function CodexUsagePanel(props: {
   resetting: boolean
   onReset: () => void
   state:
-  | { status: "idle" | "loading" }
-  | { status: "ready"; usage: CodexUsage }
-  | { status: "error"; message: string }
-  | { status: "no-auth" }
+    | { status: "idle" | "loading" }
+    | { status: "ready"; usage: CodexUsage }
+    | { status: "error"; message: string }
+    | { status: "no-auth" }
 }) {
   const [resetHovered, setResetHovered] = createSignal(false)
   const resetInteractive = () => !props.resetting
@@ -165,8 +134,7 @@ export function CodexUsagePanel(props: {
                         {" "}
                         {props.t(
                           props.resetting ? "plugin.llmCny.codex.resetting" : "plugin.llmCny.codex.resetAction",
-                        )}
-                        {" "}
+                        )}{" "}
                       </text>
                     </Show>
                   </box>

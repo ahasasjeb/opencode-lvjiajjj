@@ -34,12 +34,7 @@ export {
   type MoonshotBalance,
   type MoonshotBalanceResult,
 } from "./balance.js"
-export {
-  USD_CNY_RATE_URL,
-  fetchUsdCnyRate,
-  parseUsdCnyRate,
-  type ExchangeRateResult,
-} from "./exchange-rate.js"
+export { USD_CNY_RATE_URL, fetchUsdCnyRate, parseUsdCnyRate, type ExchangeRateResult } from "./exchange-rate.js"
 export {
   fetchCodexUsage,
   consumeCodexResetCredit,
@@ -61,3 +56,11 @@ export {
   type CopilotUsageResult,
   type QuotaSnapshot,
 } from "./copilot-usage.js"
+export {
+  fetchXaiUsage,
+  parseXaiUsageResponse,
+  readXaiOAuth,
+  selectXaiOAuthSource,
+  type XaiUsage,
+  type XaiUsageResult,
+} from "./xai-usage.js"

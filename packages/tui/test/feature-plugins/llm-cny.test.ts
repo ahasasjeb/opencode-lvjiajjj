@@ -1,5 +1,6 @@
 import type { Message } from "@opencode-ai/sdk/v2"
 import { describe, expect, test } from "bun:test"
+import { join } from "node:path"
 import {
   codexUsageDiagnostic,
   parseCodexResetCreditsResponse,
@@ -8,13 +9,16 @@ import {
   selectCodexOAuthSource,
 } from "../../src/feature-plugins/llm-cny/codex-usage"
 import { parseKimiUsageResponse } from "../../src/feature-plugins/llm-cny/kimi-usage"
+import { fetchXaiUsage, parseXaiUsageResponse } from "../../src/feature-plugins/llm-cny/xai-usage"
 import {
   hasChatGPTOAuthProvider,
   hasChatGPTUsage,
   hasKimiForCodingUsage,
   hasOpenAIApiKeyProvider,
+  hasXaiOAuthProvider,
   kimiForCodingApiKey,
 } from "../../src/feature-plugins/llm-cny/tui/session"
+import { tmpdir } from "../fixture/fixture"
 
 function assistantMessage(providerID: string): Message {
   return {
@@ -38,6 +42,13 @@ describe("LLM CNY quota integration", () => {
   test("detects Kimi For Coding usage separately from Moonshot API usage", () => {
     expect(hasKimiForCodingUsage([assistantMessage("kimi-for-coding")])).toBe(true)
     expect(hasKimiForCodingUsage([assistantMessage("moonshotai")])).toBe(false)
+  })
+
+  test("detects xAI OAuth without treating an xAI API key as OAuth", () => {
+    expect(
+      hasXaiOAuthProvider([{ id: "xai", source: "custom", options: { apiKey: "opencode-oauth-dummy-key" } }]),
+    ).toBe(true)
+    expect(hasXaiOAuthProvider([{ id: "xai", source: "api", key: "xai-api-key" }])).toBe(false)
   })
 
   test("reads the Kimi For Coding key exposed from local provider auth", () => {
@@ -134,6 +145,89 @@ describe("LLM CNY quota integration", () => {
         },
       },
     })
+  })
+
+  test("parses Grok Build credits usage", () => {
+    expect(
+      parseXaiUsageResponse(
+        JSON.stringify({
+          config: {
+            creditUsagePercent: 42.5,
+            currentPeriod: {
+              type: "USAGE_PERIOD_TYPE_WEEKLY",
+              end: "2026-07-24T00:00:00Z",
+            },
+            onDemandCap: { val: 5000 },
+            onDemandUsed: { val: 300 },
+            prepaidBalance: { val: 1250 },
+          },
+        }),
+        "SuperGrok Heavy",
+      ),
+    ).toEqual({
+      ok: true,
+      usage: {
+        subscriptionTier: "SuperGrok Heavy",
+        usedPercent: 42.5,
+        periodType: "USAGE_PERIOD_TYPE_WEEKLY",
+        resetAt: Date.parse("2026-07-24T00:00:00Z") / 1000,
+        prepaidBalanceCents: 1250,
+        onDemandCapCents: 5000,
+        onDemandUsedCents: 300,
+      },
+    })
+  })
+
+  test("silently retries Grok usage once and succeeds", async () => {
+    await using tmp = await tmpdir()
+    await Bun.write(
+      join(tmp.path, "auth.json"),
+      JSON.stringify({ xai: { type: "oauth", access: "access", refresh: "refresh", expires: Date.now() + 60_000 } }),
+    )
+    const calls: string[] = []
+    const request = async (input: string | URL | Request, init?: RequestInit) => {
+      const url = input instanceof Request ? input.url : input.toString()
+      calls.push(url)
+      expect(new Headers(init?.headers).get("X-XAI-Token-Auth")).toBe("xai-grok-cli")
+      if (url.includes("/user?")) {
+        if (calls.length === 1) return new Response("temporary", { status: 503 })
+        return Response.json({ userId: "user-1", subscriptionTier: "SuperGrok" })
+      }
+      return Response.json({ config: { creditUsagePercent: 25 } })
+    }
+
+    expect(await fetchXaiUsage(tmp.path, { fetch: request, retryDelayMs: 0 })).toEqual({
+      ok: true,
+      usage: {
+        subscriptionTier: "SuperGrok",
+        usedPercent: 25,
+        periodType: "",
+        resetAt: null,
+        prepaidBalanceCents: null,
+        onDemandCapCents: null,
+        onDemandUsedCents: null,
+      },
+    })
+    expect(calls).toHaveLength(3)
+  })
+
+  test("stops Grok usage after the one retry also fails", async () => {
+    await using tmp = await tmpdir()
+    await Bun.write(
+      join(tmp.path, "auth.json"),
+      JSON.stringify({ xai: { type: "oauth", access: "access", refresh: "refresh", expires: Date.now() + 60_000 } }),
+    )
+    const calls: string[] = []
+    const request = async (input: string | URL | Request) => {
+      calls.push(input instanceof Request ? input.url : input.toString())
+      return new Response("unavailable", { status: 503 })
+    }
+
+    expect(await fetchXaiUsage(tmp.path, { fetch: request, retryDelayMs: 0 })).toEqual({
+      ok: false,
+      message: "HTTP 503",
+    })
+    expect(calls).toHaveLength(2)
   })
 
   test("parses and orders multiple available reset expirations", () => {

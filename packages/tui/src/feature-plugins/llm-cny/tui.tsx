@@ -8,17 +8,12 @@ import { consumeCodexResetCredit, fetchCodexUsage, type CodexResetOutcome, type 
 import { fetchUsdCnyRate } from "./exchange-rate.js"
 import { fetchKimiUsage, type KimiUsage } from "./kimi-usage.js"
 import { calculateTrackedSession, supportsBalance, type BalanceProviderID } from "./pricing.js"
-import {
-  ActivationPrompt,
-  Divider,
-  EmptyUsage,
-  Header,
-  ProviderBalance,
-  Summary,
-} from "./tui/components.js"
+import { fetchXaiUsage, type XaiUsage } from "./xai-usage.js"
+import { ActivationPrompt, Divider, EmptyUsage, Header, ProviderBalance, Summary } from "./tui/components.js"
 import { CodexUsagePanel } from "./tui/codex-components.js"
 import { CopilotQuotaPanel } from "./tui/copilot-components.js"
 import { KimiUsagePanel } from "./tui/kimi-components.js"
+import { XaiUsagePanel } from "./tui/xai-components.js"
 import { errorMessage } from "./tui/format.js"
 import { parseOptions, type Options } from "./tui/options.js"
 import { randomCodexRefreshMs } from "./tui/refresh.js"
@@ -32,6 +27,7 @@ import {
   hasChatGPTOAuthProvider,
   hasChatGPTUsage,
   hasKimiForCodingUsage,
+  hasXaiOAuthProvider,
   isSubagentSession,
   kimiForCodingApiKey,
   mergeMessages,
@@ -60,6 +56,8 @@ type KimiState =
   | { status: "error"; message: string }
   | { status: "no-auth" }
 
+type XaiState = { status: "idle" } | { status: "ready"; usage: XaiUsage }
+
 const pluginID = "internal:llm-cny"
 
 function View(props: { api: TuiPluginApi; options: Options; session_id: string }) {
@@ -74,24 +72,47 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     localChildSessionIDs().flatMap((sessionID) => props.api.state.session.messages(sessionID)),
   )
   const usageMessages = createMemo(() => mergeMessages(messages(), localChildMessages(), remoteChildMessages()))
-  const openAIApiKeyEnabled = createMemo(() => hasOpenAIApiKeyProvider(props.api.state.provider, props.api.state.config))
+  const openAIApiKeyEnabled = createMemo(() =>
+    hasOpenAIApiKeyProvider(props.api.state.provider, props.api.state.config),
+  )
   const costMessages = createMemo(() =>
-    openAIApiKeyEnabled() ? usageMessages() : usageMessages().filter((item) => item.role !== "assistant" || item.providerID !== "openai"),
+    openAIApiKeyEnabled()
+      ? usageMessages()
+      : usageMessages().filter((item) => item.role !== "assistant" || item.providerID !== "openai"),
   )
   const tokens = createMemo(() => providerTokens(props.api))
   const activeProviders = createMemo(() => activeTrackedProviders(costMessages()))
   const activeBalanceProviders = createMemo(() => activeProviders().filter(supportsBalance))
   const hasTrackedUsage = createMemo(() => activeProviders().length > 0)
   const needsUsdCnyRate = createMemo(() =>
-    activeProviders().some((item) => item.id === "openrouter" || item.id === "xai" || item.id === "anthropic" || item.id === "openai" || item.id === "google" || item.id === "google-vertex"),
+    activeProviders().some(
+      (item) =>
+        item.id === "openrouter" ||
+        item.id === "xai" ||
+        item.id === "anthropic" ||
+        item.id === "openai" ||
+        item.id === "google" ||
+        item.id === "google-vertex",
+    ),
   )
-  const codexEnabled = createMemo(() => hasChatGPTOAuthProvider(props.api.state.provider) && hasChatGPTUsage(usageMessages()))
+  const codexEnabled = createMemo(
+    () => hasChatGPTOAuthProvider(props.api.state.provider) && hasChatGPTUsage(usageMessages()),
+  )
   const copilotEnabled = createMemo(
     () => hasCopilotOAuthProvider(props.api.state.provider) && hasCopilotUsage(usageMessages()),
   )
   const kimiEnabled = createMemo(() => hasKimiForCodingUsage(usageMessages()))
   const kimiApiKey = createMemo(() => kimiForCodingApiKey(props.api))
-  const activated = createMemo(() => hasTrackedUsage() || codexEnabled() || copilotEnabled() || kimiEnabled())
+  const xaiEnabled = createMemo(() => hasXaiOAuthProvider(props.api.state.provider))
+  const [xaiState, setXaiState] = createSignal<XaiState>({ status: "idle" })
+  const xaiUsage = createMemo(() => {
+    const state = xaiState()
+    return state.status === "ready" ? state.usage : undefined
+  })
+  const xaiReady = createMemo(() => xaiUsage() !== undefined)
+  const activated = createMemo(
+    () => hasTrackedUsage() || codexEnabled() || copilotEnabled() || kimiEnabled() || xaiReady(),
+  )
   const completedTrackedReplies = createMemo(() => completedTrackedReplyKey(costMessages()))
   const childRefreshKey = createMemo(() =>
     childUsageRefreshKey({
@@ -114,6 +135,9 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
   let previousCompletedTrackedReplies = ""
   let childUsageRequest = 0
   let codexRefreshTimer: ReturnType<typeof setTimeout> | undefined
+  let xaiRefreshTimer: ReturnType<typeof setTimeout> | undefined
+  let xaiController: AbortController | undefined
+  let xaiStopped = false
   let exchangeRateController: AbortController | undefined
   let disposed = false
 
@@ -166,9 +190,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
         return
       }
 
-      const responses = await Promise.all(
-        [...ids].map((sessionID) => props.api.client.session.messages({ sessionID })),
-      )
+      const responses = await Promise.all([...ids].map((sessionID) => props.api.client.session.messages({ sessionID })))
       if (request !== childUsageRequest) return
 
       setRemoteChildMessages(responses.flatMap((response) => (response.data ?? []).map((item) => item.info)))
@@ -202,6 +224,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
   let codexRequest = 0
   let copilotRequest = 0
   let kimiRequest = 0
+  let xaiRequest = 0
   const clearCodexRefreshTimer = () => {
     clearTimeout(codexRefreshTimer)
     codexRefreshTimer = undefined
@@ -362,6 +385,40 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     }
   }
 
+  const clearXaiRefreshTimer = () => {
+    clearTimeout(xaiRefreshTimer)
+    xaiRefreshTimer = undefined
+  }
+
+  const scheduleXaiRefresh = () => {
+    if (disposed || xaiStopped || !xaiEnabled() || !xaiReady()) return
+    xaiRefreshTimer = setTimeout(() => {
+      void refreshXaiUsage()
+    }, randomCodexRefreshMs())
+  }
+
+  const refreshXaiUsage = async () => {
+    clearXaiRefreshTimer()
+    if (disposed || xaiStopped || xaiController || !xaiEnabled()) return
+    const request = ++xaiRequest
+    const controller = new AbortController()
+    xaiController = controller
+    try {
+      const result = await fetchXaiUsage(props.api.state.path.state, { signal: controller.signal })
+      if (disposed || request !== xaiRequest || controller.signal.aborted) return
+      if (!result.ok) {
+        xaiStopped = true
+        return
+      }
+      setXaiState({ status: "ready", usage: result.usage })
+      scheduleXaiRefresh()
+    } catch {
+      if (!disposed && request === xaiRequest && !controller.signal.aborted) xaiStopped = true
+    } finally {
+      if (xaiController === controller) xaiController = undefined
+    }
+  }
+
   createEffect(() => {
     const current = tokenSignature(tokens())
     if (current === previousTokenSignature) return
@@ -417,13 +474,25 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     void refreshKimiUsage()
   })
 
+  createEffect(() => {
+    if (!xaiEnabled()) {
+      clearXaiRefreshTimer()
+      xaiRequest++
+      xaiController?.abort()
+      xaiController = undefined
+      xaiStopped = false
+      setXaiState({ status: "idle" })
+      return
+    }
+    if (!xaiStopped && !xaiReady()) void refreshXaiUsage()
+  })
+
   onMount(() => {
     const interval = setInterval(() => {
       if (activated()) refreshActive()
       if (needsUsdCnyRate()) refreshUsdCnyRate()
     }, props.options.balanceRefreshMs)
     onCleanup(() => clearInterval(interval))
-
   })
 
   onCleanup(() => {
@@ -431,6 +500,8 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     clearCodexRefreshTimer()
     clearCopilotRefreshTimer()
     clearKimiRefreshTimer()
+    clearXaiRefreshTimer()
+    xaiController?.abort()
     for (const controller of controllers.values()) {
       controller.abort()
     }
@@ -457,6 +528,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
             codexEnabled() ||
             copilotEnabled() ||
             (kimiEnabled() && kimiApiKey() !== undefined) ||
+            xaiReady() ||
             needsUsdCnyRate()
           }
           onRefresh={() => {
@@ -465,6 +537,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
             void refreshCodexUsage()
             void refreshCopilotUsage()
             void refreshKimiUsage()
+            void refreshXaiUsage()
           }}
         />
         <Show when={activated()} fallback={<ActivationPrompt theme={props.api.theme.current} t={t} />}>
@@ -489,7 +562,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
               resetting={codexResetting()}
               onReset={confirmCodexReset}
             />
-            <Show when={hasTrackedUsage() || copilotEnabled() || kimiEnabled()}>
+            <Show when={hasTrackedUsage() || copilotEnabled() || kimiEnabled() || xaiReady()}>
               <Divider theme={props.api.theme.current} />
             </Show>
           </Show>
@@ -500,20 +573,25 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
               locale={props.api.i18n.locale}
               state={copilotState()}
             />
-            <Show when={hasTrackedUsage() || kimiEnabled()}>
+            <Show when={hasTrackedUsage() || kimiEnabled() || xaiReady()}>
               <Divider theme={props.api.theme.current} />
             </Show>
           </Show>
           <Show when={kimiEnabled()}>
-            <KimiUsagePanel
-              theme={props.api.theme.current}
-              t={t}
-              locale={props.api.i18n.locale}
-              state={kimiState()}
-            />
-            <Show when={hasTrackedUsage()}>
+            <KimiUsagePanel theme={props.api.theme.current} t={t} locale={props.api.i18n.locale} state={kimiState()} />
+            <Show when={hasTrackedUsage() || xaiReady()}>
               <Divider theme={props.api.theme.current} />
             </Show>
+          </Show>
+          <Show when={xaiUsage()}>
+            {(usage) => (
+              <>
+                <XaiUsagePanel theme={props.api.theme.current} t={t} locale={props.api.i18n.locale} usage={usage()} />
+                <Show when={hasTrackedUsage()}>
+                  <Divider theme={props.api.theme.current} />
+                </Show>
+              </>
+            )}
           </Show>
           <For each={activeBalanceProviders()}>
             {(provider) => (

@@ -1,6 +1,12 @@
 import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { Message, Part, Session } from "@opencode-ai/sdk/v2"
-import { BALANCE_TRACKED_PROVIDERS, TRACKED_PROVIDERS, trackedModel, type BalanceProviderID, type TrackedProviderID } from "../pricing.js"
+import {
+  BALANCE_TRACKED_PROVIDERS,
+  TRACKED_PROVIDERS,
+  trackedModel,
+  type BalanceProviderID,
+  type TrackedProviderID,
+} from "../pricing.js"
 import { isRecord } from "../utils.js"
 
 type ProviderAuthLike = {
@@ -28,19 +34,22 @@ export function activeTrackedProviders(messages: ReadonlyArray<Message>) {
   return TRACKED_PROVIDERS.filter((item) => ids.has(item.id))
 }
 
-export function hasChatGPTOAuthProvider(
-  providers: ReadonlyArray<ProviderAuthLike>,
-) {
+export function hasChatGPTOAuthProvider(providers: ReadonlyArray<ProviderAuthLike>) {
   return providers.some((item) => item.id === "chatgpt")
 }
 
-export function hasCopilotOAuthProvider(
-  providers: ReadonlyArray<ProviderAuthLike>,
-) {
+export function hasCopilotOAuthProvider(providers: ReadonlyArray<ProviderAuthLike>) {
   const copilot = providers.find((item) => item.id === "github-copilot")
   if (!copilot) return false
   if (hasProviderApiKey(copilot)) return false
   return true
+}
+
+export function hasXaiOAuthProvider(providers: ReadonlyArray<ProviderAuthLike>) {
+  const xai = providers.find((item) => item.id === "xai")
+  if (!xai || xai.source === "api" || xai.source === "env" || xai.key) return false
+  const apiKey = readString(xai.options, "apiKey")
+  return !apiKey || apiKey === "opencode-oauth-dummy-key"
 }
 
 function hasProviderApiKey(provider: ProviderAuthLike) {
@@ -86,7 +95,9 @@ export function kimiForCodingApiKey(api: {
     ...(provider?.env?.map((name) => process.env[name]) ?? []),
     process.env.KIMI_API_KEY,
     readProviderConfigString(api.state.config, "kimi-for-coding", "apiKey"),
-  ].find((item) => typeof item === "string" && item.trim() !== "")?.trim()
+  ]
+    .find((item) => typeof item === "string" && item.trim() !== "")
+    ?.trim()
 }
 
 export function hasKimiForCodingUsage(messages: ReadonlyArray<Message>) {
