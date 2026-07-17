@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Birkaç sekmeyi açık tutmak etkin oturumlarınızı düzenlemeyi kolaylaştırır. Açık tutmayı planladığınız sekmelere akılda kalıcı adlar verin.",
   "help.tabs.content.home": "Tüm oturumlarınızı ve projelerinizi yeni Ana ekranında bulabilirsiniz. Bir oturum seçtiğinizde sekmede açılır.",
   "help.tabs.content.reopen": "Uygulamayı yeniden açtığınızda sekmeleriniz açık kalır.",
-  "help.tabs.content.worktrees": "Yeni tasarım henüz Git Worktrees'i desteklemiyor, ancak destek yakında gelecek. O zamana kadar Ayarlar'dan önceki düzene dönebilirsiniz. Yeni düzen birkaç hafta içinde kalıcı olacaktır."
+  "help.tabs.content.worktrees": "Yeni tasarım henüz Git Worktrees'i desteklemiyor, ancak destek yakında gelecek. O zamana kadar Ayarlar'dan önceki düzene dönebilirsiniz. Yeni düzen birkaç hafta içinde kalıcı olacaktır.",
+  "palette.search.placeholder.home": "Komut ve oturum ara"
 }

@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "保留幾個開啟的分頁，可以更輕鬆地整理進行中的工作階段。如果準備長期保留分頁，可以為它們設定容易記住的名稱。",
   "help.tabs.content.home": "新的首頁會集中顯示所有工作階段和專案。選取工作階段後，它會在分頁中開啟。",
   "help.tabs.content.reopen": "重新開啟應用程式時，分頁仍會保持開啟。",
-  "help.tabs.content.worktrees": "新設計暫不支援 Git Worktrees，但相關支援即將推出。在此之前，你可以在設定中切換回舊版面配置。新版面配置將在幾週後成為固定配置。"
+  "help.tabs.content.worktrees": "新設計暫不支援 Git Worktrees，但相關支援即將推出。在此之前，你可以在設定中切換回舊版面配置。新版面配置將在幾週後成為固定配置。",
+  "palette.search.placeholder.home": "搜尋命令和工作階段"
 }

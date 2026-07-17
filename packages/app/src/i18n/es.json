@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Mantener algunas pestañas abiertas facilita la organización de tus sesiones activas. Pon nombres fáciles de recordar a las pestañas si piensas mantenerlas abiertas.",
   "help.tabs.content.home": "Encontrarás todas tus sesiones y proyectos en la nueva pantalla Inicio. Al seleccionar una sesión, se abrirá en una pestaña.",
   "help.tabs.content.reopen": "Cuando vuelvas a abrir la aplicación, tus pestañas seguirán abiertas.",
-  "help.tabs.content.worktrees": "El nuevo diseño aún no admite Git Worktrees, pero la compatibilidad llegará pronto. Hasta entonces, puedes volver al diseño anterior desde Configuración. El nuevo diseño será permanente dentro de unas semanas."
+  "help.tabs.content.worktrees": "El nuevo diseño aún no admite Git Worktrees, pero la compatibilidad llegará pronto. Hasta entonces, puedes volver al diseño anterior desde Configuración. El nuevo diseño será permanente dentro de unas semanas.",
+  "palette.search.placeholder.home": "Buscar comandos y sesiones"
 }

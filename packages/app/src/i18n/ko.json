@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "탭 몇 개를 열어 두면 활성 세션을 더 쉽게 정리할 수 있습니다. 탭을 계속 열어 둘 예정이라면 기억하기 쉬운 이름으로 바꾸세요.",
   "help.tabs.content.home": "새 홈 화면에서 모든 세션과 프로젝트를 찾을 수 있습니다. 세션을 선택하면 탭에서 열립니다.",
   "help.tabs.content.reopen": "앱을 다시 열어도 탭은 열린 상태로 유지됩니다.",
-  "help.tabs.content.worktrees": "새 디자인은 아직 Git Worktrees를 지원하지 않지만 곧 지원할 예정입니다. 그때까지 설정에서 이전 레이아웃으로 돌아갈 수 있습니다. 새 레이아웃은 몇 주 후 기본으로 고정됩니다."
+  "help.tabs.content.worktrees": "새 디자인은 아직 Git Worktrees를 지원하지 않지만 곧 지원할 예정입니다. 그때까지 설정에서 이전 레이아웃으로 돌아갈 수 있습니다. 새 레이아웃은 몇 주 후 기본으로 고정됩니다.",
+  "palette.search.placeholder.home": "명령어 및 세션 검색"
 }

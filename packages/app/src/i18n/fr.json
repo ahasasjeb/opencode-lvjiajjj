@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Garder quelques onglets ouverts facilite l'organisation de vos sessions actives. Renommez-les de façon mémorable si vous prévoyez de les conserver.",
   "help.tabs.content.home": "Vous trouverez toutes vos sessions et tous vos projets sur le nouvel écran d'accueil. Sélectionnez une session pour l'ouvrir dans un onglet.",
   "help.tabs.content.reopen": "Lorsque vous rouvrez l'application, vos onglets sont toujours ouverts.",
-  "help.tabs.content.worktrees": "Le nouveau design ne prend pas encore en charge Git Worktrees, mais cette compatibilité arrivera bientôt. En attendant, vous pouvez revenir à la disposition précédente dans les paramètres. La nouvelle disposition deviendra permanente dans quelques semaines."
+  "help.tabs.content.worktrees": "Le nouveau design ne prend pas encore en charge Git Worktrees, mais cette compatibilité arrivera bientôt. En attendant, vous pouvez revenir à la disposition précédente dans les paramètres. La nouvelle disposition deviendra permanente dans quelques semaines.",
+  "palette.search.placeholder.home": "Rechercher des commandes et des sessions"
 }

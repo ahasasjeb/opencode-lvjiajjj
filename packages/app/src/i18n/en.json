@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Keeping a few tabs open makes it easier to organize your active sessions. Rename tabs to something memorable if you plan to keep them around.",
   "help.tabs.content.home": "You'll find all your sessions and projects on the new Home screen. Selecting a session opens it in a tab.",
   "help.tabs.content.reopen": "When you reopen the app, your tabs are still open.",
-  "help.tabs.content.worktrees": "The new design does not support Git Worktrees yet, but support is coming soon. Until then, you can switch back to the previous layout in Settings. The new layout will become permanent in a few weeks."
+  "help.tabs.content.worktrees": "The new design does not support Git Worktrees yet, but support is coming soon. Until then, you can switch back to the previous layout in Settings. The new layout will become permanent in a few weeks.",
+  "palette.search.placeholder.home": "Search commands and sessions"
 }

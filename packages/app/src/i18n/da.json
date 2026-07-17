@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Et par åbne faner gør det nemmere at organisere dine aktive sessioner. Omdøb faner til noget, du kan huske, hvis du vil beholde dem åbne.",
   "help.tabs.content.home": "Du finder alle dine sessioner og projekter på den nye startskærm. Når du vælger en session, åbnes den i en fane.",
   "help.tabs.content.reopen": "Når du åbner appen igen, er dine faner stadig åbne.",
-  "help.tabs.content.worktrees": "Det nye design understøtter endnu ikke Git Worktrees, men understøttelse kommer snart. Indtil da kan du skifte tilbage til det tidligere layout i Indstillinger. Det nye layout bliver permanent om nogle få uger."
+  "help.tabs.content.worktrees": "Det nye design understøtter endnu ikke Git Worktrees, men understøttelse kommer snart. Indtil da kan du skifte tilbage til det tidligere layout i Indstillinger. Det nye layout bliver permanent om nogle få uger.",
+  "palette.search.placeholder.home": "Søg i kommandoer og sessioner"
 }

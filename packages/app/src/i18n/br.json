@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Manter algumas abas abertas facilita a organização das sessões ativas. Renomeie as abas com nomes fáceis de lembrar se quiser mantê-las abertas.",
   "help.tabs.content.home": "Você encontrará todas as sessões e projetos na nova tela Início. Ao selecionar uma sessão, ela será aberta em uma aba.",
   "help.tabs.content.reopen": "Quando você reabrir o aplicativo, suas abas continuarão abertas.",
-  "help.tabs.content.worktrees": "O novo design ainda não oferece suporte a Git Worktrees, mas esse recurso chegará em breve. Até lá, você pode voltar ao layout anterior nas Configurações. O novo layout se tornará permanente em algumas semanas."
+  "help.tabs.content.worktrees": "O novo design ainda não oferece suporte a Git Worktrees, mas esse recurso chegará em breve. Até lá, você pode voltar ao layout anterior nas Configurações. O novo layout se tornará permanente em algumas semanas.",
+  "palette.search.placeholder.home": "Buscar comandos e sessões"
 }

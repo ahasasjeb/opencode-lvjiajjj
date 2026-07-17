@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Noen åpne faner gjør det enklere å organisere aktive økter. Gi fanene navn som er lette å huske hvis du vil beholde dem åpne.",
   "help.tabs.content.home": "Du finner alle øktene og prosjektene dine på den nye startskjermen. Når du velger en økt, åpnes den i en fane.",
   "help.tabs.content.reopen": "Når du åpner appen på nytt, er fanene fortsatt åpne.",
-  "help.tabs.content.worktrees": "Det nye designet støtter ikke Git Worktrees ennå, men støtte kommer snart. Frem til da kan du bytte tilbake til det forrige oppsettet i Innstillinger. Det nye oppsettet blir permanent om noen uker."
+  "help.tabs.content.worktrees": "Det nye designet støtter ikke Git Worktrees ennå, men støtte kommer snart. Frem til da kan du bytte tilbake til det forrige oppsettet i Innstillinger. Det nye oppsettet blir permanent om noen uker.",
+  "palette.search.placeholder.home": "Søk i kommandoer og sesjoner"
 }

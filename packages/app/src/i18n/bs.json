@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Nekoliko otvorenih kartica olakšava organizaciju aktivnih sesija. Preimenujte kartice u nešto pamtljivo ako ih planirate zadržati otvorenim.",
   "help.tabs.content.home": "Sve sesije i projekte pronaći ćete na novom početnom ekranu. Odabirom sesije ona se otvara u kartici.",
   "help.tabs.content.reopen": "Kada ponovo otvorite aplikaciju, vaše kartice ostaju otvorene.",
-  "help.tabs.content.worktrees": "Novi dizajn još ne podržava Git Worktrees, ali podrška uskoro stiže. Do tada se u postavkama možete vratiti na prethodni raspored. Novi raspored će postati trajan za nekoliko sedmica."
+  "help.tabs.content.worktrees": "Novi dizajn još ne podržava Git Worktrees, ali podrška uskoro stiže. Do tada se u postavkama možete vratiti na prethodni raspored. Novi raspored će postati trajan za nekoliko sedmica.",
+  "palette.search.placeholder.home": "Pretraži komande i sesije"
 }

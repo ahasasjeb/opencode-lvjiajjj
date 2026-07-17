@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Einige offene Tabs erleichtern die Organisation Ihrer aktiven Sitzungen. Geben Sie Tabs einprägsame Namen, wenn Sie sie geöffnet lassen möchten.",
   "help.tabs.content.home": "Alle Sitzungen und Projekte finden Sie auf dem neuen Startbildschirm. Wenn Sie eine Sitzung auswählen, wird sie in einem Tab geöffnet.",
   "help.tabs.content.reopen": "Beim erneuten Öffnen der App bleiben Ihre Tabs geöffnet.",
-  "help.tabs.content.worktrees": "Das neue Design unterstützt Git Worktrees noch nicht, die Unterstützung folgt aber bald. Bis dahin können Sie in den Einstellungen zum vorherigen Layout zurückkehren. Das neue Layout wird in einigen Wochen dauerhaft aktiviert."
+  "help.tabs.content.worktrees": "Das neue Design unterstützt Git Worktrees noch nicht, die Unterstützung folgt aber bald. Bis dahin können Sie in den Einstellungen zum vorherigen Layout zurückkehren. Das neue Layout wird in einigen Wochen dauerhaft aktiviert.",
+  "palette.search.placeholder.home": "Befehle und Sitzungen durchsuchen"
 }

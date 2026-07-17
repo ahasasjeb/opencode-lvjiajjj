@@ -1004,5 +1004,6 @@
   "help.tabs.content.organize": "Kilka otwartych kart ułatwia organizowanie aktywnych sesji. Nadaj kartom łatwe do zapamiętania nazwy, jeśli chcesz pozostawić je otwarte.",
   "help.tabs.content.home": "Wszystkie sesje i projekty znajdziesz na nowym ekranie głównym. Wybranie sesji otwiera ją w karcie.",
   "help.tabs.content.reopen": "Po ponownym otwarciu aplikacji karty pozostają otwarte.",
-  "help.tabs.content.worktrees": "Nowy wygląd nie obsługuje jeszcze Git Worktrees, ale obsługa pojawi się wkrótce. Do tego czasu możesz wrócić do poprzedniego układu w Ustawieniach. Nowy układ stanie się stały za kilka tygodni."
+  "help.tabs.content.worktrees": "Nowy wygląd nie obsługuje jeszcze Git Worktrees, ale obsługa pojawi się wkrótce. Do tego czasu możesz wrócić do poprzedniego układu w Ustawieniach. Nowy układ stanie się stały za kilka tygodni.",
+  "palette.search.placeholder.home": "Szukaj poleceń i sesji"
 }
