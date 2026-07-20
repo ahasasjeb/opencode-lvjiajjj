@@ -168,6 +168,23 @@ describe("tool.registry", () => {
     }),
   )
 
+  it.instance("does not expose task for providers that do not support subagents", () =>
+    Effect.gen(function* () {
+      const registry = yield* ToolRegistry.Service
+      const agents = yield* Agent.Service
+      const agent = yield* agents.defaultInfo()
+
+      for (const providerID of ["alibaba-token-plan", "kimi-for-coding"]) {
+        const tools = yield* registry.tools({
+          providerID: ProviderV2.ID.make(providerID),
+          modelID: ModelV2.ID.make("test"),
+          agent,
+        })
+        expect(tools.map((tool) => tool.id)).not.toContain("task")
+      }
+    }),
+  )
+
   it.instance("loads tools from .opencode/tool (singular)", () =>
     Effect.gen(function* () {
       const test = yield* TestInstance

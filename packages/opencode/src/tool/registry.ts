@@ -62,6 +62,8 @@ export function webSearchEnabled(providerID: ProviderV2.ID, flags = { exa: false
   return providerID === ProviderV2.ID.opencode || flags.exa || flags.parallel
 }
 
+const TASK_DISABLED_PROVIDER_IDS = new Set(["alibaba-token-plan", "kimi-for-coding"])
+
 type TaskDef = Tool.InferDef<typeof TaskTool>
 type ReadDef = Tool.InferDef<typeof ReadTool>
 
@@ -292,6 +294,8 @@ const layer = Layer.effect(
 
     const tools: Interface["tools"] = Effect.fn("ToolRegistry.tools")(function* (input) {
       const filtered = (yield* all()).filter((tool) => {
+        if (tool.id === TaskTool.id && TASK_DISABLED_PROVIDER_IDS.has(input.providerID)) return false
+
         if (tool.id === WebSearchTool.id) {
           return webSearchEnabled(input.providerID, { exa: flags.enableExa, parallel: flags.enableParallel })
         }

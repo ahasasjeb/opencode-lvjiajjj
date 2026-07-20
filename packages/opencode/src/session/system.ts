@@ -1,5 +1,6 @@
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { Context, Effect, Layer } from "effect"
+import os from "os"
 
 import { InstanceState } from "@/effect/instance-state"
 
@@ -70,6 +71,7 @@ const layer = Layer.effect(
             `  Working directory: ${ctx.directory}`,
             `  Workspace root folder: ${ctx.worktree}`,
             `  Is directory a git repo: ${ctx.project.vcs === "git" ? "yes" : "no"}`,
+            `  Operating system: ${process.platform === "win32" ? os.version() : `${process.platform === "darwin" ? "macOS" : os.type()} ${os.version()}`} (${process.arch})`,
             `  Platform: ${process.platform}`,
             `  Today's date: ${new Date().toDateString()}`,
             `</env>`,

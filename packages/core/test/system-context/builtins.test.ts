@@ -1,5 +1,6 @@
 import { describe, expect } from "bun:test"
 import { Effect, Layer } from "effect"
+import os from "os"
 import * as TestClock from "effect/testing/TestClock"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
@@ -18,6 +19,16 @@ const projectDirectory = AbsolutePath.make(FSUtil.resolve("/repo"))
 const instructionFile = FSUtil.resolve("/repo/AGENTS.md")
 const timestamp = Date.parse("2026-06-03T12:00:00.000Z")
 const localDate = (time: number) => new Date(time).toDateString()
+const operatingSystem = `${process.platform === "win32" ? os.version() : `${process.platform === "darwin" ? "macOS" : os.type()} ${os.version()}`} (${process.arch})`
+const mermaidPrompt = [
+  "# Diagrams",
+  "",
+  "When helpful, use ```mermaid fenced blocks for flowcharts etc. The terminal renders them as ASCII art. Use compact flowchart TD/LR, short node IDs with labels in brackets, no subgraphs.",
+  "```mermaid",
+  "flowchart TD",
+  "  A[Start] --> B[End]",
+  "```",
+].join("\n")
 const locationLayer = Layer.succeed(
   Location.Service,
   Location.Service.of(
@@ -68,10 +79,13 @@ describe("SystemContextBuiltIns", () => {
           `  Working directory: ${directory}`,
           `  Workspace root folder: ${projectDirectory}`,
           "  Is directory a git repo: yes",
+          `  Operating system: ${operatingSystem}`,
           `  Platform: ${process.platform}`,
           "</env>",
           "",
           `Today's date: ${localDate(timestamp)}`,
+          "",
+          mermaidPrompt,
         ].join("\n"),
       )
     }),
@@ -116,10 +130,13 @@ describe("SystemContextBuiltIns", () => {
           `  Working directory: ${directory}`,
           `  Workspace root folder: ${projectDirectory}`,
           "  Is directory a git repo: yes",
+          `  Operating system: ${operatingSystem}`,
           `  Platform: ${process.platform}`,
           "</env>",
           "",
           `Today's date: ${localDate(timestamp)}`,
+          "",
+          mermaidPrompt,
           "",
           `Instructions from: ${instructionFile}\nBe precise.`,
         ].join("\n"),

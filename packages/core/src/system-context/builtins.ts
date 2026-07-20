@@ -8,6 +8,7 @@ import { InstructionContext } from "../instruction-context"
 import { SystemContextRegistry } from "./registry"
 import { FSUtil } from "../fs-util"
 import { Global } from "../global"
+import os from "os"
 
 const builtIns = Layer.effectDiscard(
   Effect.gen(function* () {
@@ -18,6 +19,7 @@ const builtIns = Layer.effectDiscard(
       `  Working directory: ${location.directory}`,
       `  Workspace root folder: ${location.project.directory}`,
       `  Is directory a git repo: ${location.vcs?.type === "git" ? "yes" : "no"}`,
+      `  Operating system: ${process.platform === "win32" ? os.version() : `${process.platform === "darwin" ? "macOS" : os.type()} ${os.version()}`} (${process.arch})`,
       `  Platform: ${process.platform}`,
       "</env>",
     ].join("\n")
