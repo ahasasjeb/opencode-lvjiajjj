@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "Пользовательский провайдер, совместимый с OpenAI",
+  "dialog.model.unpaid.viewMoreProviders": "Посмотреть ещё более 70 провайдеров",
+  "session.new.git.none": "Нет Git",
   "command.category.suggested": "Предложено",
   "command.category.view": "Просмотр",
   "command.category.project": "Проект",

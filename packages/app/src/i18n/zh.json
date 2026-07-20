@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "自定义兼容 OpenAI 的提供商",
+  "dialog.model.unpaid.viewMoreProviders": "查看更多 70 多个提供商",
+  "session.new.git.none": "无 Git",
   "command.category.suggested": "建议",
   "command.category.view": "视图",
   "command.category.project": "项目",

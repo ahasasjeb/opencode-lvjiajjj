@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "カスタム OpenAI 互換プロバイダー",
+  "dialog.model.unpaid.viewMoreProviders": "70 以上のプロバイダーを見る",
+  "session.new.git.none": "Git なし",
   "command.category.suggested": "おすすめ",
   "command.category.view": "表示",
   "command.category.project": "プロジェクト",

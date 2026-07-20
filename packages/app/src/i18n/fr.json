@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "Fournisseur personnalisé compatible avec OpenAI",
+  "dialog.model.unpaid.viewMoreProviders": "Voir plus de 70 fournisseurs",
+  "session.new.git.none": "Pas de Git",
   "command.category.suggested": "Suggéré",
   "command.category.view": "Affichage",
   "command.category.project": "Projet",

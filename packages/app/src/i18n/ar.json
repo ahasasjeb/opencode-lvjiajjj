@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "موفّر مخصص متوافق مع OpenAI",
+  "dialog.model.unpaid.viewMoreProviders": "عرض أكثر من 70 موفّرًا إضافيًا",
+  "session.new.git.none": "لا يوجد Git",
   "command.category.suggested": "مقترح",
   "command.category.view": "عرض",
   "command.category.project": "مشروع",

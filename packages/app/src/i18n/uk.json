@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "Користувацький сумісний з OpenAI постачальник",
+  "dialog.model.unpaid.viewMoreProviders": "Переглянути ще понад 70 постачальників",
+  "session.new.git.none": "Немає Git",
   "command.category.suggested": "Рекомендовані",
   "command.category.view": "Вигляд",
   "command.category.project": "Проєкт",

@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "Custom OpenAI-compatible provider",
+  "dialog.model.unpaid.viewMoreProviders": "See 70+ more providers",
+  "session.new.git.none": "No Git",
   "command.category.suggested": "Suggested",
   "command.category.view": "View",
   "command.category.project": "Project",

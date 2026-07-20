@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "Niestandardowy dostawca zgodny z OpenAI",
+  "dialog.model.unpaid.viewMoreProviders": "Zobacz ponad 70 innych dostawców",
+  "session.new.git.none": "Brak Git",
   "command.category.suggested": "Sugerowane",
   "command.category.view": "Widok",
   "command.category.project": "Projekt",

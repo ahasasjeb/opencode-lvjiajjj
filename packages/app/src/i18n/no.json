@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "Tilpasset OpenAI-kompatibel leverandør",
+  "dialog.model.unpaid.viewMoreProviders": "Se over 70 flere leverandører",
+  "session.new.git.none": "Ingen Git",
   "command.category.suggested": "Foreslått",
   "command.category.view": "Visning",
   "command.category.project": "Prosjekt",

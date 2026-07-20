@@ -1,4 +1,7 @@
 {
+  "dialog.provider.custom.label": "Prilagođeni pružalac kompatibilan s OpenAI-jem",
+  "dialog.model.unpaid.viewMoreProviders": "Pogledajte više od 70 dodatnih pružalaca",
+  "session.new.git.none": "Nema Gita",
   "command.category.suggested": "Predloženo",
   "command.category.view": "Prikaz",
   "command.category.project": "Projekat",
