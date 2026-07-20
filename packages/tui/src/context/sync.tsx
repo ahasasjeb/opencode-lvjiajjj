@@ -513,6 +513,21 @@ export const {
           break
         }
 
+        case "models-dev.refreshed": {
+          const workspace = project.workspace.current()
+          void Promise.all([sdk.client.config.providers({ workspace }), sdk.client.provider.list({ workspace })]).then(
+            ([providers, providerList]) => {
+              if (!providers.data || !providerList.data) return
+              batch(() => {
+                setStore("provider", reconcile(providers.data.providers))
+                setStore("provider_default", reconcile(providers.data.default))
+                setStore("provider_next", reconcile(providerList.data))
+              })
+            },
+          )
+          break
+        }
+
         case "vcs.branch.updated": {
           if (workspace === project.workspace.current()) {
             setStore("vcs", { branch: event.properties.branch })

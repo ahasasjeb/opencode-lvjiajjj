@@ -31,6 +31,14 @@ import { ModelV2 } from "@opencode-ai/core/model"
 import { ModelStatus } from "./model-status"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderError } from "./error"
+import { EventV2Bridge } from "@/event-v2-bridge"
+import {
+  cachedOfficialModels,
+  fetchOfficialModels,
+  hasOfficialModelList,
+  officialModelKey,
+  replaceOfficialModels,
+} from "./official-models"
 
 const OPENAI_HEADER_TIMEOUT_DEFAULT = 300_000
 
@@ -1340,6 +1348,7 @@ const layer = Layer.effect(
     const plugin = yield* Plugin.Service
     const modelsDevSvc = yield* ModelsDev.Service
     const runtimeFlags = yield* RuntimeFlags.Service
+    const events = yield* EventV2Bridge.Service
 
     const state = yield* InstanceState.make<State>(() =>
       Effect.gen(function* () {
@@ -1686,11 +1695,65 @@ const layer = Layer.effect(
             }
           }
 
-          if (Object.keys(provider.models).length === 0) {
+          if (Object.keys(provider.models).length === 0 && !(hasOfficialModelList(providerID) && officialModelKey(provider))) {
             delete providers[providerID]
             continue
           }
         }
+
+        const cachePath = path.join(Global.Path.cache, "official-models.json")
+        const cached = yield* Effect.promise(() =>
+          Bun.file(cachePath)
+            .json()
+            .then((value: unknown) => cachedOfficialModels(value), () => ({})),
+        )
+
+        const includeOfficialModel = (providerID: string, modelID: string) => {
+          const provider = cfg.provider?.[providerID]
+          if (provider?.blacklist?.includes(modelID)) return false
+          if (provider?.whitelist && !provider.whitelist.includes(modelID)) return false
+          return true
+        }
+
+        for (const [providerID, provider] of Object.entries(providers)) {
+          if (!hasOfficialModelList(providerID)) continue
+          if (!officialModelKey(provider)) continue
+          const models = Object.entries(cached).find(([id]) => id === providerID)?.[1]
+          const catalogProvider = catalog[providerID]
+          if (!models || !catalogProvider) continue
+          replaceOfficialModels({
+            provider,
+            catalog: catalogProvider,
+            models,
+            include: (modelID) => includeOfficialModel(providerID, modelID),
+          })
+        }
+
+        yield* Effect.forkScoped(
+          Effect.promise(async () => {
+            const refreshed = await Promise.all(
+              Object.entries(providers).flatMap(async ([providerID, provider]) => {
+                if (!hasOfficialModelList(providerID)) return []
+                const key = officialModelKey(provider)
+                if (!key) return []
+                const models = await fetchOfficialModels(providerID, key)
+                const catalogProvider = catalog[providerID]
+                if (!models || !catalogProvider) return []
+                replaceOfficialModels({
+                  provider,
+                  catalog: catalogProvider,
+                  models,
+                  include: (modelID) => includeOfficialModel(providerID, modelID),
+                })
+                return [[providerID, models] as const]
+              }),
+            )
+            if (refreshed.length === 0) return
+            const next = { ...cached, ...Object.fromEntries(refreshed.flat()) }
+            await Bun.write(cachePath, JSON.stringify(next)).catch(() => undefined)
+            await bridge.promise(events.publish(ModelsDev.Event.Refreshed, {}))
+          }).pipe(Effect.ignore),
+        )
 
         return {
           models: languages,
@@ -2049,7 +2112,7 @@ export function parseModel(model: string) {
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
-  deps: [FSUtil.node, Config.node, Auth.node, Env.node, Plugin.node, ModelsDev.node, RuntimeFlags.node],
+  deps: [FSUtil.node, Config.node, Auth.node, Env.node, Plugin.node, ModelsDev.node, RuntimeFlags.node, EventV2Bridge.node],
 })
 
 export * as Provider from "./provider"
