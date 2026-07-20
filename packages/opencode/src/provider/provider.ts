@@ -18,7 +18,7 @@ import { iife } from "@/util/iife"
 import { Global } from "@opencode-ai/core/global"
 import path from "path"
 import { pathToFileURL } from "url"
-import { Effect, Layer, Context, Schema, Types } from "effect"
+import { Effect, Layer, Context, Schedule, Schema, Types } from "effect"
 import { EffectBridge } from "@/effect/bridge"
 import { InstanceState } from "@/effect/instance-state"
 import { EffectPromise } from "@/effect/promise"
@@ -472,6 +472,39 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
           },
         },
       }),
+    lmstudio: Effect.fnUntraced(function* (input: Info) {
+      const auth = yield* dep.auth(input.id)
+      const baseURL =
+        typeof input.options.baseURL === "string" && input.options.baseURL !== ""
+          ? input.options.baseURL.replace(/\/$/, "")
+          : (Object.values(input.models)[0]?.api.url || "http://127.0.0.1:1234/v1").replace(/\/$/, "")
+      const apiKey =
+        typeof input.options.apiKey === "string"
+          ? input.options.apiKey
+          : auth?.type === "api"
+            ? auth.key
+            : yield* dep.get("LMSTUDIO_API_KEY")
+
+      return {
+        autoload: true,
+        options: { baseURL },
+        async discoverModels() {
+          const response = await fetch(`${baseURL}/models`, {
+            headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined,
+            signal: AbortSignal.timeout(2_000),
+          })
+          if (!response.ok) throw new Error(`LM Studio model discovery failed with status ${response.status}`)
+          const body: unknown = await response.json()
+          if (!isRecord(body) || !Array.isArray(body.data)) throw new Error("LM Studio returned an invalid model list")
+          return Object.fromEntries(
+            body.data.flatMap((item) => {
+              if (!isRecord(item) || typeof item.id !== "string" || item.id === "") return []
+              return [[item.id, lmStudioModel(input, item.id, baseURL)] as const]
+            }),
+          )
+        },
+      }
+    }),
     openrouter: () =>
       Effect.succeed({
         autoload: false,
@@ -1298,6 +1331,73 @@ export function fromModelsDevProvider(provider: ModelsDev.Provider): Info {
   }
 }
 
+function lmStudioModel(provider: Info, modelID: string, baseURL: string): Model {
+  const existing = provider.models[modelID]
+  if (existing)
+    return {
+      ...existing,
+      id: ModelV2.ID.make(modelID),
+      providerID: ProviderV2.ID.make("lmstudio"),
+      api: {
+        id: modelID,
+        url: baseURL,
+        npm: "@ai-sdk/openai-compatible",
+      },
+    }
+
+  const model: Model = {
+    id: ModelV2.ID.make(modelID),
+    providerID: ProviderV2.ID.make("lmstudio"),
+    name: modelID,
+    family: "",
+    api: {
+      id: modelID,
+      url: baseURL,
+      npm: "@ai-sdk/openai-compatible",
+    },
+    status: "active",
+    headers: {},
+    options: {},
+    cost: {
+      input: 0,
+      output: 0,
+      cache: {
+        read: 0,
+        write: 0,
+      },
+    },
+    limit: {
+      context: 0,
+      output: 0,
+    },
+    capabilities: {
+      temperature: true,
+      reasoning: false,
+      attachment: false,
+      toolcall: true,
+      input: {
+        text: true,
+        audio: false,
+        image: false,
+        video: false,
+        pdf: false,
+      },
+      output: {
+        text: true,
+        audio: false,
+        image: false,
+        video: false,
+        pdf: false,
+      },
+      interleaved: false,
+    },
+    release_date: "",
+    variants: {},
+  }
+  model.variants = mapValues(ProviderTransform.variants(model), (variant) => variant)
+  return model
+}
+
 function modeOptions(model: Model, body: Record<string, unknown> | undefined) {
   if (!body) return model.options
   const options = Object.fromEntries(
@@ -1638,6 +1738,36 @@ const layer = Layer.effect(
           mergeProvider(providerID, partial)
         }
 
+        const lmstudio = ProviderV2.ID.make("lmstudio")
+        const refreshLMStudio = async (initial: boolean) => {
+          const discover = discoveryLoaders[lmstudio]
+          const provider = providers[lmstudio]
+          if (!discover || !provider || !isProviderAllowed(lmstudio)) return false
+
+          const discovered = await discover().catch(() => (initial ? {} : undefined))
+          if (!discovered) return false
+          const configProvider = cfg.provider?.[lmstudio]
+          const next = Object.fromEntries(
+            Object.entries(discovered).filter(([modelID, model]) => {
+              if (model.status === "alpha" && !runtimeFlags.enableExperimentalModels) return false
+              if (model.status === "deprecated") return false
+              if (configProvider?.blacklist?.includes(modelID)) return false
+              if (configProvider?.whitelist && !configProvider.whitelist.includes(modelID)) return false
+              return true
+            }),
+          )
+          if (JSON.stringify(Object.keys(provider.models).sort()) === JSON.stringify(Object.keys(next).sort()))
+            return false
+
+          provider.models = next
+          if (catalog[lmstudio]) catalog[lmstudio].models = toPublicInfo(provider).models
+          for (const key of languages.keys()) {
+            if (key.startsWith("lmstudio/")) languages.delete(key)
+          }
+          return true
+        }
+
+        yield* Effect.promise(() => refreshLMStudio(true))
         const gitlab = ProviderV2.ID.make("gitlab")
         if (discoveryLoaders[gitlab] && providers[gitlab] && isProviderAllowed(gitlab)) {
           yield* Effect.promise(async () => {
@@ -1695,10 +1825,24 @@ const layer = Layer.effect(
             }
           }
 
-          if (Object.keys(provider.models).length === 0 && !(hasOfficialModelList(providerID) && officialModelKey(provider))) {
+          if (
+            providerID !== lmstudio &&
+            Object.keys(provider.models).length === 0 &&
+            !(hasOfficialModelList(providerID) && officialModelKey(provider))
+          ) {
             delete providers[providerID]
             continue
           }
+        }
+
+        if (discoveryLoaders[lmstudio] && providers[lmstudio] && isProviderAllowed(lmstudio)) {
+          yield* Effect.forkScoped(
+            Effect.promise(() => refreshLMStudio(false)).pipe(
+              Effect.tap((changed) => (changed ? events.publish(ModelsDev.Event.Refreshed, {}) : Effect.void)),
+              Effect.repeat(Schedule.spaced("5 seconds")),
+              Effect.ignore,
+            ),
+          )
         }
 
         const cachePath = path.join(Global.Path.cache, "official-models.json")

@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test"
+import { afterAll, afterEach, expect, test } from "bun:test"
 import { mkdir, unlink } from "fs/promises"
 import path from "path"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
@@ -25,6 +25,24 @@ import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 
 const originalEnv = new Map<string, string | undefined>()
+
+const lmStudioTest = {
+  models: ["local/first"],
+  requests: 0,
+}
+const lmStudioServer = Bun.serve({
+  port: 0,
+  fetch(request) {
+    if (new URL(request.url).pathname !== "/v1/models") return new Response("Not found", { status: 404 })
+    lmStudioTest.requests++
+    return Response.json({
+      object: "list",
+      data: lmStudioTest.models.map((id) => ({ id, object: "model", owned_by: "lmstudio" })),
+    })
+  },
+})
+
+afterAll(() => lmStudioServer.stop(true))
 
 const rememberEnv = (k: string) => {
   if (!originalEnv.has(k)) originalEnv.set(k, process.env[k])
@@ -108,6 +126,42 @@ const alphaProviderConfig = {
     },
   },
 }
+
+it.instance(
+  "lmstudio replaces catalog models and hot reloads the local list",
+  Effect.gen(function* () {
+    lmStudioTest.models = ["local/first"]
+    lmStudioTest.requests = 0
+
+    const providers = yield* list
+    const lmstudio = providers[ProviderV2.ID.make("lmstudio")]
+    expect(Object.keys(lmstudio.models)).toEqual(["local/first"])
+    expect(lmstudio.models["local/first"].api).toEqual({
+      id: "local/first",
+      url: `${lmStudioServer.url.origin}/v1`,
+      npm: "@ai-sdk/openai-compatible",
+    })
+
+    lmStudioTest.models = ["local/second"]
+    yield* Effect.sleep("6 seconds")
+
+    const refreshed = yield* list
+    expect(Object.keys(refreshed[ProviderV2.ID.make("lmstudio")].models)).toEqual(["local/second"])
+    expect(lmStudioTest.requests).toBeGreaterThanOrEqual(2)
+  }),
+  {
+    config: {
+      provider: {
+        lmstudio: {
+          options: {
+            baseURL: `${lmStudioServer.url.origin}/v1`,
+          },
+        },
+      },
+    },
+  },
+  10_000,
+)
 
 it.instance("provider loaded from env variable", () =>
   Effect.gen(function* () {
