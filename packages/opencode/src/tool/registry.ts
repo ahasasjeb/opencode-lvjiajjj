@@ -62,7 +62,7 @@ export function webSearchEnabled(providerID: ProviderV2.ID, flags = { exa: false
   return providerID === ProviderV2.ID.opencode || flags.exa || flags.parallel
 }
 
-const TASK_DISABLED_PROVIDER_IDS = new Set(["alibaba-token-plan", "kimi-for-coding"])
+const TASK_DISABLED_PROVIDER_IDS = new Set(["alibaba-token-plan", "alibaba-token-plan-cn"])
 
 type TaskDef = Tool.InferDef<typeof TaskTool>
 type ReadDef = Tool.InferDef<typeof ReadTool>
