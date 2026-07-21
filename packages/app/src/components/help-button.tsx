@@ -91,7 +91,7 @@ export function TabsInfoPopup() {
             type="button"
             size="small"
             variant="neutral"
-            aria-label="Close"
+            aria-label={language.t("common.close")}
             icon={<IconV2 name="xmark-small" />}
             class="absolute top-[10px] left-[-36px]"
           />
