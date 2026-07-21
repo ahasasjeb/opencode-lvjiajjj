@@ -28,6 +28,7 @@ import {
   hasChatGPTUsage,
   hasKimiForCodingUsage,
   hasXaiOAuthProvider,
+  hasXaiUsage,
   isSubagentSession,
   kimiForCodingApiKey,
   mergeMessages,
@@ -103,7 +104,9 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
   )
   const kimiEnabled = createMemo(() => hasKimiForCodingUsage(usageMessages()))
   const kimiApiKey = createMemo(() => kimiForCodingApiKey(props.api))
-  const xaiEnabled = createMemo(() => hasXaiOAuthProvider(props.api.state.provider))
+  const xaiEnabled = createMemo(
+    () => hasXaiOAuthProvider(props.api.state.provider) && hasXaiUsage(usageMessages()),
+  )
   const [xaiState, setXaiState] = createSignal<XaiState>({ status: "idle" })
   const xaiUsage = createMemo(() => {
     const state = xaiState()

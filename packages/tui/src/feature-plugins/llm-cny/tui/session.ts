@@ -52,6 +52,13 @@ export function hasXaiOAuthProvider(providers: ReadonlyArray<ProviderAuthLike>) 
   return !apiKey || apiKey === "opencode-oauth-dummy-key"
 }
 
+export function hasXaiUsage(messages: ReadonlyArray<Message>) {
+  return messages.some((item) => {
+    if (item.role === "user") return item.model.providerID.toLowerCase() === "xai"
+    return item.providerID.toLowerCase() === "xai"
+  })
+}
+
 function hasProviderApiKey(provider: ProviderAuthLike) {
   const candidates = [
     provider.key,

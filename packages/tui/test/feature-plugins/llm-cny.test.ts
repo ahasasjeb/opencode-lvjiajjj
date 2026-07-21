@@ -16,6 +16,7 @@ import {
   hasKimiForCodingUsage,
   hasOpenAIApiKeyProvider,
   hasXaiOAuthProvider,
+  hasXaiUsage,
   kimiForCodingApiKey,
 } from "../../src/feature-plugins/llm-cny/tui/session"
 import { tmpdir } from "../fixture/fixture"
@@ -49,6 +50,11 @@ describe("LLM CNY quota integration", () => {
       hasXaiOAuthProvider([{ id: "xai", source: "custom", options: { apiKey: "opencode-oauth-dummy-key" } }]),
     ).toBe(true)
     expect(hasXaiOAuthProvider([{ id: "xai", source: "api", key: "xai-api-key" }])).toBe(false)
+  })
+
+  test("only shows Grok quota after this session has used xAI", () => {
+    expect(hasXaiUsage([assistantMessage("alibaba-coding-plan-cn")])).toBe(false)
+    expect(hasXaiUsage([assistantMessage("xai")])).toBe(true)
   })
 
   test("reads the Kimi For Coding key exposed from local provider auth", () => {
