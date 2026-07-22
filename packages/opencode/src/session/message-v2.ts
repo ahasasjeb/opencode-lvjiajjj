@@ -35,6 +35,7 @@ import { isMedia } from "@/util/media"
 import type { SystemError } from "bun"
 import type { Provider } from "@/provider/provider"
 import { Effect, Schema } from "effect"
+import { ToolContextRetention } from "@/tool/context-retention"
 
 /** Error shape thrown by Bun's fetch() when gzip/br decompression fails mid-stream */
 interface FetchDecompressionError extends Error {
@@ -135,6 +136,25 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
 ) {
   const result: UIMessage[] = []
   const toolNames = new Set<string>()
+  // User messages are not turn boundaries: a steer can arrive while tools or
+  // background work are still running. Only a later successful terminal
+  // assistant response proves that model-facing context has consumed a result.
+  const terminalAfter = new Array<boolean>(input.length)
+  let seenTerminal = false
+  for (let index = input.length - 1; index >= 0; index--) {
+    terminalAfter[index] = seenTerminal
+    const message = input[index]
+    if (!message || message.info.role !== "assistant") continue
+    if (message.info.error || !message.info.time.completed || !message.info.finish) continue
+    if (["tool-calls", "unknown"].includes(message.info.finish)) continue
+    const hasLocalToolCalls = message.parts.some(
+      (part) =>
+        part.type === "tool" &&
+        !part.metadata?.providerExecuted &&
+        !(part.state.status === "error" && part.state.metadata?.interrupted === true),
+    )
+    if (!hasLocalToolCalls || message.info.structured !== undefined) seenTerminal = true
+  }
   // Track media from tool results that need to be injected as user messages
   // for providers that don't support that media type in tool results.
   //
@@ -192,16 +212,21 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
     return { type: "json", value: output as never }
   }
 
-  for (const msg of input) {
+  for (const [messageIndex, msg] of input.entries()) {
     if (msg.parts.length === 0) continue
 
     if (msg.info.role === "user") {
+      const omittedSynthetic =
+        terminalAfter[messageIndex] &&
+        msg.parts.some((part) => part.type === "text" && ToolContextRetention.isMarked(part.metadata))
       const userMessage: UIMessage = {
         id: msg.info.id,
         role: "user",
         parts: [],
       }
       for (const part of msg.parts) {
+        if (part.type === "text" && ToolContextRetention.isMarked(part.metadata) && terminalAfter[messageIndex])
+          continue
         // User message parts should never be empty
         if (part.type === "text" && !part.ignored && part.text !== "")
           userMessage.parts.push({
@@ -238,6 +263,8 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
           })
         }
       }
+      if (userMessage.parts.length === 0 && omittedSynthetic)
+        userMessage.parts.push({ type: "text", text: ToolContextRetention.OMITTED_RESULT })
       if (userMessage.parts.length > 0) result.push(userMessage)
     }
 
@@ -289,11 +316,19 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
           })
         if (part.type === "tool") {
           toolNames.add(part.tool)
+          const omit =
+            terminalAfter[messageIndex] &&
+            part.state.status !== "pending" &&
+            part.state.status !== "running" &&
+            ToolContextRetention.isMarked(part.state.metadata)
           if (part.state.status === "completed") {
-            const outputText = part.state.time.compacted
-              ? "[Old tool result content cleared]"
-              : truncateToolOutput(part.state.output, options?.toolOutputMaxChars)
-            const attachments = part.state.time.compacted || options?.stripMedia ? [] : (part.state.attachments ?? [])
+            const outputText = omit
+              ? ToolContextRetention.OMITTED_RESULT
+              : part.state.time.compacted
+                ? "[Old tool result content cleared]"
+                : truncateToolOutput(part.state.output, options?.toolOutputMaxChars)
+            const attachments =
+              omit || part.state.time.compacted || options?.stripMedia ? [] : (part.state.attachments ?? [])
 
             // For providers that don't support media in tool results, extract media files
             // (images, PDFs) to be sent as a separate user message
@@ -316,20 +351,24 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
               type: ("tool-" + part.tool) as `tool-${string}`,
               state: "output-available",
               toolCallId: part.callID,
-              input: part.state.input,
+              input: omit ? ToolContextRetention.omittedInput() : part.state.input,
               output,
               ...(part.metadata?.providerExecuted ? { providerExecuted: true } : {}),
               ...(differentModel ? {} : { callProviderMetadata: providerMeta(part.metadata) }),
             })
           }
           if (part.state.status === "error") {
-            const output = part.state.metadata?.interrupted === true ? part.state.metadata.output : undefined
+            const output = omit
+              ? ToolContextRetention.OMITTED_RESULT
+              : part.state.metadata?.interrupted === true
+                ? part.state.metadata.output
+                : undefined
             if (typeof output === "string") {
               assistantMessage.parts.push({
                 type: ("tool-" + part.tool) as `tool-${string}`,
                 state: "output-available",
                 toolCallId: part.callID,
-                input: part.state.input,
+                input: omit ? ToolContextRetention.omittedInput() : part.state.input,
                 output,
                 ...(part.metadata?.providerExecuted ? { providerExecuted: true } : {}),
                 ...(differentModel ? {} : { callProviderMetadata: providerMeta(part.metadata) }),
@@ -339,8 +378,8 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
                 type: ("tool-" + part.tool) as `tool-${string}`,
                 state: "output-error",
                 toolCallId: part.callID,
-                input: part.state.input,
-                errorText: part.state.error,
+                input: omit ? ToolContextRetention.omittedInput() : part.state.input,
+                errorText: omit ? ToolContextRetention.OMITTED_RESULT : part.state.error,
                 ...(part.metadata?.providerExecuted ? { providerExecuted: true } : {}),
                 ...(differentModel ? {} : { callProviderMetadata: providerMeta(part.metadata) }),
               })

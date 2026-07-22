@@ -15,6 +15,7 @@ import { Agent } from "@/agent/agent"
 import { InstanceState } from "@/effect/instance-state"
 
 import { ToolJsonSchema } from "@/tool/json-schema"
+import { ToolContextRetention } from "@/tool/context-retention"
 import { MessageID, SessionID } from "@/session/schema"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderV2 } from "@opencode-ai/core/provider"
@@ -163,8 +164,60 @@ describe("tool.registry", () => {
       })).find((tool) => tool.id === "task")
       if (!task) throw new Error("task tool not found")
 
-      expect(task.jsonSchema).toBeUndefined()
+      expect(task.jsonSchema?.properties?.retain_context).toMatchObject({ type: "boolean", default: true })
       expect(ToolJsonSchema.fromSchema(task.parameters).properties?.background).toBeDefined()
+    }),
+  )
+
+  it.instance("adds context retention only to built-in prompt tools", () =>
+    Effect.gen(function* () {
+      const registry = yield* ToolRegistry.Service
+      const agents = yield* Agent.Service
+      const tools = yield* registry.tools({
+        providerID: ProviderV2.ID.opencode,
+        modelID: ModelV2.ID.make("test"),
+        agent: yield* agents.defaultInfo(),
+      })
+
+      for (const tool of tools) {
+        const retention = ToolJsonSchema.fromTool(tool).properties?.retain_context
+        if (["invalid", "question"].includes(tool.id)) {
+          expect(retention).toBeUndefined()
+          continue
+        }
+        expect(retention).toMatchObject({ type: "boolean", default: true })
+      }
+    }),
+  )
+
+  it.instance("marks opted-out built-in results and progress metadata", () =>
+    Effect.gen(function* () {
+      const registry = yield* ToolRegistry.Service
+      const agents = yield* Agent.Service
+      const agent = yield* agents.defaultInfo()
+      const glob = (yield* registry.tools({
+        providerID: ProviderV2.ID.opencode,
+        modelID: ModelV2.ID.make("test"),
+        agent,
+      })).find((tool) => tool.id === "glob")
+      if (!glob) throw new Error("glob tool not found")
+      const metadata: Record<string, unknown>[] = []
+
+      const result = yield* glob.execute({ pattern: "__context_retention_no_match__", retain_context: false }, {
+        sessionID: SessionID.make("ses_context_retention"),
+        messageID: MessageID.make("msg_context_retention"),
+        agent: agent.name,
+        abort: new AbortController().signal,
+        messages: [],
+        metadata: (value) =>
+          Effect.sync(() => {
+            metadata.push(value.metadata ?? {})
+          }),
+        ask: () => Effect.void,
+      } satisfies Tool.Context)
+
+      expect(ToolContextRetention.isMarked(result.metadata)).toBe(true)
+      expect(metadata.some(ToolContextRetention.isMarked)).toBe(true)
     }),
   )
 
@@ -287,6 +340,19 @@ describe("tool.registry", () => {
       const ids = yield* registry.ids()
       expect(ids).toContain("read")
       expect(ids).toContain("broken_plugin_tool")
+
+      const agents = yield* Agent.Service
+      const tools = yield* registry.tools({
+        providerID: ProviderV2.ID.opencode,
+        modelID: ModelV2.ID.make("test"),
+        agent: yield* agents.defaultInfo(),
+      })
+      expect(
+        ToolJsonSchema.fromTool(tools.find((tool) => tool.id === "read")!).properties?.retain_context,
+      ).toBeDefined()
+      expect(
+        ToolJsonSchema.fromTool(tools.find((tool) => tool.id === "broken_plugin_tool")!).properties?.retain_context,
+      ).toBeUndefined()
     }),
   )
 

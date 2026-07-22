@@ -46,6 +46,7 @@ import { SystemPrompt } from "../../src/session/system"
 import { Shell } from "@opencode-ai/core/shell"
 import { Snapshot } from "../../src/snapshot"
 import { ToolRegistry } from "@/tool/registry"
+import { ToolContextRetention } from "@/tool/context-retention"
 import { Truncate } from "@/tool/truncate"
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { Ripgrep } from "@opencode-ai/core/ripgrep"
@@ -956,13 +957,7 @@ backgroundIt.instance("loop waits for sibling background tasks and completes one
       time: { created: Date.now(), completed: Date.now() },
     }
     yield* sessions.updateMessage(taskMessage)
-    const start = (
-      id: SessionID,
-      callID: string,
-      title: string,
-      gate: Deferred.Deferred<void>,
-      output: string,
-    ) =>
+    const start = (id: SessionID, callID: string, title: string, gate: Deferred.Deferred<void>, output: string) =>
       jobs.start({
         id,
         type: "task",
@@ -978,7 +973,7 @@ backgroundIt.instance("loop waits for sibling background tasks and completes one
       })
     const firstID = SessionID.make("ses_background_first")
     const secondID = SessionID.make("ses_background_second")
-    const addTaskPart = (id: SessionID, callID: string, title: string) =>
+    const addTaskPart = (id: SessionID, callID: string, title: string, retainContext = true) =>
       sessions.updatePart({
         id: PartID.ascending(),
         messageID: taskMessage.id,
@@ -991,11 +986,13 @@ backgroundIt.instance("loop waits for sibling background tasks and completes one
           input: { description: title, prompt: title, subagent_type: "general", background: true },
           output: "background task running",
           title,
-          metadata: { background: true, sessionId: id, jobId: id },
+          metadata: retainContext
+            ? { background: true, sessionId: id, jobId: id }
+            : ToolContextRetention.mark({ background: true, sessionId: id, jobId: id }),
           time: { start: Date.now(), end: Date.now() },
         },
       })
-    yield* addTaskPart(firstID, "call-first", "first inspection")
+    yield* addTaskPart(firstID, "call-first", "first inspection", false)
     yield* addTaskPart(secondID, "call-second", "second inspection")
     yield* start(firstID, "call-first", "first inspection", first, "first result")
     yield* start(secondID, "call-second", "second inspection", second, "second result")
@@ -1027,26 +1024,24 @@ backgroundIt.instance("loop waits for sibling background tasks and completes one
       .find((message) => message.info.id === taskMessage.id)
       ?.parts.filter((part): part is SessionV1.ToolPart => part.type === "tool" && part.tool === "task")
     expect(taskParts).toHaveLength(2)
-    expect(taskParts?.[0]?.state.status === "completed" && taskParts[0].state.output).toBe(
-      "background task running",
+    expect(taskParts?.[0]?.state.status === "completed" && taskParts[0].state.output).toBe("background task running")
+    expect(taskParts?.[0]?.state.status === "completed" && taskParts[0].state.metadata.backgroundResult?.output).toBe(
+      "first result",
     )
-    expect(
-      taskParts?.[0]?.state.status === "completed" &&
-        taskParts[0].state.metadata.backgroundResult?.output,
-    ).toBe("first result")
-    expect(
-      taskParts?.[1]?.state.status === "completed" &&
-        taskParts[1].state.metadata.backgroundResult?.output,
-    ).toBe("second result")
+    expect(taskParts?.[1]?.state.status === "completed" && taskParts[1].state.metadata.backgroundResult?.output).toBe(
+      "second result",
+    )
 
-    const synthetic = messages.find((message) =>
-      message.parts.some(
-        (part) => part.type === "text" && part.synthetic && part.metadata?.backgroundResult === true,
-      ),
-    )
-    const text = synthetic?.parts.find((part) => part.type === "text")
-    expect(text?.type === "text" && text.text).toContain("first result")
-    expect(text?.type === "text" && text.text).toContain("second result")
+    const synthetic = messages
+      .flatMap((message) => message.parts)
+      .filter(
+        (part): part is SessionV1.TextPart =>
+          part.type === "text" && part.synthetic === true && part.metadata?.backgroundResult === true,
+      )
+    expect(synthetic.map((part) => part.text).join("\n")).toContain("first result")
+    expect(synthetic.map((part) => part.text).join("\n")).toContain("second result")
+    expect(ToolContextRetention.isMarked(synthetic[0]?.metadata)).toBe(true)
+    expect(ToolContextRetention.isMarked(synthetic[1]?.metadata)).toBe(false)
   }),
 )
 

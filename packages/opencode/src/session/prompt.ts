@@ -45,6 +45,7 @@ import { Process } from "@/util/process"
 import { Cause, Effect, Exit, Latch, Layer, Option, Scope, Context, Schema, Types } from "effect"
 import { InstanceState } from "@/effect/instance-state"
 import { renderOutput, TaskTool, type TaskPromptOps } from "@/tool/task"
+import { ToolContextRetention } from "@/tool/context-retention"
 import { SessionRunState } from "./run-state"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { EventV2Bridge } from "@/event-v2-bridge"
@@ -1123,13 +1124,14 @@ const layer = Layer.effect(
         return false
       }
 
-      yield* Effect.forEach(
+      const delivered = yield* Effect.forEach(
         backgroundResults,
         (result) =>
           Effect.gen(function* () {
             const parentMessageId = result.job.metadata?.parentMessageId
             const parentCallId = result.job.metadata?.parentCallId
-            if (typeof parentMessageId !== "string" || typeof parentCallId !== "string") return
+            if (typeof parentMessageId !== "string" || typeof parentCallId !== "string")
+              return { ...result, retainContext: true }
             const parent = yield* MessageV2.get({
               sessionID: input.sessionID,
               messageID: MessageID.make(parentMessageId),
@@ -1144,7 +1146,7 @@ const layer = Layer.effect(
                 part.callID === parentCallId &&
                 part.state.status === "completed",
             )
-            if (!part || part.state.status !== "completed") return
+            if (!part || part.state.status !== "completed") return { ...result, retainContext: true }
             yield* sessions.updatePart({
               ...part,
               state: {
@@ -1161,25 +1163,33 @@ const layer = Layer.effect(
                 },
               },
             })
+            return {
+              ...result,
+              retainContext: !ToolContextRetention.isMarked(part.state.metadata),
+            }
           }),
-        { concurrency: "unbounded", discard: true },
+        { concurrency: "unbounded" },
       )
 
-      yield* createUserMessage(
-        {
-          sessionID: input.sessionID,
-          agent: input.user.agent,
-          model: input.user.model,
-          variant: input.assistant.variant,
-          parts: [
+      const render = (result: (typeof delivered)[number]) =>
+        renderOutput({
+          sessionID: SessionID.make(result.sessionId),
+          state: result.status,
+          summary: result.title
+            ? `Background task ${result.status === "completed" ? "completed" : "failed"}: ${result.title}`
+            : `Background task ${result.status === "completed" ? "completed" : "failed"}`,
+          text: result.output,
+        })
+      const parts = delivered.every((result) => result.retainContext)
+        ? [
             {
-              type: "text",
+              type: "text" as const,
               synthetic: true,
               metadata: {
                 backgroundResult: true,
                 parentUserMessageId: input.user.id,
-                jobIds: backgroundResults.map((result) => result.sessionId),
-                results: backgroundResults.map((result) => ({
+                jobIds: delivered.map((result) => result.sessionId),
+                results: delivered.map((result) => ({
                   sessionId: result.sessionId,
                   status: result.status,
                   title: result.title,
@@ -1187,22 +1197,37 @@ const layer = Layer.effect(
                   completedAt: result.completedAt,
                 })),
               },
-              text: backgroundResults
-                .map((result) =>
-                  renderOutput({
-                    sessionID: SessionID.make(result.sessionId),
-                    state: result.status,
-                    summary: result.title
-                      ? `Background task ${result.status === "completed" ? "completed" : "failed"}: ${result.title}`
-                      : `Background task ${result.status === "completed" ? "completed" : "failed"}`,
-                    text: result.output,
-                  }),
-                )
-                .join("\n\n"),
+              text: delivered.map(render).join("\n\n"),
             },
-          ],
-        },
-      ).pipe(Effect.catch(Effect.die))
+          ]
+        : delivered.map((result) => ({
+            type: "text" as const,
+            synthetic: true,
+            metadata: {
+              backgroundResult: true,
+              parentUserMessageId: input.user.id,
+              jobIds: [result.sessionId],
+              results: [
+                {
+                  sessionId: result.sessionId,
+                  status: result.status,
+                  title: result.title,
+                  output: result.output,
+                  completedAt: result.completedAt,
+                },
+              ],
+              ...(result.retainContext ? {} : ToolContextRetention.mark()),
+            },
+            text: render(result),
+          }))
+
+      yield* createUserMessage({
+        sessionID: input.sessionID,
+        agent: input.user.agent,
+        model: input.user.model,
+        variant: input.assistant.variant,
+        parts,
+      }).pipe(Effect.catch(Effect.die))
       return true
     })
 

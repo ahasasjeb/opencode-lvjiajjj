@@ -9,6 +9,7 @@ import { SessionID, MessageID, PartID } from "../../src/session/schema"
 import { Question } from "../../src/question"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
+import { ToolContextRetention } from "@/tool/context-retention"
 
 const sessionID = SessionID.make("session")
 const providerID = ProviderV2.ID.make("test")
@@ -749,6 +750,107 @@ describe("session.message-v2.toModelMessage", () => {
         ],
       },
     ])
+  })
+
+  test("omits marked tool context only after a later successful terminal response", async () => {
+    const userID = "m-user-retention"
+    const assistantID = "m-assistant-retention"
+    const steerID = "m-steer-retention"
+    const finalID = "m-final-retention"
+    const tools: SessionV1.WithParts = {
+      info: {
+        ...assistantInfo(assistantID, userID),
+        finish: "tool-calls",
+        time: { created: 1, completed: 2 },
+      },
+      parts: [
+        {
+          ...basePart(assistantID, "drop"),
+          type: "tool",
+          callID: "call-drop",
+          tool: "bash",
+          state: {
+            status: "completed",
+            input: { command: "DROP_INPUT", retain_context: false },
+            output: "DROP_OUTPUT",
+            title: "Bash",
+            metadata: ToolContextRetention.mark(),
+            time: { start: 1, end: 2 },
+          },
+        },
+        {
+          ...basePart(assistantID, "keep"),
+          type: "tool",
+          callID: "call-keep",
+          tool: "glob",
+          state: {
+            status: "completed",
+            input: { pattern: "KEEP_INPUT" },
+            output: "KEEP_OUTPUT",
+            title: "Glob",
+            metadata: {},
+            time: { start: 1, end: 2 },
+          },
+        },
+      ] as SessionV1.Part[],
+    }
+    const user: SessionV1.WithParts = {
+      info: userInfo(userID),
+      parts: [{ ...basePart(userID, "user-retention"), type: "text", text: "run tools" }] as SessionV1.Part[],
+    }
+    const steer: SessionV1.WithParts = {
+      info: userInfo(steerID),
+      parts: [{ ...basePart(steerID, "steer-retention"), type: "text", text: "also check this" }] as SessionV1.Part[],
+    }
+    const terminal: SessionV1.WithParts = {
+      info: {
+        ...assistantInfo(finalID, steerID),
+        finish: "stop",
+        time: { created: 3, completed: 4 },
+      },
+      parts: [{ ...basePart(finalID, "final-retention"), type: "text", text: "done" }] as SessionV1.Part[],
+    }
+
+    const beforeTerminal = JSON.stringify(await MessageV2.toModelMessages([user, tools, steer], model))
+    expect(beforeTerminal).toContain("DROP_INPUT")
+    expect(beforeTerminal).toContain("DROP_OUTPUT")
+
+    const afterTerminal = JSON.stringify(await MessageV2.toModelMessages([user, tools, steer, terminal], model))
+    expect(afterTerminal).not.toContain("DROP_INPUT")
+    expect(afterTerminal).not.toContain("DROP_OUTPUT")
+    expect(afterTerminal).toContain(ToolContextRetention.OMITTED_RESULT)
+    expect(afterTerminal).toContain("KEEP_INPUT")
+    expect(afterTerminal).toContain("KEEP_OUTPUT")
+  })
+
+  test("omits marked synthetic task results only after they are consumed", async () => {
+    const userID = "m-background-result"
+    const terminalID = "m-background-terminal"
+    const synthetic: SessionV1.WithParts = {
+      info: userInfo(userID),
+      parts: [
+        {
+          ...basePart(userID, "background-result"),
+          type: "text",
+          text: "BACKGROUND_OUTPUT",
+          synthetic: true,
+          metadata: ToolContextRetention.mark({ backgroundResult: true }),
+        },
+      ] as SessionV1.Part[],
+    }
+    const terminal: SessionV1.WithParts = {
+      info: {
+        ...assistantInfo(terminalID, userID),
+        finish: "stop",
+        time: { created: 1, completed: 2 },
+      },
+      parts: [{ ...basePart(terminalID, "background-terminal"), type: "text", text: "done" }] as SessionV1.Part[],
+    }
+
+    expect(JSON.stringify(await MessageV2.toModelMessages([synthetic], model))).toContain("BACKGROUND_OUTPUT")
+    const consumed = JSON.stringify(await MessageV2.toModelMessages([synthetic, terminal], model))
+    expect(consumed).not.toContain("BACKGROUND_OUTPUT")
+    expect(consumed).toContain(ToolContextRetention.OMITTED_RESULT)
   })
 
   test("truncates tool output when requested", async () => {

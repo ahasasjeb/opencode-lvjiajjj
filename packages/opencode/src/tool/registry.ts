@@ -57,6 +57,8 @@ import { MCP } from "@/mcp"
 import { PermissionV1 } from "@opencode-ai/core/v1/permission"
 import { McpCatalog } from "@/mcp/catalog"
 import { Auth } from "@/auth"
+import { ToolContextRetention } from "./context-retention"
+import { ToolJsonSchema } from "./json-schema"
 
 export function webSearchEnabled(providerID: ProviderV2.ID, flags = { exa: false, parallel: false }) {
   return providerID === ProviderV2.ID.opencode || flags.exa || flags.parallel
@@ -293,7 +295,9 @@ const layer = Layer.effect(
     })
 
     const tools: Interface["tools"] = Effect.fn("ToolRegistry.tools")(function* (input) {
-      const filtered = (yield* all()).filter((tool) => {
+      const current = yield* InstanceState.get(state)
+      const builtins = new Set<Tool.Def>(current.builtin)
+      const filtered = [...current.builtin, ...current.custom].filter((tool) => {
         if (tool.id === TaskTool.id && TASK_DISABLED_PROVIDER_IDS.has(input.providerID)) return false
 
         if (tool.id === WebSearchTool.id) {
@@ -326,7 +330,7 @@ const layer = Layer.effect(
             output.parameters === tool.parameters || output.jsonSchema !== tool.jsonSchema
               ? output.jsonSchema
               : undefined
-          return {
+          const definition = {
             id: tool.id,
             description: [
               output.description,
@@ -339,6 +343,23 @@ const layer = Layer.effect(
             jsonSchema,
             execute: tool.execute,
             formatValidationError: tool.formatValidationError,
+          }
+          if (!builtins.has(tool) || !ToolContextRetention.supports(tool.id)) return definition
+          return {
+            ...definition,
+            jsonSchema: ToolContextRetention.withParameter(ToolJsonSchema.fromTool(definition)),
+            execute: (args: Record<string, unknown>, ctx: Tool.Context) => {
+              if (ToolContextRetention.shouldRetain(args)) return tool.execute(args, ctx)
+              const retainedContext = {
+                ...ctx,
+                metadata: (value: { title?: string; metadata?: Record<string, any> }) =>
+                  ctx.metadata({ ...value, metadata: ToolContextRetention.mark(value.metadata) }),
+              }
+              return ctx.metadata({ metadata: ToolContextRetention.mark() }).pipe(
+                Effect.andThen(tool.execute(args, retainedContext)),
+                Effect.map((result) => ({ ...result, metadata: ToolContextRetention.mark(result.metadata) })),
+              )
+            },
           }
         }),
         { concurrency: "unbounded" },
