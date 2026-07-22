@@ -58,7 +58,7 @@ const layer: Layer.Layer<
     const flags = yield* RuntimeFlags.Service
     const http = HttpClient.filterStatusOk(withTransientReadRetry(yield* HttpClient.HttpClient))
     const globalFiles = [
-      path.join(global.config, "AGENTS.md"),
+      path.join(global.home, ".codex", "AGENTS.md"),
       ...(!flags.disableClaudeCodePrompt ? [path.join(global.home, ".claude", "CLAUDE.md")] : []),
     ]
     const instructionFiles = [

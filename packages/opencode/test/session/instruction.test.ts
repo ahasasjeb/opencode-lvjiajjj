@@ -212,18 +212,18 @@ describe("Instruction.resolve", () => {
 describe("Instruction.system", () => {
   it.live("loads both project and global AGENTS.md when both exist", () =>
     Effect.gen(function* () {
-      const globalTmp = yield* tmpWithFiles({ "AGENTS.md": "# Global Instructions" })
+      const globalTmp = yield* tmpWithFiles({ ".codex/AGENTS.md": "# Global Instructions" })
       const projectTmp = yield* tmpWithFiles({ "AGENTS.md": "# Project Instructions" })
 
       yield* Effect.gen(function* () {
         const svc = yield* Instruction.Service
         const paths = yield* svc.systemPaths()
         expect(paths.has(path.join(projectTmp, "AGENTS.md"))).toBe(true)
-        expect(paths.has(path.join(globalTmp, "AGENTS.md"))).toBe(true)
+        expect(paths.has(path.join(globalTmp, ".codex", "AGENTS.md"))).toBe(true)
 
         const rules = yield* svc.system()
         expect(rules).toHaveLength(2)
-        expect(rules[0]).toBe(`Instructions from: ${path.join(globalTmp, "AGENTS.md")}\n# Global Instructions`)
+        expect(rules[0]).toBe(`Instructions from: ${path.join(globalTmp, ".codex", "AGENTS.md")}\n# Global Instructions`)
         expect(rules[1]).toBe(`Instructions from: ${path.join(projectTmp, "AGENTS.md")}\n# Project Instructions`)
       }).pipe(provideInstance(projectTmp), provideInstruction({ home: globalTmp, config: globalTmp }))
     }),
@@ -249,16 +249,16 @@ describe("Instruction.system", () => {
 })
 
 describe("Instruction.systemPaths global config", () => {
-  it.live("uses Global.Service config AGENTS.md", () =>
+  it.live("uses Codex global AGENTS.md", () =>
     Effect.gen(function* () {
-      const globalTmp = yield* tmpWithFiles({ "AGENTS.md": "# Global Instructions" })
+      const globalHome = yield* tmpWithFiles({ ".codex/AGENTS.md": "# Global Instructions" })
       const projectTmp = yield* tmpdirScoped()
 
       yield* Effect.gen(function* () {
         const svc = yield* Instruction.Service
         const paths = yield* svc.systemPaths()
-        expect(paths.has(path.join(globalTmp, "AGENTS.md"))).toBe(true)
-      }).pipe(provideInstance(projectTmp), provideInstruction({ home: globalTmp, config: globalTmp }))
+        expect(paths.has(path.join(globalHome, ".codex", "AGENTS.md"))).toBe(true)
+      }).pipe(provideInstance(projectTmp), provideInstruction({ home: globalHome }))
     }),
   )
 })
