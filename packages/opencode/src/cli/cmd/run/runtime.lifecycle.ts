@@ -12,6 +12,7 @@ import path from "path"
 import { CliRenderEvents, createCliRenderer, type CliRenderer, type ScrollbackWriter } from "@opentui/core"
 import { createDefaultOpenTuiKeymap } from "@opentui/keymap/opentui"
 import { Global } from "@opencode-ai/core/global"
+import { Flag } from "@opencode-ai/core/flag/flag"
 import { openEditor } from "@opencode-ai/tui/editor"
 import { registerOpencodeKeymap } from "@opencode-ai/tui/keymap"
 import { Session as SessionApi } from "@/session/session"
@@ -178,6 +179,7 @@ export async function createRuntimeLifecycle(input: LifecycleInput): Promise<Lif
   let unregisterKeymap: (() => void) | undefined
 
   try {
+    const safeMode = Flag.OPENCODE_WINDOWS_TUI_SAFE_MODE
     const renderer = await createCliRenderer({
       stdin: source.stdin,
       targetFps: 30,
@@ -186,7 +188,11 @@ export async function createRuntimeLifecycle(input: LifecycleInput): Promise<Lif
       autoFocus: false,
       openConsoleOnError: false,
       exitOnCtrlC: false,
-      useKittyKeyboard: { events: process.platform === "win32" },
+      useThread: safeMode ? false : undefined,
+      enableMouseMovement: safeMode ? false : undefined,
+      useKittyKeyboard: safeMode
+        ? { disambiguate: false, alternateKeys: false, events: false, allKeysAsEscapes: false, reportText: false }
+        : { events: process.platform === "win32" },
       screenMode: "split-footer",
       footerHeight: FOOTER_HEIGHT,
       externalOutputMode: "capture-stdout",

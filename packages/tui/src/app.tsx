@@ -90,7 +90,7 @@ import type { EventSource } from "./context/sdk"
 import { DialogVariant } from "./component/dialog-variant"
 import { createTuiAttention } from "./attention"
 import * as TuiAudio from "./audio"
-import { win32DisableProcessedInput, win32FlushInputBuffer } from "./terminal-win32"
+import { win32DisableProcessedInput, win32FlushInputBuffer, resetWindowsTerminalState, registerCleanupCallbacks } from "./terminal-win32"
 import { destroyRenderer } from "./util/renderer"
 import { cliErrorMessage, errorFormat } from "./util/error"
 
@@ -194,6 +194,13 @@ function isVersionGreater(left: string, right: string) {
 export const run = Effect.fn("Tui.run")(function* (input: TuiInput) {
   const global = yield* Global.Service
   const exit = { epilogue: undefined as string | undefined, reason: undefined as unknown }
+  const safeMode = Flag.OPENCODE_WINDOWS_TUI_SAFE_MODE
+  if (safeMode) {
+    resetWindowsTerminalState()
+    console.debug("[win32] OpenTUI native render thread disabled")
+    console.debug("[win32] Mouse reporting disabled")
+    console.debug("[win32] Kitty keyboard protocol disabled")
+  }
   const result = yield* Effect.scoped(
     Effect.gen(function* () {
       const renderer = yield* Effect.acquireRelease(
@@ -204,10 +211,14 @@ export const run = Effect.fn("Tui.run")(function* (input: TuiInput) {
               targetFps: 60,
               gatherStats: false,
               exitOnCtrlC: false,
-              useKittyKeyboard: {},
+              useThread: safeMode ? false : undefined,
+              useKittyKeyboard: safeMode
+                ? { disambiguate: false, alternateKeys: false, events: false, allKeysAsEscapes: false, reportText: false }
+                : {},
               autoFocus: false,
               openConsoleOnError: false,
-              useMouse: !Flag.OPENCODE_DISABLE_MOUSE && input.config.mouse,
+              useMouse: safeMode ? false : !Flag.OPENCODE_DISABLE_MOUSE && input.config.mouse,
+              enableMouseMovement: safeMode ? false : undefined,
               consoleOptions: {
                 keyBindings: [{ name: "y", ctrl: true, action: "copy-selection" }],
               },
@@ -219,6 +230,7 @@ export const run = Effect.fn("Tui.run")(function* (input: TuiInput) {
             destroyRenderer(renderer)
           }),
       )
+      registerCleanupCallbacks({ rendererDestroy: () => destroyRenderer(renderer) })
       win32DisableProcessedInput()
       const keymap = createDefaultOpenTuiKeymap(renderer)
       yield* Effect.acquireRelease(
