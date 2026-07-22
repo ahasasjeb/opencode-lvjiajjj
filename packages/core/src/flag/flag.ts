@@ -75,11 +75,4 @@ export const Flag = {
   get OPENCODE_CLIENT() {
     return process.env["OPENCODE_CLIENT"] ?? "cli"
   },
-  get OPENCODE_WINDOWS_TUI_SAFE_MODE() {
-    if (process.platform !== "win32") return false
-    const value = process.env["OPENCODE_WINDOWS_TUI_SAFE_MODE"]
-    if (value === "0" || value === "false") return false
-    if (value === "1" || value === "true") return true
-    return true
-  },
 }

@@ -14,16 +14,6 @@ import { writeHeapSnapshot } from "v8"
 import { ServerAuth } from "@/server/auth"
 import { validateSession } from "../tui/validate-session"
 import { win32InstallCtrlCGuard } from "@opencode-ai/tui/terminal-win32"
-import {
-  checkAndRecoverCrashMarker,
-  createCrashMarker,
-  cleanupTerminalState,
-  installExitHandlers,
-  registerCleanupCallbacks,
-  resetWindowsTerminalState,
-  win32SafeModeConsoleSetup,
-} from "@opencode-ai/tui/terminal-win32"
-import { Flag } from "@opencode-ai/core/flag/flag"
 
 declare global {
   const OPENCODE_WORKER_PATH: string
@@ -150,11 +140,6 @@ export const TuiThreadCommand = cmd({
       .option("demo", {
         type: "boolean",
         hidden: true,
-      })
-      .option("windows-tui-safe-mode", {
-        type: "boolean",
-        describe: "force Windows TUI safe mode (disables mouse, render thread, FFI polling)",
-        hidden: true,
       }),
   handler: async (args) => {
     if (args.replay === true) {
@@ -173,56 +158,36 @@ export const TuiThreadCommand = cmd({
         process.exitCode = 1
         return
       }
+
+      const { runMini } = await import("./run")
+      await runMini({
+        directory: resolveThreadDirectory(args.project),
+        continue: args.continue,
+        session: args.session,
+        fork: args.fork,
+        model: args.model,
+        agent: args.agent,
+        prompt: args.prompt,
+        replay: noReplay ? false : undefined,
+        replayLimit: args.replayLimit,
+        demo: args.demo,
+      })
+      return
     }
 
-    if (!args.mini) {
-      const unsupported = [
-        ["--no-replay", noReplay],
-        ["--replay-limit", args.replayLimit !== undefined],
-        ["--demo", args.demo !== undefined],
-      ].find((entry) => entry[1])?.[0]
-      if (unsupported) {
-        UI.error(`${unsupported} requires --mini`)
-        process.exitCode = 1
-        return
-      }
+    const unsupported = [
+      ["--no-replay", noReplay],
+      ["--replay-limit", args.replayLimit !== undefined],
+      ["--demo", args.demo !== undefined],
+    ].find((entry) => entry[1])?.[0]
+    if (unsupported) {
+      UI.error(`${unsupported} requires --mini`)
+      process.exitCode = 1
+      return
     }
-
-    if (args["windows-tui-safe-mode"]) {
-      process.env["OPENCODE_WINDOWS_TUI_SAFE_MODE"] = "1"
-    }
-
-    const safeMode = Flag.OPENCODE_WINDOWS_TUI_SAFE_MODE
-    if (safeMode) {
-      console.debug("[win32] Windows TUI safe mode enabled")
-      checkAndRecoverCrashMarker()
-      resetWindowsTerminalState()
-      win32SafeModeConsoleSetup()
-    }
-
-    createCrashMarker()
-    const disposeExitHandlers = installExitHandlers()
 
     const unguard = win32InstallCtrlCGuard()
-    registerCleanupCallbacks({ unguard: () => unguard?.() })
     try {
-      if (args.mini) {
-        const { runMini } = await import("./run")
-        await runMini({
-          directory: resolveThreadDirectory(args.project),
-          continue: args.continue,
-          session: args.session,
-          fork: args.fork,
-          model: args.model,
-          agent: args.agent,
-          prompt: args.prompt,
-          replay: noReplay ? false : undefined,
-          replayLimit: args.replayLimit,
-          demo: args.demo,
-        })
-        return
-      }
-
       const { TuiConfig } = await import("@/config/tui")
       if (args.fork && !args.continue && !args.session) {
         UI.error("--fork requires --continue or --session")
@@ -334,10 +299,11 @@ export const TuiThreadCommand = cmd({
         await stop()
       }
     } finally {
-      cleanupTerminalState()
-      disposeExitHandlers()
+      try {
+        unguard?.()
+      } catch {}
     }
-    process.exit(process.exitCode ?? 0)
+    process.exit(0)
   },
 })
 // scratch
