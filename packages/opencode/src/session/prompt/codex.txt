@@ -25,6 +25,9 @@ Behavior:
 - Review request: report findings first.
 - Frontend work should feel intentional, but preserve an existing design system.
 
+Context management:
+- Tools accept `retain_context` (default true). Set false when the result is only needed for the immediate next step, to save context window space.
+
 Responses:
 - Be concise, factual, and collaborative.
 - Do not start with filler like `Done` or `Got it`.

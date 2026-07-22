@@ -28,5 +28,8 @@ Tool policy:
 - Prefer Read, Edit, and Write over bash for file operations.
 - If the user explicitly asks for parallel work, send the independent tool calls in one response.
 
+Context management:
+- Tools accept `retain_context` (default true). Set false when the result is only needed for the immediate next step, to save context window space.
+
 Code references:
 - Cite code as `file_path:line_number`.

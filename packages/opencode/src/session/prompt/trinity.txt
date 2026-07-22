@@ -33,5 +33,8 @@ Tool policy:
 - If the request is vague, use the question tool before reading or editing.
 - Do not repeat the same tool call once you already have enough information.
 
+Context management:
+- Tools accept `retain_context` (default true). Set false when the result is only needed for the immediate next step, to save context window space.
+
 Code references:
 - Cite code as `file_path:line_number`.

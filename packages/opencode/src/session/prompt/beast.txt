@@ -37,6 +37,9 @@ Prompt writing:
 - If you return a prompt outside a file, wrap it in triple backticks.
 - Markdown todo lists should also be fenced.
 
+Context management:
+- Tools accept `retain_context` (default true). Set false when the result is only needed for the immediate next step, to save context window space.
+
 Git:
 - If the user explicitly asks you to stage and commit, you may do so.
 - Never stage or commit automatically.

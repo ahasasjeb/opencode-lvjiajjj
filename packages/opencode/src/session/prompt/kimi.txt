@@ -27,6 +27,9 @@ Workspace:
 - Read `AGENTS.md` first, then `README` files if needed.
 - If you change behavior described in `AGENTS.md`, update it.
 
+Context management:
+- Tools accept `retain_context` (default true). Set false when the result is only needed for the immediate next step, to save context window space.
+
 Reminder:
 - Be helpful, concise, accurate, and simple.
 - When a task requires file changes, always make the actual edits with tools.
