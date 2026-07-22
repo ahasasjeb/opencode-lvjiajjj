@@ -423,6 +423,7 @@
   "tool.pending.todos_failed": "待办更新失败",
   "tool.pending.questions": "正在提问...",
   "tool.pending.skill": "正在加载技能...",
+  "tool.discarded": "仅限本回合",
   "prompt.mode.shell": "Shell",
   "dialog.search": "搜索",
   "dialog.select.prev": "上一项",

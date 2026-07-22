@@ -1752,6 +1752,12 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
 
 // Pending messages moved to individual tool pending functions
 
+// Must match ToolContextRetention.METADATA in packages/opencode/src/tool/context-retention.ts
+function contextDiscarded(part: ToolPart) {
+  if (part.state.status === "pending") return false
+  return part.state.metadata?.["opencode.context.retain"] === false
+}
+
 function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMessage }) {
   const ctx = use()
   const display = createMemo(() => toolDisplay(props.part.tool))
@@ -1900,6 +1906,7 @@ function InlineTool(props: {
   const ctx = use()
   const sync = useSync()
   const renderer = useRenderer()
+  const language = useLanguage()
   const [hover, setHover] = createSignal(false)
   const [errorExpanded, setErrorExpanded] = createSignal(false)
 
@@ -1920,6 +1927,7 @@ function InlineTool(props: {
   )
 
   const failed = createMemo(() => Boolean(error() && !denied()))
+  const discarded = createMemo(() => contextDiscarded(props.part))
   const clickable = createMemo(() => Boolean(props.onClick || failed()))
   const fg = createMemo(() => {
     if (props.color) return props.color
@@ -1938,6 +1946,7 @@ function InlineTool(props: {
       errorColor={theme.error}
       failed={failed()}
       denied={Boolean(denied())}
+      discarded={discarded() ? language.t("tool.discarded") : undefined}
       error={error()}
       errorExpanded={errorExpanded()}
       complete={props.complete}
@@ -1968,6 +1977,7 @@ export function InlineToolRow(props: {
   errorColor?: RGBA
   failed?: boolean
   denied?: boolean
+  discarded?: string
   error?: string
   errorExpanded?: boolean
   complete: unknown
@@ -1980,6 +1990,7 @@ export function InlineToolRow(props: {
   onMouseOut?: () => void
   onMouseUp?: () => void
 }) {
+  const { theme } = useTheme()
   return (
     <box
       paddingLeft={3}
@@ -2028,6 +2039,9 @@ export function InlineToolRow(props: {
               >
                 {props.failed && !props.complete ? (props.failure ?? props.children) : props.children}
               </text>
+              <Show when={props.discarded}>
+                {(label) => <text fg={theme.textMuted}> · {label()}</text>}
+              </Show>
             </box>
           </Show>
         </Match>
@@ -2052,6 +2066,8 @@ function BlockTool(props: {
   const renderer = useRenderer()
   const [hover, setHover] = createSignal(false)
   const error = createMemo(() => (props.part?.state.status === "error" ? props.part.state.error : undefined))
+  const language = useLanguage()
+  const discarded = createMemo(() => (props.part ? contextDiscarded(props.part) : false))
   return (
     <box
       ref={(el: BoxRenderable) => alwaysSeparate.add(el)}
@@ -2078,6 +2094,7 @@ function BlockTool(props: {
             fallback={
               <text paddingLeft={3} fg={theme.textMuted}>
                 {title()}
+                {discarded() ? ` · ${language.t("tool.discarded")}` : ""}
               </text>
             }
           >

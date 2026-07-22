@@ -423,6 +423,7 @@
   "tool.pending.todos_failed": "Todo update failed",
   "tool.pending.questions": "Asking questions...",
   "tool.pending.skill": "Loading skill...",
+  "tool.discarded": "kun denne runden",
   "prompt.mode.shell": "Shell",
   "dialog.search": "Search",
   "dialog.select.prev": "Previous item",
