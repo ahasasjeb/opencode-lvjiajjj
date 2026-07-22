@@ -173,32 +173,19 @@ export const TuiThreadCommand = cmd({
         process.exitCode = 1
         return
       }
-
-      const { runMini } = await import("./run")
-      await runMini({
-        directory: resolveThreadDirectory(args.project),
-        continue: args.continue,
-        session: args.session,
-        fork: args.fork,
-        model: args.model,
-        agent: args.agent,
-        prompt: args.prompt,
-        replay: noReplay ? false : undefined,
-        replayLimit: args.replayLimit,
-        demo: args.demo,
-      })
-      return
     }
 
-    const unsupported = [
-      ["--no-replay", noReplay],
-      ["--replay-limit", args.replayLimit !== undefined],
-      ["--demo", args.demo !== undefined],
-    ].find((entry) => entry[1])?.[0]
-    if (unsupported) {
-      UI.error(`${unsupported} requires --mini`)
-      process.exitCode = 1
-      return
+    if (!args.mini) {
+      const unsupported = [
+        ["--no-replay", noReplay],
+        ["--replay-limit", args.replayLimit !== undefined],
+        ["--demo", args.demo !== undefined],
+      ].find((entry) => entry[1])?.[0]
+      if (unsupported) {
+        UI.error(`${unsupported} requires --mini`)
+        process.exitCode = 1
+        return
+      }
     }
 
     if (args["windows-tui-safe-mode"]) {
@@ -219,6 +206,23 @@ export const TuiThreadCommand = cmd({
     const unguard = win32InstallCtrlCGuard()
     registerCleanupCallbacks({ unguard: () => unguard?.() })
     try {
+      if (args.mini) {
+        const { runMini } = await import("./run")
+        await runMini({
+          directory: resolveThreadDirectory(args.project),
+          continue: args.continue,
+          session: args.session,
+          fork: args.fork,
+          model: args.model,
+          agent: args.agent,
+          prompt: args.prompt,
+          replay: noReplay ? false : undefined,
+          replayLimit: args.replayLimit,
+          demo: args.demo,
+        })
+        return
+      }
+
       const { TuiConfig } = await import("@/config/tui")
       if (args.fork && !args.continue && !args.session) {
         UI.error("--fork requires --continue or --session")

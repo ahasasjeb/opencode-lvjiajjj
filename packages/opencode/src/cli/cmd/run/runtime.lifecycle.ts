@@ -15,6 +15,7 @@ import { Global } from "@opencode-ai/core/global"
 import { Flag } from "@opencode-ai/core/flag/flag"
 import { openEditor } from "@opencode-ai/tui/editor"
 import { registerOpencodeKeymap } from "@opencode-ai/tui/keymap"
+import { registerCleanupCallbacks } from "@opencode-ai/tui/terminal-win32"
 import { Session as SessionApi } from "@/session/session"
 import * as Locale from "@/util/locale"
 import { resolveInteractiveStdin } from "./runtime.stdin"
@@ -199,6 +200,7 @@ export async function createRuntimeLifecycle(input: LifecycleInput): Promise<Lif
       consoleMode: "disabled",
       clearOnShutdown: false,
     })
+    registerCleanupCallbacks({ rendererDestroy: () => shutdown(renderer) })
     const theme = await resolveRunTheme(renderer)
     renderer.setBackgroundColor(theme.background)
     const keymap = createDefaultOpenTuiKeymap(renderer)
