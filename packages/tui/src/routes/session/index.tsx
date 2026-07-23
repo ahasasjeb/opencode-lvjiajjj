@@ -1947,6 +1947,7 @@ function InlineTool(props: {
       failed={failed()}
       denied={Boolean(denied())}
       discarded={discarded() ? language.t("tool.discarded") : undefined}
+      discardedColor={theme.textMuted}
       error={error()}
       errorExpanded={errorExpanded()}
       complete={props.complete}
@@ -1978,6 +1979,7 @@ export function InlineToolRow(props: {
   failed?: boolean
   denied?: boolean
   discarded?: string
+  discardedColor?: RGBA
   error?: string
   errorExpanded?: boolean
   complete: unknown
@@ -1990,7 +1992,6 @@ export function InlineToolRow(props: {
   onMouseOut?: () => void
   onMouseUp?: () => void
 }) {
-  const { theme } = useTheme()
   return (
     <box
       paddingLeft={3}
@@ -2032,6 +2033,13 @@ export function InlineToolRow(props: {
               >
                 {props.icon}
               </text>
+              <Show when={props.discarded}>
+                {(label) => (
+                  <text flexShrink={0} fg={props.discardedColor ?? props.color}>
+                    ↳ {label()} {" · "}
+                  </text>
+                )}
+              </Show>
               <text
                 flexGrow={1}
                 fg={props.failed ? props.errorColor : props.color}
@@ -2039,9 +2047,6 @@ export function InlineToolRow(props: {
               >
                 {props.failed && !props.complete ? (props.failure ?? props.children) : props.children}
               </text>
-              <Show when={props.discarded}>
-                {(label) => <text fg={theme.textMuted}> · {label()}</text>}
-              </Show>
             </box>
           </Show>
         </Match>
@@ -2094,13 +2099,17 @@ function BlockTool(props: {
             fallback={
               <text paddingLeft={3} fg={theme.textMuted}>
                 {title()}
-                {discarded() ? ` · ${language.t("tool.discarded")}` : ""}
               </text>
             }
           >
             <Spinner color={theme.textMuted}>{title().replace(/^# /, "")}</Spinner>
           </Show>
         )}
+      </Show>
+      <Show when={discarded() && !props.spinner}>
+        <text paddingLeft={3} fg={theme.textMuted}>
+          ↳ {language.t("tool.discarded")}
+        </text>
       </Show>
       {props.children}
       <Show when={error()}>

@@ -80,6 +80,8 @@ export function replaceOfficialModels(input: {
   const next = Object.fromEntries(
     Array.from(new Map(input.models.map((model) => [model.id, model])).values()).flatMap((official) => {
       if (input.include && !input.include(official.id)) return []
+      const catalogModel = input.catalog.models[official.id]
+      if (catalogModel) return [[official.id, catalogModel]]
       const source = sources[official.id] ?? fallback
       const hasAttachmentInfo = official.supports_image_in !== undefined || official.supports_video_in !== undefined
       const matchingSource = sources[official.id]

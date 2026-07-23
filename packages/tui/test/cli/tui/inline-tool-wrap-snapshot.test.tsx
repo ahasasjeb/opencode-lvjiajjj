@@ -214,6 +214,14 @@ function FailedCompleteToolFixture() {
   )
 }
 
+function DiscardedToolFixture() {
+  return (
+    <InlineToolRow icon="→" complete={true} pending="" discarded="This turn only">
+      Read src/cli/cmd/tui/routes/session/index.tsx with a deliberately long path that fills the available row
+    </InlineToolRow>
+  )
+}
+
 async function renderFrame(component: () => JSX.Element, options: { width: number; height: number }) {
   testSetup = await testRender(component, options)
   await testSetup.renderOnce()
@@ -243,6 +251,11 @@ describe("TUI inline tool wrapping", () => {
     const frame = await renderFrame(() => <FailedCompleteToolFixture />, { width: 72, height: 3 })
     expect(frame).toContain("Read src/index.ts")
     expect(frame).not.toContain("Read failed")
+  })
+
+  test("keeps the discarded-context notice visible after a long tool label", async () => {
+    const frame = await renderFrame(() => <DiscardedToolFixture />, { width: 40, height: 4 })
+    expect(frame).toContain("This turn only")
   })
 
   test("filters malformed nested tool wire data", () => {

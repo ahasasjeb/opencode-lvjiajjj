@@ -80,3 +80,23 @@ test("replaces stale catalog models with official models", () => {
     variants: { low: { effort: "low" }, high: { effort: "high" }, max: { effort: "max" } },
   })
 })
+
+test("prefers a models.dev model over an official model with the same ID", () => {
+  const connected = provider()
+  const catalog = provider()
+  connected.models.k2p7.name = "Configured K2.7"
+  catalog.models.k2p7.name = "Catalog K2.7"
+  catalog.models.k2p7.limit.context = 196_608
+  const models = officialModels({
+    data: [
+      { id: "k2p7", display_name: "Official K2.7", context_length: 262_144 },
+      { id: "k3", display_name: "K3", context_length: 262_144 },
+    ],
+  })!
+
+  replaceOfficialModels({ provider: connected, catalog, models })
+
+  expect(connected.models.k2p7).toBe(catalog.models.k2p7)
+  expect(connected.models.k2p7).toMatchObject({ name: "Catalog K2.7", limit: { context: 196_608 } })
+  expect(connected.models.k3).toMatchObject({ name: "K3", limit: { context: 262_144 } })
+})
