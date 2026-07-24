@@ -10,6 +10,8 @@ import { FSUtil } from "../fs-util"
 import { Global } from "../global"
 import { which } from "../util/which"
 
+declare const OPENCODE_LIBC: string
+
 export namespace RipgrepBinary {
   const VERSION = "15.1.0"
   const PLATFORM = {
@@ -96,6 +98,28 @@ export namespace RipgrepBinary {
 
             const target = path.join(Global.Path.bin, `rg${process.platform === "win32" ? ".exe" : ""}`)
             if (yield* fs.isFile(target).pipe(Effect.orDie)) return target
+
+            const embedded = Bun.embeddedFiles.find(
+              (file): file is Blob & { name: string } =>
+                "name" in file &&
+                typeof file.name === "string" &&
+                (file.name === `opencode-ripgrep${process.platform === "win32" ? ".exe" : ""}` ||
+                  file.name.startsWith("opencode-ripgrep-")),
+            )
+            if (embedded) {
+              yield* fs.writeWithDirs(target, new Uint8Array(yield* Effect.promise(() => embedded.arrayBuffer())))
+              if (process.platform !== "win32") yield* fs.chmod(target, 0o755)
+              return target
+            }
+
+            const bundled =
+              typeof OPENCODE_LIBC === "undefined" || OPENCODE_LIBC !== "musl"
+                ? yield* Effect.promise(async () => {
+                    const { rgPath } = await import("@vscode/ripgrep")
+                    return rgPath
+                  }).pipe(Effect.catch(() => Effect.succeed(undefined)))
+                : undefined
+            if (bundled && (yield* fs.isFile(bundled).pipe(Effect.orDie))) return bundled
 
             const platformKey = `${process.arch}-${process.platform}` as keyof typeof PLATFORM
             const config = PLATFORM[platformKey]

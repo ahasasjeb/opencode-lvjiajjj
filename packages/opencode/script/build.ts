@@ -4,6 +4,7 @@ import { $ } from "bun"
 import fs from "fs"
 import path from "path"
 import { fileURLToPath } from "url"
+import { createRequire } from "node:module"
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
 
 const __filename = fileURLToPath(import.meta.url)
@@ -16,6 +17,9 @@ const generated = await import("./generate.ts")
 
 import { Script } from "@opencode-ai/script"
 import pkg from "../package.json"
+
+const coreRequire = createRequire(new URL("../../core/package.json", import.meta.url))
+const ripgrepRequire = createRequire(coreRequire.resolve("@vscode/ripgrep"))
 
 const singleFlag = process.argv.includes("--single")
 const baselineFlag = process.argv.includes("--baseline")
@@ -165,6 +169,7 @@ if (!skipInstall) {
   await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`
   await $`bun install --os="*" --cpu="*" @parcel/watcher@${pkg.dependencies["@parcel/watcher"]}`
   await $`bun install --os="*" --cpu="*" @ff-labs/fff-bun@${pkg.dependencies["@ff-labs/fff-bun"]}`
+  await $`bun install --os="*" --cpu="*"`
 }
 for (const item of targets) {
   const name = [
@@ -179,6 +184,18 @@ for (const item of targets) {
     .join("-")
   console.log(`building ${name}`)
   await $`mkdir -p dist/${name}/bin`
+
+  const ripgrepPath = item.abi
+    ? undefined
+    : path.join("dist", name, `opencode-ripgrep${item.os === "win32" ? ".exe" : ""}`)
+  const ripgrepEntrypoint = ripgrepPath ? path.join("dist", name, "opencode-ripgrep.gen.ts") : undefined
+  if (ripgrepPath && ripgrepEntrypoint) {
+    fs.copyFileSync(
+      ripgrepRequire.resolve(`@vscode/ripgrep-${item.os}-${item.arch}/bin/rg${item.os === "win32" ? ".exe" : ""}`),
+      ripgrepPath,
+    )
+    fs.writeFileSync(ripgrepEntrypoint, `import "./${path.basename(ripgrepPath)}" with { type: "file" }`)
+  }
 
   const workerPath = "./src/cli/tui/worker.ts"
   const treeSitterWorkerPath = "opentui-tree-sitter-worker.js"
@@ -212,6 +229,7 @@ for (const item of targets) {
       workerPath,
       treeSitterWorkerPath,
       ...(embeddedFileMap ? ["opencode-web-ui.gen.ts"] : []),
+      ...(ripgrepEntrypoint ? [ripgrepEntrypoint] : []),
     ],
     define: {
       FFF_LIBC: JSON.stringify(item.abi === "musl" ? "musl" : "gnu"),
@@ -224,6 +242,8 @@ for (const item of targets) {
       ...(item.os === "linux" ? { "process.env.OPENTUI_LIBC": JSON.stringify(item.abi ?? "glibc") } : {}),
     },
   })
+  if (ripgrepPath) fs.rmSync(ripgrepPath)
+  if (ripgrepEntrypoint) fs.rmSync(ripgrepEntrypoint)
 
   // Smoke test: only run if binary is for current platform
   if (item.os === process.platform && item.arch === process.arch && !item.abi) {
