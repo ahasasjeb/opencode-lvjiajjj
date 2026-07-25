@@ -36,6 +36,8 @@ import { usePermission } from "./permission"
 function mergeStreamedPart(current: Part | undefined, incoming: Part): Part {
   if (incoming.type !== "text" && incoming.type !== "reasoning") return incoming
   if (!current || (current.type !== "text" && current.type !== "reasoning")) return incoming
+  // Length preservation only protects in-flight text from stale snapshots; completed text is authoritative.
+  if (incoming.time?.end !== undefined) return incoming
   if (incoming.text.length >= current.text.length) return incoming
   return { ...incoming, text: current.text }
 }

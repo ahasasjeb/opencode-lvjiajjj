@@ -9,6 +9,11 @@ function reasoningText(parts: { type: string; text?: string }[] | undefined) {
   return part?.type === "reasoning" ? part.text : undefined
 }
 
+function textPartText(parts: { type: string; text?: string }[] | undefined) {
+  const part = parts?.[0]
+  return part?.type === "text" ? part.text : undefined
+}
+
 function branchEvent(branch: string, workspace?: string): GlobalEvent {
   return {
     directory: "/tmp/other",
@@ -237,6 +242,78 @@ describe("tui sync", () => {
 
       await wait(() => reasoningText(sync.data.part[messageID]) === "thinking done")
       expect(sync.data.part[messageID][0]).toMatchObject({ text: "thinking done" })
+    } finally {
+      app.renderer.destroy()
+    }
+  })
+
+  test("terminal text snapshot replaces longer corrupted streamed text", async () => {
+    await using tmp = await tmpdir()
+    await Bun.write(`${tmp.path}/kv.json`, "{}")
+    const { app, emit, sync } = await mount(undefined, tmp.path)
+
+    const sessionID = "ses_terminal"
+    const messageID = "msg_terminal"
+    const partID = "prt_terminal"
+
+    try {
+      emit({
+        directory: "/tmp/other",
+        project: "proj_test",
+        payload: {
+          id: "evt_text_start",
+          type: "message.part.updated",
+          properties: {
+            sessionID,
+            time: 1,
+            part: {
+              id: partID,
+              sessionID,
+              messageID,
+              type: "text",
+              text: "",
+              time: { start: 1 },
+            },
+          },
+        },
+      })
+      emit({
+        directory: "/tmp/other",
+        project: "proj_test",
+        payload: {
+          id: "evt_text_delta",
+          type: "message.part.delta",
+          properties: { sessionID, messageID, partID, field: "text", delta: "已启动。等\n两分钟确认没有立即报错：" },
+        },
+      })
+      await wait(() => textPartText(sync.data.part[messageID]) === "已启动。等\n两分钟确认没有立即报错：")
+
+      emit({
+        directory: "/tmp/other",
+        project: "proj_test",
+        payload: {
+          id: "evt_text_end",
+          type: "message.part.updated",
+          properties: {
+            sessionID,
+            time: 2,
+            part: {
+              id: partID,
+              sessionID,
+              messageID,
+              type: "text",
+              text: "已启动。等两分钟确认没有立即报错：",
+              time: { start: 1, end: 2 },
+            },
+          },
+        },
+      })
+
+      await wait(() => textPartText(sync.data.part[messageID]) === "已启动。等两分钟确认没有立即报错：")
+      expect(sync.data.part[messageID][0]).toMatchObject({
+        text: "已启动。等两分钟确认没有立即报错：",
+        time: { start: 1, end: 2 },
+      })
     } finally {
       app.renderer.destroy()
     }
