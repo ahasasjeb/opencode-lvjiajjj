@@ -161,4 +161,4 @@ const table = sqliteTable("session", {
 - Keep the System Context algebra, registry, and built-ins in `src/system-context`; keep Context Source producers with their observed domains, and keep Session History selection plus Context Epoch persistence Session-owned.
 
 默认以TUI功能为主
-目前是以anomalyco/opencode仓库的c8487bac54d220b085b86b344cb15c61d67f215d提交为基础进行合并，后续可以考虑自行更新这条
+目前是以anomalyco/opencode仓库的8cbea4fbb7f2a8ccf59f44922ef7c1ff5f22e377提交为基础进行合并，后续可以考虑自行更新这条
