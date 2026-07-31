@@ -274,6 +274,7 @@
   "prompt.attachment.remove": "Видалити вкладення",
   "prompt.action.send": "Надіслати",
   "prompt.action.stop": "Зупинити",
+  "prompt.toast.attachmentDuplicate.title": "Цей файл уже завантажено",
   "prompt.toast.pasteUnsupported.title": "Непідтримуване вкладення",
   "prompt.toast.pasteUnsupported.description": "Сюди можна прикріплювати лише зображення, PDF або текстові файли.",
   "prompt.toast.modelAgentRequired.title": "Виберіть агента та модель",
