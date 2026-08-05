@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test"
+﻿import { describe, expect, test } from "bun:test"
 
 const appLocales = [
   "ar",
@@ -18,24 +18,30 @@ const appLocales = [
   "tr",
   "zh",
   "zht",
+  "hi",
+  "nl",
+  "id",
+  "vi",
+  "it",
+  "ur",
+  "pa",
+  "az",
+  "fi",
+  "sv",
 ] as const
-const desktopLocales = appLocales.filter((locale) => locale !== "th" && locale !== "tr")
-const targetedAppKeys = [
-  "command.session.previous.unseen",
-  "command.session.next.unseen",
-  "command.language.cycle",
-  "command.language.set",
-  "help.openWebsite",
-  "help.tabs.popupAria",
-  "help.tabs.dismiss",
-  "help.tabs.title",
-  "help.tabs.description",
-  "help.tabs.date",
-  "help.tabs.navigationTitle",
-  "help.tabs.navigationDescription",
-  "session.review.noUncommittedChanges",
-  "session.review.noBranchChanges",
-] as const
+const desktopLocales = appLocales
+const pluralCategories: Partial<Record<(typeof appLocales)[number], readonly string[]>> = {
+  ar: ["zero", "two", "few", "many"],
+  br: ["many"],
+  bs: ["few"],
+  es: ["many"],
+  fr: ["many"],
+  it: ["many"],
+  pl: ["few", "many"],
+  ru: ["few", "many"],
+  uk: ["few", "many"],
+}
+
 const domains = [
   {
     name: "app",
@@ -58,18 +64,23 @@ const domains = [
 ] as const
 
 describe.skipIf(!!process.env.CI)("i18n parity", () => {
-  test("non-English locales have every English key", async () => {
+  test("non-English locales have every English key and required plural variants", async () => {
     for (const domain of domains) {
       const source = await dictionary(domain.source)
       for (const locale of domain.locales) {
         const target = await dictionary(domain.target(locale))
         const missing = Object.keys(source).filter((key) => !Object.hasOwn(target, key))
-        const extra = Object.keys(target).filter((key) => !Object.hasOwn(source, key))
+        const extra = Object.keys(target)
+          .filter((key) => !Object.hasOwn(source, key))
+          .sort()
+        const expected = pluralFamilies(source)
+          .flatMap((key) => (pluralCategories[locale] ?? []).map((category) => `${key}.${category}`))
+          .sort()
         expect({ domain: domain.name, locale, missing, extra }).toEqual({
           domain: domain.name,
           locale,
           missing: [],
-          extra: [],
+          extra: expected,
         })
       }
     }
@@ -83,17 +94,26 @@ describe.skipIf(!!process.env.CI)("i18n parity", () => {
         const mismatched = Object.keys(source).filter(
           (key) => Object.hasOwn(target, key) && placeholders(source[key]).join() !== placeholders(target[key]).join(),
         )
-        expect({ domain: domain.name, locale, mismatched }).toEqual({ domain: domain.name, locale, mismatched: [] })
+        const pluralMismatched = pluralFamilies(source).flatMap((key) =>
+          (pluralCategories[locale] ?? [])
+            .map((category) => `${key}.${category}`)
+            .filter((variant) => placeholders(source[`${key}.other`]).join() !== placeholders(target[variant]).join()),
+        )
+        expect({ domain: domain.name, locale, mismatched, pluralMismatched }).toEqual({
+          domain: domain.name,
+          locale,
+          mismatched: [],
+          pluralMismatched: [],
+        })
       }
     }
   })
 
-  test("non-English app locales translate targeted interaction keys", async () => {
+  test("non-English locales translate targeted unseen session keys", async () => {
     const source = await dictionary("./en.ts")
     for (const locale of appLocales) {
       const target = await dictionary(`./${locale}.ts`)
-      expect(target["language.uk"]).toBeDefined()
-      for (const key of targetedAppKeys) {
+      for (const key of ["command.session.previous.unseen", "command.session.next.unseen"]) {
         expect(target[key]).toBeDefined()
         expect(target[key]).not.toBe(source[key])
       }
@@ -116,6 +136,38 @@ describe.skipIf(!!process.env.CI)("i18n parity", () => {
   })
 })
 
+describe("i18n plural parity", () => {
+  test("locale-specific categories exist and preserve count placeholders", async () => {
+    for (const domain of domains.slice(0, 2)) {
+      const source = await dictionary(domain.source)
+      const families = pluralFamilies(source)
+      for (const locale of domain.locales) {
+        const target = await dictionary(domain.target(locale))
+        const missing = families.flatMap((key) =>
+          (pluralCategories[locale] ?? [])
+            .map((category) => `${key}.${category}`)
+            .filter((variant) => !Object.hasOwn(target, variant)),
+        )
+        const mismatched = families.flatMap((key) =>
+          (pluralCategories[locale] ?? [])
+            .map((category) => `${key}.${category}`)
+            .filter(
+              (variant) =>
+                Object.hasOwn(target, variant) &&
+                placeholders(source[`${key}.other`]).join() !== placeholders(target[variant]).join(),
+            ),
+        )
+        expect({ domain: domain.name, locale, missing, mismatched }).toEqual({
+          domain: domain.name,
+          locale,
+          missing: [],
+          mismatched: [],
+        })
+      }
+    }
+  })
+})
+
 async function dictionary(file: string) {
   const module: unknown = await import(file)
   if (typeof module !== "object" || module === null || !("dict" in module) || !isDictionary(module.dict)) {
@@ -131,4 +183,15 @@ function isDictionary(value: unknown): value is Record<string, string> {
 
 function placeholders(value: string) {
   return Array.from(value.matchAll(/{{\s*([^}]+?)\s*}}/g), (match) => match[1]).sort()
+}
+
+function pluralFamilies(dictionary: Record<string, string>) {
+  return Object.keys(dictionary)
+    .filter(
+      (key) =>
+        key.endsWith(".one") &&
+        dictionary[key].includes("{{count}}") &&
+        dictionary[`${key.slice(0, -4)}.other`]?.includes("{{count}}"),
+    )
+    .map((key) => key.slice(0, -4))
 }
