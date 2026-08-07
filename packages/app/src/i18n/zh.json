@@ -1110,5 +1110,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "在不更改所选语言的情况下，强制设置整个应用的布局方向",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "导出会话",
+  "command.session.export.description": "将完整会话记录导出为 JSON",
+  "dialog.usageExceeded.dontShowAgain": "不再显示",
+  "context.export.session": "导出会话",
+  "toast.session.export.success.title": "会话已导出",
+  "toast.session.export.success.description": "已将会话保存到 {{filename}}",
+  "toast.session.export.failed.title": "导出会话失败",
+  "toast.session.export.failed.description": "导出会话时发生错误",
+  "common.export": "导出"
 }

@@ -1110,5 +1110,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "Gennemtving layoutretningen for hele appen uden at ændre det valgte sprog",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "Eksportér session",
+  "command.session.export.description": "Eksportér hele sessionsudskriften som JSON",
+  "dialog.usageExceeded.dontShowAgain": "Vis ikke igen",
+  "context.export.session": "Eksportér session",
+  "toast.session.export.success.title": "Session eksporteret",
+  "toast.session.export.success.description": "Sessionen blev gemt i {{filename}}",
+  "toast.session.export.failed.title": "Kunne ikke eksportere session",
+  "toast.session.export.failed.description": "Der opstod en fejl under eksport af sessionen",
+  "common.export": "Eksportér"
 }

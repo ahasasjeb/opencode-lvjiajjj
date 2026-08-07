@@ -1110,5 +1110,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "在不變更所選語言的情況下，強制設定整個應用程式的版面配置方向",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "匯出工作階段",
+  "command.session.export.description": "將完整的工作階段記錄匯出為 JSON",
+  "dialog.usageExceeded.dontShowAgain": "不再顯示",
+  "context.export.session": "匯出工作階段",
+  "toast.session.export.success.title": "工作階段已匯出",
+  "toast.session.export.success.description": "已將工作階段儲存至 {{filename}}",
+  "toast.session.export.failed.title": "匯出工作階段失敗",
+  "toast.session.export.failed.description": "匯出工作階段時發生錯誤",
+  "common.export": "匯出"
 }

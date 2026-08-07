@@ -1122,5 +1122,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "فرض اتجاه التخطيط على التطبيق بالكامل دون تغيير اللغة المحددة",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "تصدير الجلسة",
+  "command.session.export.description": "تصدير النص الكامل للجلسة بصيغة JSON",
+  "dialog.usageExceeded.dontShowAgain": "عدم الإظهار مرة أخرى",
+  "context.export.session": "تصدير الجلسة",
+  "toast.session.export.success.title": "تم تصدير الجلسة",
+  "toast.session.export.success.description": "تم حفظ الجلسة في ⁨{{filename}}⁩",
+  "toast.session.export.failed.title": "فشل تصدير الجلسة",
+  "toast.session.export.failed.description": "حدث خطأ أثناء تصدير الجلسة",
+  "common.export": "تصدير"
 }

@@ -1110,5 +1110,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "選択中の言語を変更せずに、アプリ全体のレイアウト方向を強制設定",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "セッションをエクスポート",
+  "command.session.export.description": "セッションの全記録を JSON としてエクスポート",
+  "dialog.usageExceeded.dontShowAgain": "今後表示しない",
+  "context.export.session": "セッションをエクスポート",
+  "toast.session.export.success.title": "セッションをエクスポートしました",
+  "toast.session.export.success.description": "セッションを {{filename}} に保存しました",
+  "toast.session.export.failed.title": "セッションのエクスポートに失敗しました",
+  "toast.session.export.failed.description": "セッションのエクスポート中にエラーが発生しました",
+  "common.export": "エクスポート"
 }

@@ -31,6 +31,7 @@ import {
   applyThemePreference,
   Footer,
   getGitHubStars,
+  githubLink,
   Header,
   isThemePreference,
   themeStorageKey,
@@ -245,7 +246,7 @@ export default function ModelCompareDetailPage(props: ModelCompareDetailPageProp
         <script type="application/ld+json">{structuredData()}</script>
       </Show>
       <Header
-        githubStars={githubStars() ?? "150K"}
+        githubStars={githubStars() ?? githubLink.fallbackStars}
         links={compareHeaderLinks()}
         brandHref={import.meta.env.BASE_URL}
       />

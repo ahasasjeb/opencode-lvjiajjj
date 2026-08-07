@@ -1110,5 +1110,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "Seçili dili değiştirmeden tüm uygulamanın düzen yönünü zorla ayarla",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "Oturumu dışa aktar",
+  "command.session.export.description": "Oturumun tam dökümünü JSON olarak dışa aktar",
+  "dialog.usageExceeded.dontShowAgain": "Bir daha gösterme",
+  "context.export.session": "Oturumu dışa aktar",
+  "toast.session.export.success.title": "Oturum dışa aktarıldı",
+  "toast.session.export.success.description": "Oturum {{filename}} dosyasına kaydedildi",
+  "toast.session.export.failed.title": "Oturum dışa aktarılamadı",
+  "toast.session.export.failed.description": "Oturum dışa aktarılırken bir hata oluştu",
+  "common.export": "Dışa aktar"
 }

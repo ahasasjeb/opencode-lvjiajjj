@@ -1110,5 +1110,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "บังคับกำหนดทิศทางเค้าโครงของทั้งแอปโดยไม่เปลี่ยนภาษาที่เลือก",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "ส่งออกเซสชัน",
+  "command.session.export.description": "ส่งออกบันทึกทั้งหมดของเซสชันเป็น JSON",
+  "dialog.usageExceeded.dontShowAgain": "ไม่ต้องแสดงอีก",
+  "context.export.session": "ส่งออกเซสชัน",
+  "toast.session.export.success.title": "ส่งออกเซสชันแล้ว",
+  "toast.session.export.success.description": "บันทึกเซสชันไปยัง {{filename}} แล้ว",
+  "toast.session.export.failed.title": "ไม่สามารถส่งออกเซสชัน",
+  "toast.session.export.failed.description": "เกิดข้อผิดพลาดขณะส่งออกเซสชัน",
+  "common.export": "ส่งออก"
 }

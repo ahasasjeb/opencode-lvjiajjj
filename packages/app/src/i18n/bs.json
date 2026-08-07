@@ -1113,5 +1113,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "Prisilno postavi smjer rasporeda cijele aplikacije bez promjene odabranog jezika",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "Izvezi sesiju",
+  "command.session.export.description": "Izvezi cijeli zapis sesije u JSON formatu",
+  "dialog.usageExceeded.dontShowAgain": "Nemoj više prikazivati",
+  "context.export.session": "Izvezi sesiju",
+  "toast.session.export.success.title": "Sesija izvezena",
+  "toast.session.export.success.description": "Sesija je sačuvana kao {{filename}}",
+  "toast.session.export.failed.title": "Izvoz sesije nije uspio",
+  "toast.session.export.failed.description": "Došlo je do greške prilikom izvoza sesije",
+  "common.export": "Izvezi"
 }

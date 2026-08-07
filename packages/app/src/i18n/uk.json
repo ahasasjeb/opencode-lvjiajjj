@@ -1116,5 +1116,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "Примусово задати напрямок макета всієї програми, не змінюючи вибрану мову",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "Експортувати сесію",
+  "command.session.export.description": "Експортувати повну історію сесії у форматі JSON",
+  "dialog.usageExceeded.dontShowAgain": "Більше не показувати",
+  "context.export.session": "Експортувати сесію",
+  "toast.session.export.success.title": "Сесію експортовано",
+  "toast.session.export.success.description": "Сесію збережено у файл {{filename}}",
+  "toast.session.export.failed.title": "Не вдалося експортувати сесію",
+  "toast.session.export.failed.description": "Під час експортування сесії сталася помилка",
+  "common.export": "Експортувати"
 }

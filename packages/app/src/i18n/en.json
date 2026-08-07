@@ -1110,5 +1110,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "Force the full app layout direction without changing the selected language",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "Export session",
+  "command.session.export.description": "Export the full session transcript as JSON",
+  "dialog.usageExceeded.dontShowAgain": "Don't show again",
+  "context.export.session": "Export session",
+  "toast.session.export.success.title": "Session exported",
+  "toast.session.export.success.description": "Saved session to {{filename}}",
+  "toast.session.export.failed.title": "Failed to export session",
+  "toast.session.export.failed.description": "An error occurred while exporting the session",
+  "common.export": "Export"
 }

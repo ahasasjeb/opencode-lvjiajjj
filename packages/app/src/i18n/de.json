@@ -1110,5 +1110,14 @@
   "debugBar.direction.label": "DIR",
   "debugBar.direction.tip": "Layoutrichtung für die gesamte App erzwingen, ohne die ausgewählte Sprache zu ändern",
   "debugBar.direction.ltr": "LTR",
-  "debugBar.direction.rtl": "RTL"
+  "debugBar.direction.rtl": "RTL",
+  "command.session.export": "Sitzung exportieren",
+  "command.session.export.description": "Das vollständige Transkript der Sitzung als JSON exportieren",
+  "dialog.usageExceeded.dontShowAgain": "Nicht mehr anzeigen",
+  "context.export.session": "Sitzung exportieren",
+  "toast.session.export.success.title": "Sitzung exportiert",
+  "toast.session.export.success.description": "Sitzung unter {{filename}} gespeichert",
+  "toast.session.export.failed.title": "Sitzung konnte nicht exportiert werden",
+  "toast.session.export.failed.description": "Beim Exportieren der Sitzung ist ein Fehler aufgetreten",
+  "common.export": "Exportieren"
 }
