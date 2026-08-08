@@ -259,9 +259,9 @@ export type UsageRecord = {
 }
 
 export type ModelSubtotal = {
-  providerID: TrackedProviderID
+  providerID: string
   providerLabel: string
-  modelID: TrackedModelID
+  modelID: string
   modelLabel: string
   turns: number
   cacheHitInputTokens: number

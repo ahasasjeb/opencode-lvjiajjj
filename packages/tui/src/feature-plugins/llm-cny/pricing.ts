@@ -27,6 +27,8 @@ export type {
   ModelPriceEntry,
   PricingOptions,
 } from "./pricing/types.js"
+export { buildModelsDevEntries } from "./pricing/models-dev.js"
+export type { ModelsDevPriceEntry } from "./pricing/models-dev.js"
 
 import { TRACKED_PROVIDERS } from "./pricing/types.js"
 export { TRACKED_PROVIDERS }
@@ -42,6 +44,7 @@ import type {
   PricingOptions,
   ModelPriceEntry,
 } from "./pricing/types.js"
+import { buildModelsDevEntries, type ModelsDevPriceEntry } from "./pricing/models-dev.js"
 import {
   safe,
   unique,
@@ -110,8 +113,14 @@ export function supportsBalance(provider: TrackedProvider): provider is BalanceT
 
 export const BALANCE_TRACKED_PROVIDERS = TRACKED_PROVIDERS.filter(supportsBalance)
 
-export function calculateTrackedSession(records: readonly UsageRecord[], options: PricingOptions = {}): SessionCostSummary {
-  const models = MODEL_PRICES.map((entry) => subtotal(entry, records, options)).filter((item) => item.turns > 0)
+export function calculateTrackedSession(
+  records: readonly UsageRecord[],
+  options: PricingOptions = {},
+  modelsDevEntries: readonly ModelsDevPriceEntry[] = [],
+): SessionCostSummary {
+  const models = [...MODEL_PRICES, ...modelsDevEntries]
+    .map((entry) => subtotal(entry, records, options))
+    .filter((item) => item.turns > 0)
 
   return {
     turns: models.reduce((sum, item) => sum + item.turns, 0),
@@ -129,7 +138,9 @@ export function calculateDeepseekSession(records: readonly UsageRecord[]): Sessi
   return calculateTrackedSession(records.filter((item) => item.providerID === "deepseek"))
 }
 
-function subtotal(entry: ModelPriceEntry, records: readonly UsageRecord[], options: PricingOptions): ModelSubtotal {
+type PriceEntry = ModelPriceEntry | ModelsDevPriceEntry
+
+function subtotal(entry: PriceEntry, records: readonly UsageRecord[], options: PricingOptions): ModelSubtotal {
   const sum = records
     .filter((item) => item.providerID === entry.providerID && item.modelID === entry.modelID)
     .reduce<ModelSubtotal>(

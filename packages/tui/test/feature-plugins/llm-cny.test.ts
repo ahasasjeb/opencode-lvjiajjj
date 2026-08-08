@@ -9,6 +9,8 @@ import {
   selectCodexOAuthSource,
 } from "../../src/feature-plugins/llm-cny/codex-usage"
 import { parseKimiUsageResponse } from "../../src/feature-plugins/llm-cny/kimi-usage"
+import { buildModelsDevEntries } from "../../src/feature-plugins/llm-cny/pricing/models-dev"
+import { calculateTrackedSession, trackedModel } from "../../src/feature-plugins/llm-cny/pricing"
 import { fetchXaiUsage, parseXaiUsageResponse } from "../../src/feature-plugins/llm-cny/xai-usage"
 import {
   hasChatGPTOAuthProvider,
@@ -337,5 +339,74 @@ describe("LLM CNY quota integration", () => {
 
     expect(selected?.filePath).toBe("auth.json")
     expect(selected?.credential.expires).toBe(2)
+  })
+})
+
+describe("LLM CNY models.dev fallback pricing", () => {
+  const modelInfo = (overrides: Partial<Parameters<typeof buildModelsDevEntries>[0][number]> = {}) => ({
+    id: "acme-1",
+    providerID: "acme",
+    name: "Acme Model 1",
+    cost: [
+      { input: 1, output: 2, cache: { read: 0.5, write: 1.5 } },
+      { tier: { type: "context" as const, size: 200_000 }, input: 2, output: 4, cache: { read: 1, write: 3 } },
+    ],
+    ...overrides,
+  })
+
+  test("builds entries for models not covered by presets", () => {
+    const covered = buildModelsDevEntries([modelInfo()], (providerID, modelID) => trackedModel(providerID, modelID) !== undefined)
+    expect(covered).toHaveLength(1)
+    expect(covered[0]!.modelID).toBe("acme-1")
+    expect(covered[0]!.providerLabel).toBe("acme")
+  })
+
+  test("skips models already covered by presets", () => {
+    const covered = buildModelsDevEntries(
+      [modelInfo({ id: "deepseek-v4-flash", providerID: "deepseek" })],
+      (providerID, modelID) => trackedModel(providerID, modelID) !== undefined,
+    )
+    expect(covered).toHaveLength(0)
+  })
+
+  test("skips models without cost data", () => {
+    const covered = buildModelsDevEntries([modelInfo({ cost: [] })])
+    expect(covered).toHaveLength(0)
+  })
+
+  test("picks the tier matching the input token count and converts USD to CNY", () => {
+    const entries = buildModelsDevEntries([modelInfo()])
+    const short = entries[0]!.priceFor(Date.now(), 10_000, { usdCnyRate: 7.2 })
+    const long = entries[0]!.priceFor(Date.now(), 300_000, { usdCnyRate: 7.2 })
+    expect(short.cacheMissInput).toBe(7.2)
+    expect(short.output).toBe(14.4)
+    expect(long.cacheMissInput).toBe(14.4)
+    expect(long.output).toBe(28.8)
+  })
+
+  test("flags a pending exchange rate warning when the rate is missing", () => {
+    const entries = buildModelsDevEntries([modelInfo()])
+    const price = entries[0]!.priceFor(Date.now(), 10_000, {})
+    expect(price.cacheMissInput).toBe(0)
+    expect(price.warnings).toContain("正在获取美元兑人民币汇率，成功后自动换算人民币价格")
+  })
+
+  test("includes models.dev records in the tracked session summary", () => {
+    const entries = buildModelsDevEntries([modelInfo()])
+    const summary = calculateTrackedSession(
+      [
+        {
+          providerID: "acme",
+          modelID: "acme-1",
+          time: { completed: 1 },
+          tokens: { input: 100_000, output: 1_000, reasoning: 0, cache: { read: 0, write: 0 } },
+        },
+      ],
+      { usdCnyRate: 7.2 },
+      entries,
+    )
+    expect(summary.turns).toBe(1)
+    // input 100k * 1 USD/1M + output 1k * 2 USD/1M, converted at 7.2
+    expect(summary.costCny).toBeCloseTo(0.7344, 6)
   })
 })
