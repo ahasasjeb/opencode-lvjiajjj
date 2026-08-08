@@ -2,7 +2,7 @@ import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { RGBA } from "@opentui/core"
 import { createSignal, For, Match, Show, Switch } from "solid-js"
 import type { BalanceTrackedProvider, SessionCostSummary } from "../pricing.js"
-import { formatDetails, formatMoney, formatTime, formatTokens } from "./format.js"
+import { formatDetails, formatMoney, formatPercent, formatTime, formatTokens } from "./format.js"
 import type { Translator } from "./i18n.js"
 import { balanceTone, type BalanceState } from "./state.js"
 
@@ -60,6 +60,13 @@ export function Summary(props: { theme: Theme; t: Translator; locale: string; su
           reasoning: formatTokens(props.summary.reasoningTokens, props.locale),
         })}
       </text>
+      <Show when={props.summary.cacheHitRate !== undefined}>
+        <text fg={props.theme.textMuted}>
+          {props.t("plugin.llmCny.tokens.cacheHitRate", {
+            percent: formatPercent(props.summary.cacheHitRate!, props.locale),
+          })}
+        </text>
+      </Show>
       <Show when={hasAnthropicCacheWrite()}>
         <text fg={props.theme.textMuted}>
           {props.t("plugin.llmCny.cacheWrite1h", { cost: formatMoney(cacheWrite1hTotal()) })}

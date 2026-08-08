@@ -1,4 +1,4 @@
-{
+﻿{
   "category.agent": "Agent",
   "category.language": "語言",
   "category.provider": "Provider",
@@ -646,6 +646,7 @@
   "plugin.llmCny.times": "{{count}} calls",
   "plugin.llmCny.tokens.inputCache": "Input {{input}} · Cache {{cache}}",
   "plugin.llmCny.tokens.outputReasoning": "Output {{output}} · Reasoning {{reasoning}}",
+  "plugin.llmCny.tokens.cacheHitRate": "緩存命中率 {{percent}}",
   "plugin.llmCny.cacheWrite1h": "If Claude used 1h cache writes: +{{cost}} (not included in total)",
   "plugin.llmCny.activation": "Activated after a response from DeepSeek, moonshot China, Xiaomi MiMo, ZhipuAI, Alibaba Cloud, xAI, Anthropic, OpenAI API Key, ChatGPT OAuth, or GitHub Copilot OAuth.",
   "plugin.llmCny.noUsage": "No supported model usage in this session",

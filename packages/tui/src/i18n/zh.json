@@ -1,4 +1,4 @@
-{
+﻿{
   "category.agent": "智能体",
   "category.language": "语言",
   "category.provider": "提供商",
@@ -646,6 +646,7 @@
   "plugin.llmCny.times": "{{count}} 次",
   "plugin.llmCny.tokens.inputCache": "输入 {{input}} · 缓存 {{cache}}",
   "plugin.llmCny.tokens.outputReasoning": "输出 {{output}} · 推理 {{reasoning}}",
+  "plugin.llmCny.tokens.cacheHitRate": "缓存命中率 {{percent}}",
   "plugin.llmCny.cacheWrite1h": "若 Claude 使用 1h 缓存写入：+{{cost}}（未计入总费用）",
   "plugin.llmCny.activation": "使用 DeepSeek、moonshot China、Xiaomi MiMo、ZhipuAI、Alibaba Cloud、xAI、Anthropic、OpenAI API Key、ChatGPT OAuth 或 GitHub Copilot OAuth，模型返回一次消息后激活。",
   "plugin.llmCny.noUsage": "本会话暂无已支持模型用量",

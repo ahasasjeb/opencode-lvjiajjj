@@ -23,6 +23,10 @@ export function formatTime(value: number, locale = "en") {
   })
 }
 
+export function formatPercent(value: number, locale = "en") {
+  return `${(value * 100).toLocaleString(locale, { maximumFractionDigits: 1 })}%`
+}
+
 export function formatDetails(details: DisplayBalance["details"], labels: Record<string, string> = {}) {
   return details.map((item) => `${labels[item.label] ?? item.label} ${item.value}`).join(" · ")
 }

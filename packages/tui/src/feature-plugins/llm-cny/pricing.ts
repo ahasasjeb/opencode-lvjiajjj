@@ -122,14 +122,20 @@ export function calculateTrackedSession(
     .map((entry) => subtotal(entry, records, options))
     .filter((item) => item.turns > 0)
 
+  const cacheHitInputTokens = models.reduce((sum, item) => sum + item.cacheHitInputTokens, 0)
+  const cacheMissInputTokens = models.reduce((sum, item) => sum + item.cacheMissInputTokens, 0)
+
   return {
     turns: models.reduce((sum, item) => sum + item.turns, 0),
-    cacheHitInputTokens: models.reduce((sum, item) => sum + item.cacheHitInputTokens, 0),
-    cacheMissInputTokens: models.reduce((sum, item) => sum + item.cacheMissInputTokens, 0),
+    cacheHitInputTokens,
+    cacheMissInputTokens,
     outputTokens: models.reduce((sum, item) => sum + item.outputTokens, 0),
     reasoningTokens: models.reduce((sum, item) => sum + item.reasoningTokens, 0),
     costCny: roundMoney(models.reduce((sum, item) => sum + item.costCny, 0)),
     cacheWrite1hCostCny: roundMoney(models.reduce((sum, item) => sum + item.cacheWrite1hCostCny, 0)),
+    cacheHitRate: cacheHitInputTokens + cacheMissInputTokens > 0
+      ? cacheHitInputTokens / (cacheHitInputTokens + cacheMissInputTokens)
+      : undefined,
     models,
   }
 }

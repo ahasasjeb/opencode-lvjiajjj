@@ -410,3 +410,33 @@ describe("LLM CNY models.dev fallback pricing", () => {
     expect(summary.costCny).toBeCloseTo(0.7344, 6)
   })
 })
+
+describe("LLM CNY cache hit rate", () => {
+  const record = (read: number, write: number, input: number) => ({
+    providerID: "deepseek",
+    modelID: "deepseek-v4-flash",
+    time: { completed: 1 },
+    tokens: { input, output: 1_000, reasoning: 0, cache: { read, write } },
+  })
+
+  test("computes the hit rate across cache reads, misses, and writes", () => {
+    const summary = calculateTrackedSession([record(3_000, 0, 1_000), record(6_000, 1_000, 2_000)])
+    // hit 9k / (hit 9k + miss input 3k + write 1k)
+    expect(summary.cacheHitRate).toBeCloseTo(9_000 / 13_000, 6)
+  })
+
+  test("reports 100% when every input token was served from cache", () => {
+    const summary = calculateTrackedSession([record(4_000, 0, 0), record(4_000, 0, 0)])
+    expect(summary.cacheHitRate).toBe(1)
+  })
+
+  test("reports 0 when the cache never hit", () => {
+    const summary = calculateTrackedSession([record(0, 500, 2_000), record(0, 0, 3_000)])
+    expect(summary.cacheHitRate).toBe(0)
+  })
+
+  test("omits the hit rate when there is no input at all", () => {
+    const summary = calculateTrackedSession([record(0, 0, 0), record(0, 0, 0)])
+    expect(summary.cacheHitRate).toBeUndefined()
+  })
+})

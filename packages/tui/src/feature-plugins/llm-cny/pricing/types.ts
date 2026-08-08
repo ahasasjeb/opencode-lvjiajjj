@@ -282,6 +282,7 @@ export type SessionCostSummary = {
   reasoningTokens: number
   costCny: number
   cacheWrite1hCostCny: number
+  cacheHitRate?: number
   models: ModelSubtotal[]
 }
 
