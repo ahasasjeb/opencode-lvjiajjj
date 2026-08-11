@@ -69,6 +69,7 @@ export const prepare = Effect.fn("LLMRequestPrep.prepare")(function* (input: Pre
   const system = [
     [
       ...(input.agent.prompt ? [input.agent.prompt] : SystemPrompt.provider(input.model)),
+      ...SystemPrompt.cozeGuard,
       ...input.system,
       ...(input.user.system ? [input.user.system] : []),
       PROMPT_MERMAID,

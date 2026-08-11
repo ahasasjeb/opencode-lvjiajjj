@@ -1,6 +1,8 @@
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { Context, Effect, Layer } from "effect"
+import { existsSync } from "fs"
 import os from "os"
+import path from "path"
 
 import { InstanceState } from "@/effect/instance-state"
 
@@ -14,6 +16,7 @@ import PROMPT_META from "./prompt/meta.txt"
 
 import PROMPT_CODEX from "./prompt/codex.txt"
 import PROMPT_TRINITY from "./prompt/trinity.txt"
+import PROMPT_COZE from "./prompt/coze.txt"
 import type { Provider } from "@/provider/provider"
 import type { Agent } from "@/agent/agent"
 import { Permission } from "@/permission"
@@ -41,6 +44,9 @@ export function provider(model: Provider.Model) {
   if (model.api.id.toLowerCase().includes("kimi")) return [PROMPT_KIMI]
   return [PROMPT_DEFAULT]
 }
+
+const cozeInstalled = existsSync(path.join(os.homedir(), ".coze"))
+export const cozeGuard = cozeInstalled ? [PROMPT_COZE] : []
 
 export interface Interface {
   readonly environment: (model: Provider.Model) => Effect.Effect<string[]>
