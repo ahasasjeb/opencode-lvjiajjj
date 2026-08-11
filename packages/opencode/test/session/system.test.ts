@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test"
+import { existsSync } from "fs"
+import os from "os"
+import path from "path"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { Effect, Layer } from "effect"
 import type { Agent } from "../../src/agent/agent"
@@ -7,7 +10,9 @@ import { Skill } from "../../src/skill"
 import { Permission } from "../../src/permission"
 import type { Provider } from "../../src/provider/provider"
 import { SystemPrompt } from "../../src/session/system"
-import PROMPT_KIMI from "../../src/session/prompt/kimi.txt"
+import PROMPT_BEAST_CN from "../../src/session/prompt/beast_cn.txt"
+import PROMPT_COZE from "../../src/session/prompt/coze.txt"
+import PROMPT_COZE_CN from "../../src/session/prompt/coze_cn.txt"
 import { MCP } from "../../src/mcp"
 import { testEffect } from "../lib/effect"
 
@@ -91,8 +96,25 @@ describe("session.system", () => {
     )
   })
 
-  test("selects the Kimi prompt for Kimi model IDs", () => {
-    expect(SystemPrompt.provider({ api: { id: "moonshot/kimi-k2" } } as Provider.Model)[0]).toBe(PROMPT_KIMI)
+  test("selects the Chinese prompt for Chinese model IDs", () => {
+    for (const id of ["deepseek-chat", "qwen3-max", "hy3-0711", "moonshot/kimi-k2", "glm-5.2", "longcat-flash"]) {
+      expect(SystemPrompt.provider({ api: { id } } as Provider.Model)[0]).toBe(PROMPT_BEAST_CN)
+    }
+  })
+
+  test("matches Chinese model IDs case-insensitively", () => {
+    expect(SystemPrompt.provider({ api: { id: "DeepSeek-V3" } } as Provider.Model)[0]).toBe(PROMPT_BEAST_CN)
+  })
+
+  const cozeInstalled = existsSync(path.join(os.homedir(), ".coze"))
+
+  test.skipIf(!cozeInstalled)("selects the Coze guard language by model", () => {
+    expect(SystemPrompt.cozeGuard({ api: { id: "deepseek-chat" } } as Provider.Model)[0]).toBe(PROMPT_COZE_CN)
+    expect(SystemPrompt.cozeGuard({ api: { id: "gpt-5" } } as Provider.Model)[0]).toBe(PROMPT_COZE)
+  })
+
+  test.skipIf(cozeInstalled)("omits the Coze guard when Coze is not installed", () => {
+    expect(SystemPrompt.cozeGuard({ api: { id: "deepseek-chat" } } as Provider.Model)).toEqual([])
   })
 
   it.effect("skills output is sorted by name and stable across calls", () =>

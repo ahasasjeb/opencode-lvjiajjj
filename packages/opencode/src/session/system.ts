@@ -9,14 +9,15 @@ import { InstanceState } from "@/effect/instance-state"
 import PROMPT_ANTHROPIC from "./prompt/anthropic.txt"
 import PROMPT_DEFAULT from "./prompt/default.txt"
 import PROMPT_BEAST from "./prompt/beast.txt"
+import PROMPT_BEAST_CN from "./prompt/beast_cn.txt"
 import PROMPT_GEMINI from "./prompt/gemini.txt"
 import PROMPT_GPT from "./prompt/gpt.txt"
-import PROMPT_KIMI from "./prompt/kimi.txt"
 import PROMPT_META from "./prompt/meta.txt"
 
 import PROMPT_CODEX from "./prompt/codex.txt"
 import PROMPT_TRINITY from "./prompt/trinity.txt"
 import PROMPT_COZE from "./prompt/coze.txt"
+import PROMPT_COZE_CN from "./prompt/coze_cn.txt"
 import type { Provider } from "@/provider/provider"
 import type { Agent } from "@/agent/agent"
 import { Permission } from "@/permission"
@@ -28,7 +29,15 @@ import { Reference } from "@opencode-ai/core/reference"
 import { MCP } from "@/mcp"
 import { PermissionV1 } from "@opencode-ai/core/v1/permission"
 
+const CN_MODEL_KEYWORDS = ["deepseek", "qwen", "hy", "kimi", "glm", "longcat"]
+
+function isCnModel(model: Provider.Model) {
+  const id = model.api.id.toLowerCase()
+  return CN_MODEL_KEYWORDS.some((keyword) => id.includes(keyword))
+}
+
 export function provider(model: Provider.Model) {
+  if (isCnModel(model)) return [PROMPT_BEAST_CN]
   if (model.api.id.includes("muse-spark")) return [PROMPT_META]
   if (model.api.id.includes("gpt-4") || model.api.id.includes("o1") || model.api.id.includes("o3"))
     return [PROMPT_BEAST]
@@ -41,12 +50,14 @@ export function provider(model: Provider.Model) {
   if (model.api.id.includes("gemini-")) return [PROMPT_GEMINI]
   if (model.api.id.includes("claude")) return [PROMPT_ANTHROPIC]
   if (model.api.id.toLowerCase().includes("trinity")) return [PROMPT_TRINITY]
-  if (model.api.id.toLowerCase().includes("kimi")) return [PROMPT_KIMI]
   return [PROMPT_DEFAULT]
 }
 
 const cozeInstalled = existsSync(path.join(os.homedir(), ".coze"))
-export const cozeGuard = cozeInstalled ? [PROMPT_COZE] : []
+export function cozeGuard(model: Provider.Model) {
+  if (!cozeInstalled) return []
+  return isCnModel(model) ? [PROMPT_COZE_CN] : [PROMPT_COZE]
+}
 
 export interface Interface {
   readonly environment: (model: Provider.Model) => Effect.Effect<string[]>
