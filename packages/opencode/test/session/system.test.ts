@@ -118,6 +118,12 @@ describe("session.system", () => {
     expect(SystemPrompt.provider({ api: { id: "DeepSeek-V3" } } as Provider.Model)[0]).toBe(PROMPT_BEAST_CN)
   })
 
+  test("selects the Chinese prompt for official Kimi provider IDs", () => {
+    for (const providerID of ["kimi-for-coding", "moonshotai", "moonshotai-cn"]) {
+      expect(SystemPrompt.provider({ providerID, api: { id: "k3" } } as Provider.Model)[0]).toBe(PROMPT_BEAST_CN)
+    }
+  })
+
   const cozeInstalled = existsSync(path.join(os.homedir(), ".coze"))
 
   test.skipIf(!cozeInstalled)("selects the Coze guard language by model", () => {

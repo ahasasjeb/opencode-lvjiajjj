@@ -30,10 +30,11 @@ import { MCP } from "@/mcp"
 import { PermissionV1 } from "@opencode-ai/core/v1/permission"
 
 const CN_MODEL_KEYWORDS = ["deepseek", "qwen", "hy", "kimi", "glm", "longcat"]
+const CN_PROVIDER_IDS = ["kimi-for-coding", "moonshotai", "moonshotai-cn"]
 
 function isCnModel(model: Provider.Model) {
   const id = model.api.id.toLowerCase()
-  return CN_MODEL_KEYWORDS.some((keyword) => id.includes(keyword))
+  return CN_MODEL_KEYWORDS.some((keyword) => id.includes(keyword)) || CN_PROVIDER_IDS.includes(model.providerID)
 }
 
 export function provider(model: Provider.Model) {
