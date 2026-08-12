@@ -378,7 +378,7 @@ export const dict = {
   "zen.api.error.providerNotSupported": "Provedor {{provider}} não suportado",
   "zen.api.error.missingApiKey": "Chave de API ausente.",
   "zen.api.error.invalidApiKey": "Chave de API inválida.",
-  "zen.api.error.requestBlockedByUpstreamProvider": "Solicitação bloqueada pelo provedor upstream.",
+  "zen.api.error.requestBlockedByUpstreamProvider": "Esta conta foi flagrada cometendo fraudes ou violando os termos de serviço e foi bloqueada. Se você acredita que isso é um engano, envie um e-mail para help@anoma.ly.",
   "zen.api.error.subscriptionQuotaExceeded": "Cota de assinatura excedida. Tente novamente em {{retryIn}}.",
   "zen.api.error.goSubscriptionRollingLimitExceeded":
     "Limite de uso de 5 horas atingido. Será reiniciado em {{retryIn}}. Para continuar usando este modelo agora, habilite o uso a partir do seu saldo disponível: {{consoleGoUrl}}",

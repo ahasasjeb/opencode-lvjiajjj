@@ -375,7 +375,7 @@ export const dict = {
   "zen.api.error.providerNotSupported": "Провайдер {{provider}} не підтримується",
   "zen.api.error.missingApiKey": "Відсутній ключ API.",
   "zen.api.error.invalidApiKey": "Недійсний ключ API.",
-  "zen.api.error.requestBlockedByUpstreamProvider": "Запит заблоковано зовнішнім провайдером.",
+  "zen.api.error.requestBlockedByUpstreamProvider": "Цей обліковий запис викрито у шахрайстві або порушенні умов надання послуг, і його заблоковано. Якщо ви вважаєте, що це помилка, надішліть електронний лист на help@anoma.ly.",
   "zen.api.error.subscriptionQuotaExceeded": "Перевищено квоту підписки. Повторіть через {{retryIn}}.",
   "zen.api.error.goSubscriptionRollingLimitExceeded":
     "Досягнуто 5-годинного ліміту використання. Скидається через {{retryIn}}. Щоб продовжити, увімкніть використання з доступного балансу: {{consoleGoUrl}}",

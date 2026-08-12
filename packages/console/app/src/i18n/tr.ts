@@ -379,7 +379,7 @@ export const dict = {
   "zen.api.error.providerNotSupported": "{{provider}} sağlayıcısı desteklenmiyor",
   "zen.api.error.missingApiKey": "API anahtarı eksik.",
   "zen.api.error.invalidApiKey": "Geçersiz API anahtarı.",
-  "zen.api.error.requestBlockedByUpstreamProvider": "İstek üst sağlayıcı tarafından engellendi.",
+  "zen.api.error.requestBlockedByUpstreamProvider": "Bu hesabın dolandırıcılık yaptığı veya hizmet şartlarını ihlal ettiği tespit edilmiştir ve engellenmiştir. Bunun bir hata olduğunu düşünüyorsanız lütfen help@anoma.ly adresine e-posta gönderin.",
   "zen.api.error.subscriptionQuotaExceeded": "Abonelik kotası aşıldı. {{retryIn}} içinde tekrar deneyin.",
   "zen.api.error.goSubscriptionRollingLimitExceeded":
     "5 saatlik kullanım limitine ulaşıldı. {{retryIn}} içinde sıfırlanır. Bu modeli şimdi kullanmaya devam etmek için kullanılabilir bakiyenizden kullanımı etkinleştirin: {{consoleGoUrl}}",

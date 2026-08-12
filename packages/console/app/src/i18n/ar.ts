@@ -369,7 +369,7 @@ export const dict = {
   "zen.api.error.providerNotSupported": "المزود {{provider}} غير مدعوم",
   "zen.api.error.missingApiKey": "مفتاح API مفقود.",
   "zen.api.error.invalidApiKey": "مفتاح API غير صالح.",
-  "zen.api.error.requestBlockedByUpstreamProvider": "حظر المزود الخارجي الطلب.",
+  "zen.api.error.requestBlockedByUpstreamProvider": "تبيّن أن هذا الحساب يرتكب عمليات احتيال أو ينتهك شروط الخدمة وقد تم حظره. إذا كنت تعتقد أن هذا خطأ، يرجى إرسال بريد إلكتروني إلى help@anoma.ly.",
   "zen.api.error.subscriptionQuotaExceeded": "تم تجاوز حصة الاشتراك. أعد المحاولة خلال {{retryIn}}.",
   "zen.api.error.goSubscriptionRollingLimitExceeded":
     "تم الوصول إلى حد الاستخدام لمدة 5 ساعات. تتم إعادة التعيين خلال {{retryIn}}. لمواصلة استخدام هذا النموذج الآن، فعّل الاستخدام من رصيدك المتاح: {{consoleGoUrl}}",
