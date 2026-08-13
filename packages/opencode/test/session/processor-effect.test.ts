@@ -4,7 +4,7 @@ import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { expect } from "bun:test"
 import { tool } from "ai"
-import { Cause, Effect, Exit, Fiber, Layer, Stream } from "effect"
+import { Cause, Effect, Exit, Fiber, Layer, Ref, Stream } from "effect"
 import path from "path"
 import z from "zod"
 import type { Agent } from "../../src/agent/agent"
@@ -225,6 +225,88 @@ const fragmentFailureLLM = Layer.succeed(
 )
 const fragmentFailureEnv = LayerNode.compile(root, [...replacements, [LLM.node, fragmentFailureLLM]])
 const itFragmentFailure = testEffect(fragmentFailureEnv)
+
+// A provider turn that opens a tool_use block and then drops the stream with an
+// "unknown" finish and zero output tokens — the real mid tool_use truncation shape.
+const midToolTruncationStep = (): Stream.Stream<LLMEvent> =>
+  Stream.make(
+    LLMEvent.stepStart({ index: 0 }),
+    LLMEvent.toolInputStart({ id: "call-1", name: "bash" }),
+    LLMEvent.stepFinish({ index: 0, reason: "unknown" }),
+  )
+const midToolRecoveryStep = (): Stream.Stream<LLMEvent> =>
+  Stream.make(
+    LLMEvent.stepStart({ index: 0 }),
+    LLMEvent.textStart({ id: "text-1" }),
+    LLMEvent.textDelta({ id: "text-1", text: "recovered" }),
+    LLMEvent.textEnd({ id: "text-1" }),
+    LLMEvent.stepFinish({ index: 0, reason: "stop" }),
+    LLMEvent.finish({ reason: "stop" }),
+  )
+
+// A provider turn that streams a reasoning block and then drops the stream with
+// an "unknown" finish and zero output tokens — no tool call, no text.
+const midReasoningTruncationStep = (): Stream.Stream<LLMEvent> =>
+  Stream.make(
+    LLMEvent.stepStart({ index: 0 }),
+    LLMEvent.reasoningStart({ id: "reasoning-1" }),
+    LLMEvent.reasoningDelta({ id: "reasoning-1", text: "thinking hard and then the stream drops" }),
+    LLMEvent.stepFinish({ index: 0, reason: "unknown" }),
+  )
+
+const midToolCalls = { recovery: 0, exhaust: 0, reasoning: 0 }
+
+const midReasoningRecoveryLLM = Layer.effect(
+  LLM.Service,
+  Effect.gen(function* () {
+    const attempts = yield* Ref.make(0)
+    return LLM.Service.of({
+      stream: () =>
+        Stream.unwrap(
+          Ref.updateAndGet(attempts, (x) => x + 1).pipe(
+            Effect.map((n) => {
+              midToolCalls.reasoning = n
+              return n === 1 ? midReasoningTruncationStep() : midToolRecoveryStep()
+            }),
+          ),
+        ),
+    })
+  }),
+)
+const midReasoningRecoveryEnv = LayerNode.compile(root, [...replacements, [LLM.node, midReasoningRecoveryLLM]])
+const itMidReasoningRecovery = testEffect(midReasoningRecoveryEnv)
+
+const midToolRecoveryLLM = Layer.effect(
+  LLM.Service,
+  Effect.gen(function* () {
+    const attempts = yield* Ref.make(0)
+    return LLM.Service.of({
+      stream: () =>
+        Stream.unwrap(
+          Ref.updateAndGet(attempts, (x) => x + 1).pipe(
+            Effect.map((n) => {
+              midToolCalls.recovery = n
+              return n === 1 ? midToolTruncationStep() : midToolRecoveryStep()
+            }),
+          ),
+        ),
+    })
+  }),
+)
+const midToolRecoveryEnv = LayerNode.compile(root, [...replacements, [LLM.node, midToolRecoveryLLM]])
+const itMidToolRecovery = testEffect(midToolRecoveryEnv)
+
+const midToolExhaustLLM = Layer.succeed(
+  LLM.Service,
+  LLM.Service.of({
+    stream: () => {
+      midToolCalls.exhaust += 1
+      return midToolTruncationStep()
+    },
+  }),
+)
+const midToolExhaustEnv = LayerNode.compile(root, [...replacements, [LLM.node, midToolExhaustLLM]])
+const itMidToolExhaust = testEffect(midToolExhaustEnv)
 
 const boot = Effect.fn("test.boot")(function* () {
   const processors = yield* SessionProcessor.Service
@@ -1111,4 +1193,148 @@ itFragmentFailure.live("session.processor effect tests retain partial legacy par
       }),
     { config: cfg },
   ),
+)
+
+itMidToolRecovery.live("session.processor retries a mid tool call truncation", () =>
+  provideTmpdirInstance(
+    (dir) =>
+      Effect.gen(function* () {
+        midToolCalls.recovery = 0
+        const { processors, session, provider } = yield* boot()
+
+        const chat = yield* session.create({})
+        const parent = yield* user(chat.id, "go")
+        const msg = yield* assistant(chat.id, parent.id, path.resolve(dir))
+        const mdl = yield* provider.getModel(ref.providerID, ref.modelID)
+        const handle = yield* processors.create({
+          assistantMessage: msg,
+          sessionID: chat.id,
+          model: mdl,
+        })
+
+        const value = yield* handle.process({
+          user: {
+            id: parent.id,
+            sessionID: chat.id,
+            role: "user",
+            time: parent.time,
+            agent: parent.agent,
+            model: { providerID: ref.providerID, modelID: ref.modelID },
+          } satisfies SessionV1.User,
+          sessionID: chat.id,
+          model: mdl,
+          agent: agent(),
+          system: [],
+          messages: [{ role: "user", content: "go" }],
+          tools: {},
+        })
+
+        const parts = yield* MessageV2.parts(msg.id)
+
+        expect(value).toBe("continue")
+        expect(midToolCalls.recovery).toBe(2)
+        expect(handle.message.error).toBeUndefined()
+        expect(parts.some((part) => part.type === "text" && part.text === "recovered")).toBe(true)
+        // The truncated attempt's orphaned tool call must be discarded, not left behind.
+        expect(parts.some((part) => part.type === "tool")).toBe(false)
+      }),
+    { config: cfg },
+  ),
+  20_000,
+)
+
+itMidReasoningRecovery.live("session.processor retries a mid reasoning truncation", () =>
+  provideTmpdirInstance(
+    (dir) =>
+      Effect.gen(function* () {
+        midToolCalls.reasoning = 0
+        const { processors, session, provider } = yield* boot()
+
+        const chat = yield* session.create({})
+        const parent = yield* user(chat.id, "go")
+        const msg = yield* assistant(chat.id, parent.id, path.resolve(dir))
+        const mdl = yield* provider.getModel(ref.providerID, ref.modelID)
+        const handle = yield* processors.create({
+          assistantMessage: msg,
+          sessionID: chat.id,
+          model: mdl,
+        })
+
+        const value = yield* handle.process({
+          user: {
+            id: parent.id,
+            sessionID: chat.id,
+            role: "user",
+            time: parent.time,
+            agent: parent.agent,
+            model: { providerID: ref.providerID, modelID: ref.modelID },
+          } satisfies SessionV1.User,
+          sessionID: chat.id,
+          model: mdl,
+          agent: agent(),
+          system: [],
+          messages: [{ role: "user", content: "go" }],
+          tools: {},
+        })
+
+        const parts = yield* MessageV2.parts(msg.id)
+
+        expect(value).toBe("continue")
+        expect(midToolCalls.reasoning).toBe(2)
+        expect(handle.message.error).toBeUndefined()
+        expect(parts.some((part) => part.type === "text" && part.text === "recovered")).toBe(true)
+      }),
+    { config: cfg },
+  ),
+  20_000,
+)
+
+itMidToolExhaust.live("session.processor surfaces an error when truncation retries exhaust", () =>
+  provideTmpdirInstance(
+    (dir) =>
+      Effect.gen(function* () {
+        midToolCalls.exhaust = 0
+        const { processors, session, provider } = yield* boot()
+
+        const chat = yield* session.create({})
+        const parent = yield* user(chat.id, "go")
+        const msg = yield* assistant(chat.id, parent.id, path.resolve(dir))
+        const mdl = yield* provider.getModel(ref.providerID, ref.modelID)
+        const handle = yield* processors.create({
+          assistantMessage: msg,
+          sessionID: chat.id,
+          model: mdl,
+        })
+
+        const value = yield* handle.process({
+          user: {
+            id: parent.id,
+            sessionID: chat.id,
+            role: "user",
+            time: parent.time,
+            agent: parent.agent,
+            model: { providerID: ref.providerID, modelID: ref.modelID },
+          } satisfies SessionV1.User,
+          sessionID: chat.id,
+          model: mdl,
+          agent: agent(),
+          system: [],
+          messages: [{ role: "user", content: "go" }],
+          tools: {},
+        })
+
+        const parts = yield* MessageV2.parts(msg.id)
+
+        expect(value).toBe("stop")
+        // Initial attempt plus two retries before the EmptyOther cap (3) trips.
+        expect(midToolCalls.exhaust).toBe(3)
+        expect(handle.message.error?.name).toBe("APIError")
+        expect((handle.message.error as { data?: { message?: string } })?.data?.message).toContain("mid tool call")
+        expect(handle.message.finish).toBe("error")
+        // The orphaned tool call is discarded on exhaustion, not left behind.
+        expect(parts.some((part) => part.type === "tool")).toBe(false)
+      }),
+    { config: cfg },
+  ),
+  30_000,
 )
