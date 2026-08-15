@@ -10,7 +10,17 @@ import {
 } from "../../src/feature-plugins/llm-cny/codex-usage"
 import { parseKimiUsageResponse } from "../../src/feature-plugins/llm-cny/kimi-usage"
 import { buildModelsDevEntries } from "../../src/feature-plugins/llm-cny/pricing/models-dev"
-import { calculateTrackedSession, trackedModel } from "../../src/feature-plugins/llm-cny/pricing"
+import { calculateTrackedSession, priceForModel, trackedModel } from "../../src/feature-plugins/llm-cny/pricing"
+import {
+  DEEPSEEK_V4_NEW_PRICING_AT,
+  flashOffPeakPrice,
+  flashPeakPrice,
+  flashPrice,
+  isDeepseekPeakHour,
+  proOffPeakPrice,
+  proPeakPrice,
+  proPrice,
+} from "../../src/feature-plugins/llm-cny/pricing/deepseek"
 import { fetchXaiUsage, parseXaiUsageResponse } from "../../src/feature-plugins/llm-cny/xai-usage"
 import {
   hasChatGPTOAuthProvider,
@@ -438,5 +448,49 @@ describe("LLM CNY cache hit rate", () => {
   test("omits the hit rate when there is no input at all", () => {
     const summary = calculateTrackedSession([record(0, 0, 0), record(0, 0, 0)])
     expect(summary.cacheHitRate).toBeUndefined()
+  })
+})
+
+describe("LLM CNY DeepSeek V4 peak pricing", () => {
+  const beijing = (value: string) => Date.parse(`${value}+08:00`)
+
+  test("keeps launch prices before Beijing 2026-08-17 00:00, including peak clock hours", () => {
+    expect(priceForModel("deepseek-v4-flash", beijing("2026-08-16T23:59:59"))).toEqual(flashPrice)
+    expect(priceForModel("deepseek-v4-pro", beijing("2026-08-16T10:00:00"))).toEqual(proPrice)
+    expect(priceForModel("deepseek-v4-flash", DEEPSEEK_V4_NEW_PRICING_AT - 1)).toEqual(flashPrice)
+  })
+
+  test("switches to off-peak rates at Beijing 2026-08-17 00:00", () => {
+    expect(priceForModel("deepseek-v4-flash", DEEPSEEK_V4_NEW_PRICING_AT)).toEqual(flashOffPeakPrice)
+    expect(priceForModel("deepseek-v4-pro", beijing("2026-08-17T00:00:00"))).toEqual(proOffPeakPrice)
+    expect(priceForModel("deepseek-v4-pro", beijing("2026-08-17T13:59:59"))).toEqual(proOffPeakPrice)
+  })
+
+  test("uses peak rates only in Beijing 9:00-12:00 and 14:00-18:00 after the switch", () => {
+    expect(isDeepseekPeakHour(beijing("2026-08-17T08:59:59"))).toBe(false)
+    expect(isDeepseekPeakHour(beijing("2026-08-17T09:00:00"))).toBe(true)
+    expect(isDeepseekPeakHour(beijing("2026-08-17T11:59:59"))).toBe(true)
+    expect(isDeepseekPeakHour(beijing("2026-08-17T12:00:00"))).toBe(false)
+    expect(isDeepseekPeakHour(beijing("2026-08-17T13:59:59"))).toBe(false)
+    expect(isDeepseekPeakHour(beijing("2026-08-17T14:00:00"))).toBe(true)
+    expect(isDeepseekPeakHour(beijing("2026-08-17T17:59:59"))).toBe(true)
+    expect(isDeepseekPeakHour(beijing("2026-08-17T18:00:00"))).toBe(false)
+
+    expect(priceForModel("deepseek-v4-flash", beijing("2026-08-17T09:00:00"))).toEqual(flashPeakPrice)
+    expect(priceForModel("deepseek-v4-flash", beijing("2026-08-17T15:00:00"))).toEqual(flashPeakPrice)
+    expect(priceForModel("deepseek-v4-pro", beijing("2026-08-17T11:30:00"))).toEqual(proPeakPrice)
+    expect(priceForModel("deepseek-v4-pro", beijing("2026-08-17T16:00:00"))).toEqual(proPeakPrice)
+  })
+
+  test("prices a completed turn from the message time, not the current clock", () => {
+    const summary = calculateTrackedSession([
+      {
+        providerID: "deepseek",
+        modelID: "deepseek-v4-pro",
+        time: { completed: beijing("2026-08-17T10:00:00") },
+        tokens: { input: 1_000_000, output: 1_000_000, reasoning: 0, cache: { read: 0, write: 0 } },
+      },
+    ])
+    expect(summary.costCny).toBe(36)
   })
 })

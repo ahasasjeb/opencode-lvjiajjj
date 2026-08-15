@@ -52,7 +52,7 @@ import {
   NO_CACHE_AFTER_MULTI_TURN_WARNING,
   USD_CNY_RATE_PENDING_WARNING,
 } from "./pricing/utils.js"
-import { flashPrice, DEEPSEEK_ENTRIES } from "./pricing/deepseek.js"
+import { DEEPSEEK_ENTRIES } from "./pricing/deepseek.js"
 import { kimiK25Price, kimiK26Price, kimiK27CodePrice, KIMI_ENTRIES } from "./pricing/kimi.js"
 import { mimoV25Price, mimoV25ProPrice, XIAOMI_ENTRIES } from "./pricing/xiaomi.js"
 import { ZHIPUAI_ENTRIES } from "./pricing/zhipuai.js"
@@ -93,8 +93,9 @@ export function trackedModel(providerID: string, modelID: string) {
 }
 
 export function priceForModel(modelID: TrackedModelID, time = Date.now(), inputTokens = 0, options: PricingOptions = {}): Price {
-  if (modelID === "deepseek-v4-flash") return flashPrice
-  if (modelID === "deepseek-v4-pro") return DEEPSEEK_ENTRIES[1]!.priceFor(time, inputTokens, options)
+  if (modelID === "deepseek-v4-flash" || modelID === "deepseek-v4-pro") {
+    return DEEPSEEK_ENTRIES.find((item) => item.modelID === modelID)!.priceFor(time, inputTokens, options)
+  }
   if (modelID === "kimi-k2.5") return kimiK25Price
   if (modelID === "kimi-k2.6") return kimiK26Price
   if (modelID === "kimi-k2.7-code") return kimiK27CodePrice
