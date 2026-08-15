@@ -199,7 +199,7 @@ test("hydration does not clear text streamed before it starts", async () => {
   }
 })
 
-test("live messages merged during hydration retain the 100 message window", async () => {
+test("hydration keeps the full session history including live messages", async () => {
   await using tmp = await tmpdir()
   await Bun.write(`${tmp.path}/kv.json`, "{}")
 
@@ -208,10 +208,12 @@ test("live messages merged during hydration retain the 100 message window", asyn
     resolveMessages = resolve
   })
   let requested = false
+  let requestUrl: URL | undefined
   const { app, emit, sync } = await mount((url) => {
     if (url.pathname === `/session/${sessionID}`) return json(session)
     if (url.pathname === `/session/${sessionID}/message`) {
       requested = true
+      requestUrl = url
       return messages
     }
     if (url.pathname === `/session/${sessionID}/todo` || url.pathname === `/session/${sessionID}/diff`) return json([])
@@ -237,10 +239,47 @@ test("live messages merged during hydration retain the 100 message window", asyn
     )
     await hydrate
 
-    expect(sync.data.message[sessionID]).toHaveLength(100)
+    expect(requestUrl?.searchParams.get("limit")).toBeNull()
+    expect(sync.data.message[sessionID]).toHaveLength(101)
+    expect(sync.data.message[sessionID][0]?.id).toBe("msg_000")
     expect(sync.data.message[sessionID].at(-1)?.id).toBe(live.id)
-    expect(sync.data.message[sessionID].some((message) => message.id === "msg_000")).toBe(false)
-    expect(sync.data.part.msg_000).toBeUndefined()
+    expect(sync.data.part.msg_000?.[0]).toMatchObject({ id: "prt_msg_000", text: "msg_000" })
+  } finally {
+    app.renderer.destroy()
+  }
+})
+
+test("live updates keep user messages after 100 assistant messages", async () => {
+  await using tmp = await tmpdir()
+  await Bun.write(`${tmp.path}/kv.json`, "{}")
+  const { app, emit, sync } = await mount(undefined, tmp.path)
+  const user = {
+    id: "msg_user_first",
+    sessionID,
+    role: "user" as const,
+    time: { created: 0 },
+    agent: "build",
+    model: { providerID: "test", modelID: "model" },
+  }
+
+  try {
+    emit(global({ id: "evt_user", type: "message.updated", properties: { sessionID, info: user } }))
+    for (let index = 0; index < 120; index++) {
+      emit(
+        global({
+          id: `evt_assistant_${index}`,
+          type: "message.updated",
+          properties: {
+            sessionID,
+            info: { ...assistant, id: `msg_assistant_${index}`, time: { created: index + 1, completed: index + 1 } },
+          },
+        }),
+      )
+    }
+    await wait(() => sync.data.message[sessionID]?.length === 121)
+
+    expect(sync.data.message[sessionID][0]?.id).toBe(user.id)
+    expect(sync.data.message[sessionID]).toHaveLength(121)
   } finally {
     app.renderer.destroy()
   }
