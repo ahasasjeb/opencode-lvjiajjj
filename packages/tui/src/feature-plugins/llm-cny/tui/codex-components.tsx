@@ -1,7 +1,9 @@
 import type { TuiPluginApi } from "@opencode-ai/plugin/tui"
 import { createSignal, For, Match, Show, Switch } from "solid-js"
+import type { CodexSessionCostSummary } from "../codex-pricing.js"
 import type { CodexUsage, WindowLimit } from "../codex-usage.js"
 import { formatWindowLabel } from "./codex-format.js"
+import { formatCredits, formatMessageRange } from "./format.js"
 import type { Translator } from "./i18n.js"
 import { QuotaProgressBar } from "./quota-components.js"
 
@@ -53,6 +55,7 @@ export function CodexUsagePanel(props: {
   t: Translator
   locale: string
   resetting: boolean
+  estimate: CodexSessionCostSummary
   onReset: () => void
   state:
     | { status: "idle" | "loading" }
@@ -79,6 +82,7 @@ export function CodexUsagePanel(props: {
     return map[raw] ?? props.state.usage.planType
   }
   const resetCredits = () => (props.state.status === "ready" ? props.state.usage.resetCredits : null)
+  const credits = () => (props.state.status === "ready" ? props.state.usage.credits : null)
 
   return (
     <box gap={1}>
@@ -103,9 +107,66 @@ export function CodexUsagePanel(props: {
           </text>
         </Match>
         <Match when={props.state.status === "ready"}>
+          <Show when={credits()}>
+            {(credits) => (
+              <box gap={0}>
+                <box flexDirection="row" justifyContent="space-between">
+                  <text fg={props.theme.textMuted}>{props.t("plugin.llmCny.codex.credits.remaining")}</text>
+                  <text fg={props.theme.text}>
+                    {credits().unlimited
+                      ? props.t("plugin.llmCny.codex.credits.unlimited")
+                      : credits().balance === null
+                        ? "-"
+                        : `${formatCredits(credits().balance!, props.locale)} credits`}
+                  </text>
+                </box>
+                <Show when={credits().approxLocalMessages}>
+                  {(messages) => (
+                    <text fg={props.theme.textMuted}>
+                      {props.t("plugin.llmCny.codex.credits.localMessages", {
+                        count: formatMessageRange(messages(), props.locale),
+                      })}
+                    </text>
+                  )}
+                </Show>
+                <Show when={credits().approxCloudMessages}>
+                  {(messages) => (
+                    <text fg={props.theme.textMuted}>
+                      {props.t("plugin.llmCny.codex.credits.cloudMessages", {
+                        count: formatMessageRange(messages(), props.locale),
+                      })}
+                    </text>
+                  )}
+                </Show>
+              </box>
+            )}
+          </Show>
+          <Show when={props.estimate.turns > 0}>
+            <box gap={0}>
+              <box flexDirection="row" justifyContent="space-between">
+                <text fg={props.theme.textMuted}>
+                  {props.t("plugin.llmCny.codex.credits.sessionEstimate", { count: props.estimate.turns })}
+                </text>
+                <text fg={props.theme.text}>{formatCredits(props.estimate.credits, props.locale)} credits</text>
+              </box>
+              <For each={props.estimate.models}>
+                {(model) => (
+                  <text fg={props.theme.textMuted}>
+                    {model.modelLabel} · {props.t("plugin.llmCny.times", { count: model.turns })} ·{" "}
+                    {formatCredits(model.credits, props.locale)} credits
+                    <Show when={model.longContextTurns > 0}> · ≥512K ×2</Show>
+                  </text>
+                )}
+              </For>
+            </box>
+          </Show>
           <Show
             when={props.state.status === "ready" && (props.state.usage.primary || props.state.usage.secondary)}
-            fallback={<text fg={props.theme.textMuted}>{props.t("plugin.llmCny.codex.empty")}</text>}
+            fallback={
+              <Show when={!credits() && !resetCredits()}>
+                <text fg={props.theme.textMuted}>{props.t("plugin.llmCny.codex.empty")}</text>
+              </Show>
+            }
           >
             <Show when={props.state.status === "ready" && props.state.usage.primary}>
               {(primary) => <LimitRow limit={primary()} theme={props.theme} t={props.t} locale={props.locale} />}

@@ -3,6 +3,7 @@ import type { TuiPlugin, TuiPluginApi, TuiPluginModule } from "@opencode-ai/plug
 import type { Message, ModelV2Info } from "@opencode-ai/sdk/v2"
 import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { fetchDisplayBalance } from "./balance.js"
+import { calculateCodexSession } from "./codex-pricing.js"
 import { fetchCopilotUsage, type CopilotQuota } from "./copilot-usage.js"
 import { consumeCodexResetCredit, fetchCodexUsage, type CodexResetOutcome, type CodexUsage } from "./codex-usage.js"
 import { fetchUsdCnyRate } from "./exchange-rate.js"
@@ -126,6 +127,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
   const summary = createMemo(() =>
     calculateTrackedSession(usageRecords(costMessages()), { usdCnyRate: usdCnyRate() }, modelsDevEntries()),
   )
+  const codexEstimate = createMemo(() => calculateCodexSession(usageRecords(usageMessages())))
   const needsUsdCnyRate = createMemo(() =>
     hasModelsDevUsage() ||
     activeProviders().some(
@@ -588,6 +590,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
               t={t}
               locale={props.api.i18n.locale}
               state={codexState()}
+              estimate={codexEstimate()}
               resetting={codexResetting()}
               onReset={confirmCodexReset}
             />

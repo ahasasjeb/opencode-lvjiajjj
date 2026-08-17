@@ -16,7 +16,15 @@ export type CodexUsage = {
   planType: string
   primary: WindowLimit | null
   secondary: WindowLimit | null
+  credits: CodexCredits | null
   resetCredits: CodexResetCredits | null
+}
+
+export type CodexCredits = {
+  balance: number | null
+  unlimited: boolean
+  approxLocalMessages: [number, number] | null
+  approxCloudMessages: [number, number] | null
 }
 
 export type CodexResetCredit = {
@@ -76,6 +84,25 @@ function parseWindowLimit(obj: unknown): WindowLimit | null {
   const resetAt = typeof record.reset_at === "number" ? record.reset_at : 0
   if (usedPercent === 0 && windowSeconds === 0) return null
   return { usedPercent, windowSeconds, resetAt }
+}
+
+function parseApproxMessages(value: unknown): [number, number] | null {
+  if (!Array.isArray(value) || value.length !== 2) return null
+  if (!value.every((item) => typeof item === "number" && Number.isFinite(item) && item >= 0)) return null
+  return [value[0]!, value[1]!]
+}
+
+function parseCredits(obj: unknown): CodexCredits | null {
+  if (!obj || typeof obj !== "object") return null
+  const record = obj as Record<string, unknown>
+  const rawBalance =
+    typeof record.balance === "string" || typeof record.balance === "number" ? Number(record.balance) : Number.NaN
+  const balance = Number.isFinite(rawBalance) ? rawBalance : null
+  const unlimited = record.unlimited === true
+  const approxLocalMessages = parseApproxMessages(record.approx_local_messages)
+  const approxCloudMessages = parseApproxMessages(record.approx_cloud_messages)
+  if (balance === null && !unlimited && !approxLocalMessages && !approxCloudMessages) return null
+  return { balance, unlimited, approxLocalMessages, approxCloudMessages }
 }
 
 function parseTimestamp(value: unknown) {
@@ -242,12 +269,13 @@ export function parseCodexUsageResponse(body: string): CodexUsageResult {
     const rateLimit = data.rate_limit as Record<string, unknown> | undefined
     const primary = parseWindowLimit(rateLimit?.primary_window)
     const secondary = parseWindowLimit(rateLimit?.secondary_window)
+    const credits = parseCredits(data.credits)
     const reset = data.rate_limit_reset_credits as Record<string, unknown> | undefined
     const resetCredits =
       typeof reset?.available_count === "number"
         ? { availableCount: reset.available_count, credits: [] }
         : null
-    return { ok: true, usage: { planType, primary, secondary, resetCredits } }
+    return { ok: true, usage: { planType, primary, secondary, credits, resetCredits } }
   } catch {
     return { ok: false, message: "响应格式解析失败" }
   }

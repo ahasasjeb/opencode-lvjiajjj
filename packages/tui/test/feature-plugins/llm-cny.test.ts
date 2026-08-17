@@ -8,6 +8,7 @@ import {
   parseCodexUsageResponse,
   selectCodexOAuthSource,
 } from "../../src/feature-plugins/llm-cny/codex-usage"
+import { calculateCodexSession } from "../../src/feature-plugins/llm-cny/codex-pricing"
 import { parseKimiUsageResponse } from "../../src/feature-plugins/llm-cny/kimi-usage"
 import { buildModelsDevEntries } from "../../src/feature-plugins/llm-cny/pricing/models-dev"
 import { calculateTrackedSession, priceForModel, trackedModel } from "../../src/feature-plugins/llm-cny/pricing"
@@ -157,12 +158,76 @@ describe("LLM CNY quota integration", () => {
           windowSeconds: 604_800,
           resetAt: 456,
         },
+        credits: null,
         resetCredits: {
           availableCount: 2,
           credits: [],
         },
       },
     })
+  })
+
+  test("parses remaining Codex credits and message estimates", () => {
+    expect(
+      parseCodexUsageResponse(
+        JSON.stringify({
+          credits: {
+            balance: "1483.6393350000",
+            unlimited: false,
+            approx_local_messages: [371, 1929],
+            approx_cloud_messages: [59, 371],
+          },
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      usage: {
+        planType: "",
+        primary: null,
+        secondary: null,
+        credits: {
+          balance: 1483.639335,
+          unlimited: false,
+          approxLocalMessages: [371, 1929],
+          approxCloudMessages: [59, 371],
+        },
+        resetCredits: null,
+      },
+    })
+  })
+
+  test("calculates Codex credits from input, cache, and output tokens", () => {
+    const summary = calculateCodexSession([
+      {
+        providerID: "chatgpt",
+        modelID: "gpt-5.6-sol",
+        tokens: { input: 100_000, output: 100_000, reasoning: 0, cache: { read: 100_000, write: 0 } },
+      },
+    ])
+
+    expect(summary.credits).toBe(88.75)
+    expect(summary.models).toEqual([
+      expect.objectContaining({
+        modelLabel: "GPT-5.6 Sol",
+        inputTokens: 100_000,
+        cachedInputTokens: 100_000,
+        outputTokens: 100_000,
+        credits: 88.75,
+      }),
+    ])
+  })
+
+  test("doubles every Codex credit rate above the 512K context threshold", () => {
+    const summary = calculateCodexSession([
+      {
+        providerID: "chatgpt",
+        modelID: "gpt-5.4-mini",
+        tokens: { input: 512_001, output: 1_000_000, reasoning: 0, cache: { read: 0, write: 0 } },
+      },
+    ])
+
+    expect(summary.credits).toBeCloseTo(((512_001 * 18.75 + 1_000_000 * 113) / 1_000_000) * 2, 6)
+    expect(summary.models[0]!.longContextTurns).toBe(1)
   })
 
   test("parses Grok Build credits usage", () => {

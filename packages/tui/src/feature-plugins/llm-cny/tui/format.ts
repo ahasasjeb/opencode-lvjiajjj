@@ -27,6 +27,16 @@ export function formatPercent(value: number, locale = "en") {
   return `${(value * 100).toLocaleString(locale, { maximumFractionDigits: 1 })}%`
 }
 
+export function formatCredits(value: number, locale = "en") {
+  return value.toLocaleString(locale, { maximumFractionDigits: 4 })
+}
+
+export function formatMessageRange(value: [number, number], locale = "en") {
+  const start = value[0].toLocaleString(locale)
+  const end = value[1].toLocaleString(locale)
+  return start === end ? start : `${start}–${end}`
+}
+
 export function formatDetails(details: DisplayBalance["details"], labels: Record<string, string> = {}) {
   return details.map((item) => `${labels[item.label] ?? item.label} ${item.value}`).join(" · ")
 }
