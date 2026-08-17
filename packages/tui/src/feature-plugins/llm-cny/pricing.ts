@@ -49,7 +49,6 @@ import {
   safe,
   unique,
   roundMoney,
-  NO_CACHE_AFTER_MULTI_TURN_WARNING,
   USD_CNY_RATE_PENDING_WARNING,
 } from "./pricing/utils.js"
 import { DEEPSEEK_ENTRIES } from "./pricing/deepseek.js"
@@ -204,10 +203,5 @@ function subtotal(entry: PriceEntry, records: readonly UsageRecord[], options: P
       },
     )
 
-  return sum.turns > 1 && sum.cacheHitInputTokens === 0 && !(sum.costCny === 0 && !sum.warnings.includes(USD_CNY_RATE_PENDING_WARNING))
-    ? {
-      ...sum,
-      warnings: unique([...sum.warnings, NO_CACHE_AFTER_MULTI_TURN_WARNING]),
-    }
-    : sum
+  return sum
 }

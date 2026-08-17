@@ -9,7 +9,6 @@ export const HY3_PREVIEW_SHORT_CONTEXT_THRESHOLD_TOKENS = 16_000
 export const HY3_PREVIEW_MEDIUM_CONTEXT_THRESHOLD_TOKENS = 32_000
 export const QWEN_EXPENSIVE_CONTEXT_WARNING = "qwen3.6-plus 价格高昂警告"
 export const MINIMAX_M3_EXPENSIVE_CONTEXT_WARNING = "minimax-m3 512K 到 1M 价格高昂警告"
-export const NO_CACHE_AFTER_MULTI_TURN_WARNING = "多轮对话缓存命中为 0，请注意价格"
 export const USD_CNY_RATE_PENDING_WARNING = "正在获取美元兑人民币汇率，成功后自动换算人民币价格"
 
 export function safe(value: number) {

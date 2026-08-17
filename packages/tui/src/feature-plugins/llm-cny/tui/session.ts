@@ -82,6 +82,21 @@ export function hasChatGPTUsage(messages: ReadonlyArray<Message>) {
   })
 }
 
+export function hasChatGPTDiscardedToolContext(
+  messages: ReadonlyArray<Message>,
+  parts: (messageID: string) => ReadonlyArray<Part>,
+) {
+  return messages.some((message) => {
+    if (message.role !== "assistant" || message.providerID.toLowerCase() !== "chatgpt") return false
+    return parts(message.id).some(
+      (part) =>
+        part.type === "tool" &&
+        part.state.status !== "pending" &&
+        part.state.metadata?.["opencode.context.retain"] === false,
+    )
+  })
+}
+
 export function hasCopilotUsage(messages: ReadonlyArray<Message>) {
   return messages.some((item) => {
     if (item.role === "user") return item.model.providerID.toLowerCase() === "github-copilot"

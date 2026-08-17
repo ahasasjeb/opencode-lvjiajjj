@@ -688,6 +688,7 @@
   "plugin.llmCny.codex.credits.localMessages": "本地消息约：{{count}} 条",
   "plugin.llmCny.codex.credits.cloudMessages": "云端消息约：{{count}} 条",
   "plugin.llmCny.codex.credits.sessionEstimate": "本会话预估（{{count}} 次调用）",
+  "plugin.llmCny.codex.credits.contextCacheDiscarded": "`retain_context` 为 false 时，会破坏上下文缓存，导致用户承担更高的成本，谨慎判断。",
   "plugin.llmCny.xai.title": "Grok 限额",
   "plugin.llmCny.xai.weekly": "每周限额",
   "plugin.llmCny.xai.monthly": "每月限额",

@@ -3,7 +3,7 @@ import { createSignal, For, Match, Show, Switch } from "solid-js"
 import type { CodexSessionCostSummary } from "../codex-pricing.js"
 import type { CodexUsage, WindowLimit } from "../codex-usage.js"
 import { formatWindowLabel } from "./codex-format.js"
-import { formatCredits, formatMessageRange } from "./format.js"
+import { formatCredits, formatMessageRange, formatPercent } from "./format.js"
 import type { Translator } from "./i18n.js"
 import { QuotaProgressBar } from "./quota-components.js"
 
@@ -56,6 +56,7 @@ export function CodexUsagePanel(props: {
   locale: string
   resetting: boolean
   estimate: CodexSessionCostSummary
+  discardedToolContext: boolean
   onReset: () => void
   state:
     | { status: "idle" | "loading" }
@@ -158,7 +159,17 @@ export function CodexUsagePanel(props: {
                   </text>
                 )}
               </For>
+              <Show when={props.estimate.cacheHitRate !== undefined}>
+                <text fg={props.theme.textMuted}>
+                  {props.t("plugin.llmCny.tokens.cacheHitRate", {
+                    percent: formatPercent(props.estimate.cacheHitRate!, props.locale),
+                  })}
+                </text>
+              </Show>
             </box>
+          </Show>
+          <Show when={props.discardedToolContext}>
+            <text fg={props.theme.warning}>{props.t("plugin.llmCny.codex.credits.contextCacheDiscarded")}</text>
           </Show>
           <Show
             when={props.state.status === "ready" && (props.state.usage.primary || props.state.usage.secondary)}

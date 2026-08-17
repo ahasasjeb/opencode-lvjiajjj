@@ -26,6 +26,7 @@ export type CodexSessionCostSummary = {
   cachedInputTokens: number
   outputTokens: number
   credits: number
+  cacheHitRate?: number
   models: CodexModelSubtotal[]
 }
 
@@ -139,12 +140,16 @@ export function calculateCodexSession(records: readonly UsageRecord[]): CodexSes
     ]
   })
 
+  const inputTokens = models.reduce((sum, model) => sum + model.inputTokens, 0)
+  const cachedInputTokens = models.reduce((sum, model) => sum + model.cachedInputTokens, 0)
+
   return {
     turns: models.reduce((sum, model) => sum + model.turns, 0),
-    inputTokens: models.reduce((sum, model) => sum + model.inputTokens, 0),
-    cachedInputTokens: models.reduce((sum, model) => sum + model.cachedInputTokens, 0),
+    inputTokens,
+    cachedInputTokens,
     outputTokens: models.reduce((sum, model) => sum + model.outputTokens, 0),
     credits: Math.round(models.reduce((sum, model) => sum + model.credits, 0) * 1_000_000) / 1_000_000,
+    cacheHitRate: cachedInputTokens + inputTokens > 0 ? cachedInputTokens / (cachedInputTokens + inputTokens) : undefined,
     models,
   }
 }

@@ -25,6 +25,7 @@ import {
 import { fetchXaiUsage, parseXaiUsageResponse } from "../../src/feature-plugins/llm-cny/xai-usage"
 import {
   hasChatGPTOAuthProvider,
+  hasChatGPTDiscardedToolContext,
   hasChatGPTUsage,
   hasKimiForCodingUsage,
   hasOpenAIApiKeyProvider,
@@ -42,6 +43,16 @@ function assistantMessage(providerID: string): Message {
     modelID: "gpt-5.4",
     time: { completed: 1 },
   } as Message
+}
+
+function chatgptAssistant(id: string): Extract<Message, { role: "assistant" }> {
+  return {
+    id,
+    role: "assistant",
+    providerID: "chatgpt",
+    modelID: "gpt-5.6",
+    tokens: { input: 100, output: 1, reasoning: 0, cache: { read: 0, write: 0 } },
+  } as Extract<Message, { role: "assistant" }>
 }
 
 describe("LLM CNY quota integration", () => {
@@ -206,6 +217,7 @@ describe("LLM CNY quota integration", () => {
     ])
 
     expect(summary.credits).toBe(88.75)
+    expect(summary.cacheHitRate).toBe(0.5)
     expect(summary.models).toEqual([
       expect.objectContaining({
         modelLabel: "GPT-5.6 Sol",
@@ -228,6 +240,28 @@ describe("LLM CNY quota integration", () => {
 
     expect(summary.credits).toBeCloseTo(((512_001 * 18.75 + 1_000_000 * 113) / 1_000_000) * 2, 6)
     expect(summary.models[0]!.longContextTurns).toBe(1)
+  })
+
+  test("only warns when a ChatGPT tool discards context", () => {
+    const messages = [chatgptAssistant("discarded")]
+    const parts = () =>
+      [
+        {
+          type: "tool",
+          state: { status: "completed", metadata: { "opencode.context.retain": false } },
+        },
+      ] as never
+
+    expect(hasChatGPTDiscardedToolContext(messages, parts)).toBe(true)
+    expect(
+      hasChatGPTDiscardedToolContext(messages, () => [{ type: "tool", state: { status: "pending" } }] as never),
+    ).toBe(false)
+    expect(
+      hasChatGPTDiscardedToolContext(
+        [{ ...messages[0]!, providerID: "openai" }],
+        parts,
+      ),
+    ).toBe(false)
   })
 
   test("parses Grok Build credits usage", () => {

@@ -26,6 +26,7 @@ import {
   hasCopilotUsage,
   hasOpenAIApiKeyProvider,
   hasChatGPTOAuthProvider,
+  hasChatGPTDiscardedToolContext,
   hasChatGPTUsage,
   hasKimiForCodingUsage,
   hasXaiOAuthProvider,
@@ -128,6 +129,9 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     calculateTrackedSession(usageRecords(costMessages()), { usdCnyRate: usdCnyRate() }, modelsDevEntries()),
   )
   const codexEstimate = createMemo(() => calculateCodexSession(usageRecords(usageMessages())))
+  const codexDiscardedToolContext = createMemo(() =>
+    hasChatGPTDiscardedToolContext(usageMessages(), (messageID) => props.api.state.part(messageID)),
+  )
   const needsUsdCnyRate = createMemo(() =>
     hasModelsDevUsage() ||
     activeProviders().some(
@@ -591,6 +595,7 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
               locale={props.api.i18n.locale}
               state={codexState()}
               estimate={codexEstimate()}
+              discardedToolContext={codexDiscardedToolContext()}
               resetting={codexResetting()}
               onReset={confirmCodexReset}
             />

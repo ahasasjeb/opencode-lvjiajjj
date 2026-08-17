@@ -688,6 +688,7 @@
   "plugin.llmCny.codex.credits.localMessages": "Approx. local messages: {{count}}",
   "plugin.llmCny.codex.credits.cloudMessages": "Approx. cloud messages: {{count}}",
   "plugin.llmCny.codex.credits.sessionEstimate": "This session estimate ({{count}} calls)",
+  "plugin.llmCny.codex.credits.contextCacheDiscarded": "`retain_context=false` breaks context caching and increases user cost. Use it carefully.",
   "plugin.llmCny.xai.title": "Grok limitleri",
   "plugin.llmCny.xai.weekly": "Haftalık limit",
   "plugin.llmCny.xai.monthly": "Aylık limit",

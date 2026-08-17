@@ -29,12 +29,13 @@ Task flow:
 
 Tool policy:
 - Prefer Task for broad codebase exploration.
-- Use exactly one tool per assistant message.
+- Batch independent tool calls in one assistant message.
 - If the request is vague, use the question tool before reading or editing.
 - Do not repeat the same tool call once you already have enough information.
 
 Context management:
-- Tools accept `retain_context` (default true). Set false when the result is only needed for the immediate next step, to save context window space.
+- `retain_context` defaults to true. If the result is only needed for the immediate next step, consider setting it to false to save context window space.
+- `retain_context=false` breaks the context cache and increases user cost. Use it carefully.
 
 Code references:
 - Cite code as `file_path:line_number`.

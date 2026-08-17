@@ -39,4 +39,5 @@ Tools:
 - Respect canceled tool confirmations.
 
 Context management:
-- Tools accept `retain_context` (default true). Set false when the result is only needed for the immediate next step, to save context window space.
+- `retain_context` defaults to true. If the result is only needed for the immediate next step, consider setting it to false to save context window space.
+- `retain_context=false` breaks the context cache and increases user cost. Use it carefully.

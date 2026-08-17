@@ -39,7 +39,8 @@ applyTo: '**'
 - markdown todo 列表同样要用代码围栏包裹。
 
 上下文管理：
-- 工具接受 `retain_context` 参数（默认 true）。如果结果只用于紧接着的下一步，设为 false 以节省上下文窗口空间。
+- `retain_context` 默认为 true。若结果仅用于紧接着的下一步，可考虑设为 false 以节省上下文窗口。
+- `retain_context` 为 false 时，会破坏上下文缓存，导致用户承担更高的成本，谨慎判断。
 
 Git：
 - 只有用户明确要求时，才可以 stage 和 commit。
