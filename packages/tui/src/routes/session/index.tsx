@@ -1687,21 +1687,24 @@ function ReasoningHeader(props: {
   encrypted?: boolean
 }) {
   const { theme } = useTheme()
+  const language = useLanguage()
   const fg = () =>
     props.open
       ? RGBA.fromValues(theme.warning.r, theme.warning.g, theme.warning.b, theme.thinkingOpacity)
       : theme.warning
   const completed = () => {
-    if (props.encrypted) return `Thought${props.duration ? ` · ${props.duration}` : ""}`
+    if (props.encrypted) return language.t("session.reasoning.thought") + (props.duration ? ` · ${props.duration}` : "")
     const detail = [props.title, props.duration].filter(Boolean).join(" · ")
-    return `${props.toggleable ? (props.open ? "- " : "+ ") : ""}Thought${detail ? `: ${detail}` : ""}`
+    return `${props.toggleable ? (props.open ? "- " : "+ ") : ""}${language.t("session.reasoning.thought")}${detail ? `: ${detail}` : ""}`
   }
 
   return (
     <Switch>
       <Match when={!props.done}>
         <box flexDirection="row">
-          <Spinner color={fg()}>{props.title ? "Thinking: " + props.title : "Thinking"}</Spinner>
+          <Spinner color={fg()}>
+            {props.title ? `${language.t("session.reasoning.thinking")}: ${props.title}` : language.t("session.reasoning.thinking")}
+          </Spinner>
         </box>
       </Match>
       <Match when={true}>

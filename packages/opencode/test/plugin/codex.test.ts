@@ -390,6 +390,7 @@ describe("plugin.codex", () => {
     )
     expect(requests).toBe(1)
     expect(Object.keys(cached)).toEqual(["gpt-remote"])
+  })
 
   test("sends token residency only to the ChatGPT Codex backend", async () => {
     const requests: Array<{ path: string; residency: string | null }> = []

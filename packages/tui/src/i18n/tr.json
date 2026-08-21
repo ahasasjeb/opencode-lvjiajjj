@@ -1,4 +1,4 @@
-﻿{
+{
   "category.agent": "Agent",
   "category.language": "Dil",
   "category.provider": "Provider",
@@ -332,6 +332,9 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
+  
+  "session.reasoning.thought": "Düşünce",
+  "session.reasoning.thinking": "Düşünüyor",
   "session.loading": "Loading session...",
   "label.loading": "Loading",
   "label.today": "Today",

@@ -1,4 +1,4 @@
-﻿{
+{
   "category.agent": "智能体",
   "category.language": "语言",
   "category.provider": "提供商",
@@ -332,6 +332,9 @@
   "home.tip.subagent": "在提示中使用 {highlight}@agent-name{/highlight} 调用专用子智能体",
   "home.tip.session_tree": "使用 {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} 在父子会话间移动",
   "home.tip.plugins": "将 {highlight}.ts{/highlight} 文件添加到 {highlight}.opencode/plugins/{/highlight} 以注册事件钩子",
+  
+  "session.reasoning.thought": "思考",
+  "session.reasoning.thinking": "思考中",
   "session.loading": "正在加载会话...",
   "label.loading": "加载中",
   "label.today": "今天",
