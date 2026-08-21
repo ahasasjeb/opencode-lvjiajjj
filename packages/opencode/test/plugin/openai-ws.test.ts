@@ -787,7 +787,7 @@ function streamRequest(headers?: Record<string, string>, signal?: AbortSignal): 
 }
 
 async function readTextError(promise: Promise<string>) {
-  // Bun 1.3.14 hangs on expect(response.text()).rejects for streams errored from ws callbacks.
+  // Bun 1.4.9 hangs on expect(response.text()).rejects for streams errored from ws callbacks.
   return promise.then(
     () => {
       throw new Error("Expected response text to reject")
