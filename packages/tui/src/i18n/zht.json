@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "思考",
   "session.reasoning.thinking": "思考中",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "使用 {highlight}{{command}}{/highlight} 或 {highlight}{{shortcut}}{/highlight} 顯示說明對話框",
   "home.tip.rename": "使用 {highlight}/rename{/highlight} 重新命名目前會話",
   "home.tip.input_undo": "按 {highlight}{{shortcut}}{/highlight} 復原提示框中的變更",
-  "home.tip.terminal_suspend": "按 {highlight}{{shortcut}}{/highlight} 暫停終端機並返回 shell"
+  "home.tip.terminal_suspend": "按 {highlight}{{shortcut}}{/highlight} 暫停終端機並返回 shell",
+  "command.session.delete_all": "刪除所有會話",
+  "dialog.session.delete_all.title": "刪除所有會話",
+  "dialog.session.delete_all.confirm": "將永久刪除所有會話及其全部歷史記錄？此操作無法復原。",
+  "toast.delete_all.done": "已刪除 {{count}} 個會話",
+  "toast.delete_all.partial": "{{count}} 個會話刪除失敗",
+  "toast.delete_all.failed": "刪除會話失敗"
 }

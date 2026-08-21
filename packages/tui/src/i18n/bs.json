@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "Misao",
   "session.reasoning.thinking": "Razmišlja",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "Koristite {highlight}{{command}}{/highlight} ili {highlight}{{shortcut}}{/highlight} da prikažete dijalog pomoći",
   "home.tip.rename": "Koristite {highlight}/rename{/highlight} da preimenujete trenutnu sesiju",
   "home.tip.input_undo": "Pritisnite {highlight}{{shortcut}}{/highlight} da poništite promjene u vašem promptu",
-  "home.tip.terminal_suspend": "Pritisnite {highlight}{{shortcut}}{/highlight} da suspendujete terminal i vratite se u shell"
+  "home.tip.terminal_suspend": "Pritisnite {highlight}{{shortcut}}{/highlight} da suspendujete terminal i vratite se u shell",
+  "command.session.delete_all": "Obriši sve sesije",
+  "dialog.session.delete_all.title": "Obriši sve sesije",
+  "dialog.session.delete_all.confirm": "Trajno obrisati sve sesije i njihovu cijelu historiju? Ova radnja se ne može poništiti.",
+  "toast.delete_all.done": "Obrisano sesija: {{count}}",
+  "toast.delete_all.partial": "Brisanje {{count}} sesija nije uspjelo",
+  "toast.delete_all.failed": "Brisanje sesija nije uspjelo"
 }

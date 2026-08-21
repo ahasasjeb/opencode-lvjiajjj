@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "思考",
   "session.reasoning.thinking": "思考中",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "{highlight}{{command}}{/highlight} または {highlight}{{shortcut}}{/highlight} でヘルプダイアログを表示できます",
   "home.tip.rename": "{highlight}/rename{/highlight} で現在のセッション名を変更できます",
   "home.tip.input_undo": "{highlight}{{shortcut}}{/highlight} でプロンプトの変更を元に戻せます",
-  "home.tip.terminal_suspend": "{highlight}{{shortcut}}{/highlight} でターミナルを一時停止してシェルに戻れます"
+  "home.tip.terminal_suspend": "{highlight}{{shortcut}}{/highlight} でターミナルを一時停止してシェルに戻れます",
+  "command.session.delete_all": "すべてのセッションを削除",
+  "dialog.session.delete_all.title": "すべてのセッションを削除",
+  "dialog.session.delete_all.confirm": "すべてのセッションとその履歴を完全に削除しますか？この操作は元に戻せません。",
+  "toast.delete_all.done": "{{count}} 件のセッションを削除しました",
+  "toast.delete_all.partial": "{{count}} 件のセッションを削除できませんでした",
+  "toast.delete_all.failed": "セッションの削除に失敗しました"
 }

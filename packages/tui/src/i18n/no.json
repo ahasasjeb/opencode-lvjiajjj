@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "Tanke",
   "session.reasoning.thinking": "Tenker",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "Bruk {highlight}{{command}}{/highlight} eller {highlight}{{shortcut}}{/highlight} for å vise hjelpedialogen",
   "home.tip.rename": "Bruk {highlight}/rename{/highlight} for å gi nytt navn til gjeldende økt",
   "home.tip.input_undo": "Trykk {highlight}{{shortcut}}{/highlight} for å angre endringer i prompten",
-  "home.tip.terminal_suspend": "Trykk {highlight}{{shortcut}}{/highlight} for å suspendere terminalen og gå tilbake til shell"
+  "home.tip.terminal_suspend": "Trykk {highlight}{{shortcut}}{/highlight} for å suspendere terminalen og gå tilbake til shell",
+  "command.session.delete_all": "Slett alle økter",
+  "dialog.session.delete_all.title": "Slett alle økter",
+  "dialog.session.delete_all.confirm": "Vil du permanent slette alle økter og hele historikken deres? Denne handlingen kan ikke angres.",
+  "toast.delete_all.done": "Slettet {{count}} økter",
+  "toast.delete_all.partial": "Kunne ikke slette {{count}} økter",
+  "toast.delete_all.failed": "Kunne ikke slette økter"
 }

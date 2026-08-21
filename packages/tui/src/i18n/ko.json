@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "생각",
   "session.reasoning.thinking": "생각 중",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "{highlight}{{command}}{/highlight} 또는 {highlight}{{shortcut}}{/highlight}으로 도움말 대화상자를 표시하세요",
   "home.tip.rename": "{highlight}/rename{/highlight}으로 현재 세션 이름을 변경하세요",
   "home.tip.input_undo": "{highlight}{{shortcut}}{/highlight}으로 프롬프트 변경을 실행 취소하세요",
-  "home.tip.terminal_suspend": "{highlight}{{shortcut}}{/highlight}으로 터미널을 일시 중단하고 셸로 돌아가세요"
+  "home.tip.terminal_suspend": "{highlight}{{shortcut}}{/highlight}으로 터미널을 일시 중단하고 셸로 돌아가세요",
+  "command.session.delete_all": "모든 세션 삭제",
+  "dialog.session.delete_all.title": "모든 세션 삭제",
+  "dialog.session.delete_all.confirm": "모든 세션과 기록을 영구적으로 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
+  "toast.delete_all.done": "세션 {{count}}개를 삭제했습니다",
+  "toast.delete_all.partial": "세션 {{count}}개를 삭제하지 못했습니다",
+  "toast.delete_all.failed": "세션 삭제에 실패했습니다"
 }

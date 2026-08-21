@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "Réflexion",
   "session.reasoning.thinking": "Réflexion en cours",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "Utilisez {highlight}{{command}}{/highlight} ou {highlight}{{shortcut}}{/highlight} pour afficher la boîte d'aide",
   "home.tip.rename": "Utilisez {highlight}/rename{/highlight} pour renommer la session actuelle",
   "home.tip.input_undo": "Appuyez sur {highlight}{{shortcut}}{/highlight} pour annuler les modifications de votre prompt",
-  "home.tip.terminal_suspend": "Appuyez sur {highlight}{{shortcut}}{/highlight} pour suspendre le terminal et revenir au shell"
+  "home.tip.terminal_suspend": "Appuyez sur {highlight}{{shortcut}}{/highlight} pour suspendre le terminal et revenir au shell",
+  "command.session.delete_all": "Supprimer toutes les sessions",
+  "dialog.session.delete_all.title": "Supprimer toutes les sessions",
+  "dialog.session.delete_all.confirm": "Supprimer définitivement toutes les sessions et leur historique ? Cette action est irréversible.",
+  "toast.delete_all.done": "{{count}} sessions supprimées",
+  "toast.delete_all.partial": "Échec de la suppression de {{count}} sessions",
+  "toast.delete_all.failed": "Échec de la suppression des sessions"
 }

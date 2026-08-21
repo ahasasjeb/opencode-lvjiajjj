@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "Размышление",
   "session.reasoning.thinking": "Размышляет",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "Используйте {highlight}{{command}}{/highlight} или {highlight}{{shortcut}}{/highlight}, чтобы показать диалог справки",
   "home.tip.rename": "Используйте {highlight}/rename{/highlight}, чтобы переименовать текущую сессию",
   "home.tip.input_undo": "Нажмите {highlight}{{shortcut}}{/highlight}, чтобы отменить изменения в промпте",
-  "home.tip.terminal_suspend": "Нажмите {highlight}{{shortcut}}{/highlight}, чтобы приостановить терминал и вернуться в shell"
+  "home.tip.terminal_suspend": "Нажмите {highlight}{{shortcut}}{/highlight}, чтобы приостановить терминал и вернуться в shell",
+  "command.session.delete_all": "Удалить все сессии",
+  "dialog.session.delete_all.title": "Удалить все сессии",
+  "dialog.session.delete_all.confirm": "Безвозвратно удалить все сессии и их историю? Это действие нельзя отменить.",
+  "toast.delete_all.done": "Удалено сессий: {{count}}",
+  "toast.delete_all.partial": "Не удалось удалить сессий: {{count}}",
+  "toast.delete_all.failed": "Не удалось удалить сессии"
 }

@@ -622,6 +622,44 @@ function App(props: { onSnapshot?: () => Promise<string[]>; pluginHost: TuiPlugi
         },
       },
       {
+        name: "session.delete_all",
+        title: t("command.session.delete_all"),
+        category: t("category.session"),
+        suggested: sync.data.session.length > 0,
+        run: async () => {
+          const ok = await DialogConfirm.show(
+            dialog,
+            t("dialog.session.delete_all.title"),
+            t("dialog.session.delete_all.confirm"),
+          )
+          if (ok !== true) return
+          const list = await sdk.client.session.list({ roots: true, limit: 200 })
+          if (list.error) {
+            toast.show({ variant: "error", title: t("toast.delete_all.failed"), message: errorMessage(list.error) })
+            return
+          }
+          let failed = 0
+          for (const session of list.data) {
+            const result = await sdk.client.session.delete({ sessionID: session.id }).catch(() => undefined)
+            if (!result || result.error) failed++
+          }
+          await sync.session.refresh()
+          route.navigate({ type: "home" })
+          dialog.clear()
+          const done = list.data.length - failed
+          if (failed > 0) {
+            toast.show({
+              variant: "error",
+              title: t("toast.delete_all.failed"),
+              message: t("toast.delete_all.partial", { count: failed }),
+            })
+          }
+          if (done > 0) {
+            toast.show({ variant: "success", message: t("toast.delete_all.done", { count: done }) })
+          }
+        },
+      },
+      {
         name: "workspace.copy_path",
         title: t("command.workspace.copy_path"),
         category: t("category.workspace"),

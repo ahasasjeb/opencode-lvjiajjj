@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "ความคิด",
   "session.reasoning.thinking": "กำลังคิด",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "ใช้ {highlight}{{command}}{/highlight} หรือ {highlight}{{shortcut}}{/highlight} เพื่อแสดงกล่องโต้ตอบความช่วยเหลือ",
   "home.tip.rename": "ใช้ {highlight}/rename{/highlight} เพื่อเปลี่ยนชื่อเซสชันปัจจุบัน",
   "home.tip.input_undo": "กด {highlight}{{shortcut}}{/highlight} เพื่อเลิกทำการเปลี่ยนแปลงในพรอมป์ต",
-  "home.tip.terminal_suspend": "กด {highlight}{{shortcut}}{/highlight} เพื่อระงับเทอร์มินัลและกลับไปยัง shell"
+  "home.tip.terminal_suspend": "กด {highlight}{{shortcut}}{/highlight} เพื่อระงับเทอร์มินัลและกลับไปยัง shell",
+  "command.session.delete_all": "ลบเซสชันทั้งหมด",
+  "dialog.session.delete_all.title": "ลบเซสชันทั้งหมด",
+  "dialog.session.delete_all.confirm": "ลบเซสชันทั้งหมดและประวัติทั้งหมดอย่างถาวรใช่หรือไม่ การกระทำนี้ย้อนกลับไม่ได้",
+  "toast.delete_all.done": "ลบแล้ว {{count}} เซสชัน",
+  "toast.delete_all.partial": "ลบไม่สำเร็จ {{count}} เซสชัน",
+  "toast.delete_all.failed": "ลบเซสชันไม่สำเร็จ"
 }

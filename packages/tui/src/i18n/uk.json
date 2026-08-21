@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "Роздум",
   "session.reasoning.thinking": "Роздумує",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "Використовуйте {highlight}{{command}}{/highlight} або {highlight}{{shortcut}}{/highlight}, щоб показати діалог довідки",
   "home.tip.rename": "Використовуйте {highlight}/rename{/highlight}, щоб перейменувати поточну сесію",
   "home.tip.input_undo": "Натисніть {highlight}{{shortcut}}{/highlight}, щоб скасувати зміни у вашому промпті",
-  "home.tip.terminal_suspend": "Натисніть {highlight}{{shortcut}}{/highlight}, щоб призупинити термінал і повернутися до shell"
+  "home.tip.terminal_suspend": "Натисніть {highlight}{{shortcut}}{/highlight}, щоб призупинити термінал і повернутися до shell",
+  "command.session.delete_all": "Видалити всі сесії",
+  "dialog.session.delete_all.title": "Видалити всі сесії",
+  "dialog.session.delete_all.confirm": "Безповоротно видалити всі сесії та їхню історію? Цю дію не можна скасувати.",
+  "toast.delete_all.done": "Видалено сесій: {{count}}",
+  "toast.delete_all.partial": "Не вдалося видалити сесій: {{count}}",
+  "toast.delete_all.failed": "Не вдалося видалити сесії"
 }

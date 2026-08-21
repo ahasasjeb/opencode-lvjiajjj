@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "Gedanke",
   "session.reasoning.thinking": "Denkt nach",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "Nutze {highlight}{{command}}{/highlight} oder {highlight}{{shortcut}}{/highlight}, um den Hilfedialog anzuzeigen",
   "home.tip.rename": "Nutze {highlight}/rename{/highlight}, um die aktuelle Sitzung umzubenennen",
   "home.tip.input_undo": "Drücke {highlight}{{shortcut}}{/highlight}, um Änderungen in deinem Prompt rückgängig zu machen",
-  "home.tip.terminal_suspend": "Drücke {highlight}{{shortcut}}{/highlight}, um das Terminal anzuhalten und zur Shell zurückzukehren"
+  "home.tip.terminal_suspend": "Drücke {highlight}{{shortcut}}{/highlight}, um das Terminal anzuhalten und zur Shell zurückzukehren",
+  "command.session.delete_all": "Alle Sitzungen löschen",
+  "dialog.session.delete_all.title": "Alle Sitzungen löschen",
+  "dialog.session.delete_all.confirm": "Alle Sitzungen und deren Verlauf endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "toast.delete_all.done": "{{count}} Sitzungen gelöscht",
+  "toast.delete_all.partial": "Löschen von {{count}} Sitzungen fehlgeschlagen",
+  "toast.delete_all.failed": "Löschen der Sitzungen fehlgeschlagen"
 }

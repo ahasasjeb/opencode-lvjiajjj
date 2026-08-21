@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "Myśl",
   "session.reasoning.thinking": "Myślenie",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "Użyj {highlight}{{command}}{/highlight} lub {highlight}{{shortcut}}{/highlight}, aby pokazać okno pomocy",
   "home.tip.rename": "Użyj {highlight}/rename{/highlight}, aby zmienić nazwę bieżącej sesji",
   "home.tip.input_undo": "Naciśnij {highlight}{{shortcut}}{/highlight}, aby cofnąć zmiany w prompcie",
-  "home.tip.terminal_suspend": "Naciśnij {highlight}{{shortcut}}{/highlight}, aby zawiesić terminal i wrócić do shell"
+  "home.tip.terminal_suspend": "Naciśnij {highlight}{{shortcut}}{/highlight}, aby zawiesić terminal i wrócić do shell",
+  "command.session.delete_all": "Usuń wszystkie sesje",
+  "dialog.session.delete_all.title": "Usuń wszystkie sesje",
+  "dialog.session.delete_all.confirm": "Trwale usunąć wszystkie sesje i ich historię? Tej operacji nie można cofnąć.",
+  "toast.delete_all.done": "Usunięto sesji: {{count}}",
+  "toast.delete_all.partial": "Nie udało się usunąć sesji: {{count}}",
+  "toast.delete_all.failed": "Nie udało się usunąć sesji"
 }

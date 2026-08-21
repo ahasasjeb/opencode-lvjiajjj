@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "Pensamiento",
   "session.reasoning.thinking": "Pensando",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "Usa {highlight}{{command}}{/highlight} o {highlight}{{shortcut}}{/highlight} para mostrar el diálogo de ayuda",
   "home.tip.rename": "Usa {highlight}/rename{/highlight} para renombrar la sesión actual",
   "home.tip.input_undo": "Pulsa {highlight}{{shortcut}}{/highlight} para deshacer cambios en tu prompt",
-  "home.tip.terminal_suspend": "Pulsa {highlight}{{shortcut}}{/highlight} para suspender el terminal y volver al shell"
+  "home.tip.terminal_suspend": "Pulsa {highlight}{{shortcut}}{/highlight} para suspender el terminal y volver al shell",
+  "command.session.delete_all": "Eliminar todas las sesiones",
+  "dialog.session.delete_all.title": "Eliminar todas las sesiones",
+  "dialog.session.delete_all.confirm": "¿Eliminar permanentemente todas las sesiones y su historial? Esta acción no se puede deshacer.",
+  "toast.delete_all.done": "Se eliminaron {{count}} sesiones",
+  "toast.delete_all.partial": "No se pudieron eliminar {{count}} sesiones",
+  "toast.delete_all.failed": "Error al eliminar las sesiones"
 }

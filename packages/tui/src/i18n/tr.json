@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "Düşünce",
   "session.reasoning.thinking": "Düşünüyor",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "Yardım iletişim kutusunu göstermek için {highlight}{{command}}{/highlight} veya {highlight}{{shortcut}}{/highlight} kullanın",
   "home.tip.rename": "Geçerli oturumu yeniden adlandırmak için {highlight}/rename{/highlight} kullanın",
   "home.tip.input_undo": "İsteminizdeki değişiklikleri geri almak için {highlight}{{shortcut}}{/highlight} tuşuna basın",
-  "home.tip.terminal_suspend": "Terminali askıya alıp kabuğa dönmek için {highlight}{{shortcut}}{/highlight} tuşuna basın"
+  "home.tip.terminal_suspend": "Terminali askıya alıp kabuğa dönmek için {highlight}{{shortcut}}{/highlight} tuşuna basın",
+  "command.session.delete_all": "Tüm oturumları sil",
+  "dialog.session.delete_all.title": "Tüm oturumları sil",
+  "dialog.session.delete_all.confirm": "Tüm oturumlar ve geçmişleri kalıcı olarak silinsin mi? Bu işlem geri alınamaz.",
+  "toast.delete_all.done": "{{count}} oturum silindi",
+  "toast.delete_all.partial": "{{count}} oturum silinemedi",
+  "toast.delete_all.failed": "Oturumlar silinemedi"
 }

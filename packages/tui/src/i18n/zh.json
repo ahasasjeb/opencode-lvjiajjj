@@ -332,7 +332,6 @@
   "home.tip.subagent": "在提示中使用 {highlight}@agent-name{/highlight} 调用专用子智能体",
   "home.tip.session_tree": "使用 {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} 在父子会话间移动",
   "home.tip.plugins": "将 {highlight}.ts{/highlight} 文件添加到 {highlight}.opencode/plugins/{/highlight} 以注册事件钩子",
-  
   "session.reasoning.thought": "思考",
   "session.reasoning.thinking": "思考中",
   "session.loading": "正在加载会话...",
@@ -829,5 +828,11 @@
   "home.tip.help": "使用 {highlight}{{command}}{/highlight} 或 {highlight}{{shortcut}}{/highlight} 显示帮助对话框",
   "home.tip.rename": "使用 {highlight}/rename{/highlight} 重命名当前会话",
   "home.tip.input_undo": "按 {highlight}{{shortcut}}{/highlight} 撤销提示框中的更改",
-  "home.tip.terminal_suspend": "按 {highlight}{{shortcut}}{/highlight} 挂起终端并返回 shell"
+  "home.tip.terminal_suspend": "按 {highlight}{{shortcut}}{/highlight} 挂起终端并返回 shell",
+  "command.session.delete_all": "删除所有会话",
+  "dialog.session.delete_all.title": "删除所有会话",
+  "dialog.session.delete_all.confirm": "将永久删除所有会话及其全部历史记录？此操作无法撤销。",
+  "toast.delete_all.done": "已删除 {{count}} 个会话",
+  "toast.delete_all.partial": "{{count}} 个会话删除失败",
+  "toast.delete_all.failed": "删除会话失败"
 }

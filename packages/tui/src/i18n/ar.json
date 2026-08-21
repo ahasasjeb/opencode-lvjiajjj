@@ -332,7 +332,6 @@
   "home.tip.subagent": "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   "home.tip.session_tree": "Use {highlight}{{parent}}{/highlight} / {highlight}{{first}}{/highlight} / {highlight}{{previous}}{/highlight} / {highlight}{{next}}{/highlight} to move between parent and child sessions",
   "home.tip.plugins": "Add {highlight}.ts{/highlight} files to {highlight}.opencode/plugins/{/highlight} for event hooks",
-  
   "session.reasoning.thought": "تفكير",
   "session.reasoning.thinking": "يفكّر",
   "session.loading": "Loading session...",
@@ -829,5 +828,11 @@
   "home.tip.help": "استخدم {highlight}{{command}}{/highlight} أو {highlight}{{shortcut}}{/highlight} لعرض مربع المساعدة",
   "home.tip.rename": "استخدم {highlight}/rename{/highlight} لإعادة تسمية الجلسة الحالية",
   "home.tip.input_undo": "اضغط {highlight}{{shortcut}}{/highlight} للتراجع عن التغييرات في المطالبة",
-  "home.tip.terminal_suspend": "اضغط {highlight}{{shortcut}}{/highlight} لتعليق الطرفية والعودة إلى shell"
+  "home.tip.terminal_suspend": "اضغط {highlight}{{shortcut}}{/highlight} لتعليق الطرفية والعودة إلى shell",
+  "command.session.delete_all": "حذف جميع الجلسات",
+  "dialog.session.delete_all.title": "حذف جميع الجلسات",
+  "dialog.session.delete_all.confirm": "حذف جميع الجلسات وسجلها بالكامل نهائيًا؟ لا يمكن التراجع عن هذا الإجراء.",
+  "toast.delete_all.done": "تم حذف {{count}} جلسة",
+  "toast.delete_all.partial": "فشل حذف {{count}} جلسة",
+  "toast.delete_all.failed": "فشل حذف الجلسات"
 }
