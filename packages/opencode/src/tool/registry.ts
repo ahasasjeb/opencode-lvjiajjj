@@ -61,7 +61,12 @@ import { ToolContextRetention } from "./context-retention"
 import { ToolJsonSchema } from "./json-schema"
 
 export function webSearchEnabled(providerID: ProviderV2.ID, flags = { exa: false, parallel: false }) {
-  return providerID === ProviderV2.ID.opencode || flags.exa || flags.parallel
+  return (
+    providerID === ProviderV2.ID.opencode ||
+    providerID === ProviderV2.ID.make("opencode-go") ||
+    flags.exa ||
+    flags.parallel
+  )
 }
 
 const TASK_DISABLED_PROVIDER_IDS = new Set(["alibaba-token-plan", "alibaba-token-plan-cn"])
