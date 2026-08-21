@@ -1048,7 +1048,7 @@ describe("tool.shell abort", () => {
           const collected: string[] = []
           const res = yield* run(
             {
-              command: `echo before && sleep 30`,
+              command: `echo before; sleep 30`,
             },
             {
               ...ctx,
@@ -1143,7 +1143,7 @@ describe("tool.shell abort", () => {
         const updates: string[] = []
         const result = yield* run(
           {
-            command: `echo first && sleep 0.1 && echo second`,
+            command: `echo first; sleep 0.1; echo second`,
           },
           {
             ...ctx,

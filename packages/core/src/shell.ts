@@ -163,6 +163,13 @@ function info(file: string): Item {
   }
 }
 
+// Windows PowerShell 5.1 pipes native output through the legacy console codepage (e.g. GBK);
+// force UTF-8 so captured output decodes correctly. OutputEncoding throws without a console
+// handle, hence the guard.
+export function psUtf8(command: string) {
+  return `try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}; $OutputEncoding = [System.Text.Encoding]::UTF8; ${command}`
+}
+
 export function args(file: string, command: string, cwd: string) {
   const n = name(file)
   if (n === "nu" || n === "fish") return ["-c", command]
@@ -195,7 +202,7 @@ export function args(file: string, command: string, cwd: string) {
     ]
   }
   if (n === "cmd") return ["/c", command]
-  if (ps(file)) return ["-NoProfile", "-Command", command]
+  if (ps(file)) return ["-NoProfile", "-Command", psUtf8(command)]
   return ["-c", command]
 }
 
