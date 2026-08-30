@@ -3,6 +3,7 @@ import { ProviderIcon } from "@opencode-ai/ui/provider-icon"
 import {
   getStatsModelsComparisonData,
   type ModelUsagePoint,
+  type RetentionEntry,
   type StatsModelComparisonInput,
   type StatsModelComparisonEntry,
 } from "@opencode-ai/stats-core/domain/home"
@@ -975,6 +976,17 @@ function buildComparisonDetailSections(models: readonly ComparisonModel[], t: Tr
       ],
       usage: models.map((model) => model.stats?.usage ?? []),
     },
+    {
+      title: t("compare.section.retention"),
+      badge: t("compare.badge.week1"),
+      rows: [
+        comparisonDetailRow(
+          t("compare.row.returningUsers"),
+          models.map((model) => retentionCell(model.stats?.weeklyRetention, t)),
+          "higher",
+        ),
+      ],
+    },
   ]
 }
 
@@ -1075,6 +1087,15 @@ function percentCell(value: number | undefined, t: Translate): ComparisonDetailC
 function tokenCell(value: number | undefined, trend: number | undefined, t: Translate): ComparisonDetailCell {
   if (value === undefined) return { value: t("compare.noUsage") }
   return { value: formatTokens(value), score: value, trend }
+}
+
+function retentionCell(value: RetentionEntry | null | undefined, t: Translate): ComparisonDetailCell {
+  if (!value || value.rank === null) return { value: t("lab.pending") }
+  return {
+    value: formatPercent(value.rate),
+    unit: `${formatTokens(value.eligibleUserWeeks)} ${t("compare.unit.userWeeks")}`,
+    score: value.rate,
+  }
 }
 
 function labHref(lab: string) {
