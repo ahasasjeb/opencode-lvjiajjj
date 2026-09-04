@@ -341,30 +341,36 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
           if (ALLOWED_MODELS.has(model.api.id)) return true
           if (DISALLOWED_MODELS.has(model.api.id)) return false
           if (model.api.id === "gpt-5.6") return false
-          const match = model.api.id.match(/^gpt-(\d+\.\d+)/)
-          return match ? parseFloat(match[1]) > 5.4 : false
+          const match = model.api.id.match(/^gpt-(\d+)(?:\.(\d+))?/)
+          if (!match) return false
+          const major = Number(match[1])
+          const minor = Number(match[2] ?? 0)
+          return major > 5 || (major === 5 && minor > 4)
         })
         const fallback = Object.fromEntries(
-          (available.length ? available : Object.entries(provider.models)).map(([modelID, model]) => [
-            modelID,
-            {
-              ...model,
-              cost: {
-                input: 0,
-                output: 0,
-                cache: { read: 0, write: 0 },
+          (available.length || !currentAuth.access ? available : Object.entries(provider.models)).map(
+            ([modelID, model]) => [
+              modelID,
+              {
+                ...model,
+                cost: {
+                  input: 0,
+                  output: 0,
+                  cache: { read: 0, write: 0 },
+                },
+                limit:
+                  model.id.includes("gpt-5.5") || model.id.includes("gpt-5.6")
+                    ? {
+                        context: 400_000,
+                        input: 272_000,
+                        output: 128_000,
+                      }
+                    : model.limit,
               },
-              limit:
-                model.id.includes("gpt-5.5") || model.id.includes("gpt-5.6")
-                  ? {
-                      context: 400_000,
-                      input: 272_000,
-                      output: 128_000,
-                    }
-                  : model.limit,
-            },
-          ]),
+            ],
+          ),
         )
+        if (!currentAuth.access || !currentAuth.refresh || !currentAuth.expires) return fallback
         const mapModels = (remote: CodexModel[]) => {
           const template = Object.values(fallback)[0] ?? Object.values(provider.models)[0]
           if (!template) return {}

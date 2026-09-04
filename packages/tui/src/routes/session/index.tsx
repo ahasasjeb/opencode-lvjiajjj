@@ -14,7 +14,6 @@ import {
   untrack,
   useContext,
 } from "solid-js"
-
 import path from "node:path"
 import { mkdir, writeFile } from "node:fs/promises"
 import { useRoute, useRouteData } from "../../context/route"
@@ -41,7 +40,7 @@ import { useLocal } from "../../context/local"
 import { Locale } from "../../util/locale"
 import { useLanguage } from "../../context/language"
 import { formatFirecrawlLabel, webSearchProviderLabel } from "../../util/tool-display"
-import { useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
+import { Dynamic, useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
 import { useSDK } from "../../context/sdk"
 import { useEditorContext } from "../../context/editor"
 import { openEditor } from "../../editor"
