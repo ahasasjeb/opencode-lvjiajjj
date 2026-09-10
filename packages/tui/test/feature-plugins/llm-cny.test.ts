@@ -10,10 +10,14 @@ import {
 } from "../../src/feature-plugins/llm-cny/codex-usage"
 import { calculateCodexSession } from "../../src/feature-plugins/llm-cny/codex-pricing"
 import { parseKimiUsageResponse } from "../../src/feature-plugins/llm-cny/kimi-usage"
-import { buildModelsDevEntries } from "../../src/feature-plugins/llm-cny/pricing/models-dev"
+import { buildModelsDevEntries, buildProviderEntries } from "../../src/feature-plugins/llm-cny/pricing/models-dev"
 import { calculateTrackedSession, priceForModel, trackedModel } from "../../src/feature-plugins/llm-cny/pricing"
 import {
   DEEPSEEK_V4_NEW_PRICING_AT,
+  DEEPSEEK_V41_PRICING_AT,
+  DEEPSEEK_PRO_FLASH_PRICING_AT,
+  flashV41OffPeakPrice,
+  flashV41PeakPrice,
   flashOffPeakPrice,
   flashPeakPrice,
   flashPrice,
@@ -32,6 +36,7 @@ import {
   hasXaiOAuthProvider,
   hasXaiUsage,
   kimiForCodingApiKey,
+  usageRecords,
 } from "../../src/feature-plugins/llm-cny/tui/session"
 import { tmpdir } from "../fixture/fixture"
 
@@ -256,12 +261,7 @@ describe("LLM CNY quota integration", () => {
     expect(
       hasChatGPTDiscardedToolContext(messages, () => [{ type: "tool", state: { status: "pending" } }] as never),
     ).toBe(false)
-    expect(
-      hasChatGPTDiscardedToolContext(
-        [{ ...messages[0]!, providerID: "openai" }],
-        parts,
-      ),
-    ).toBe(false)
+    expect(hasChatGPTDiscardedToolContext([{ ...messages[0]!, providerID: "openai" }], parts)).toBe(false)
   })
 
   test("parses Grok Build credits usage", () => {
@@ -452,6 +452,54 @@ describe("LLM CNY quota integration", () => {
 })
 
 describe("LLM CNY models.dev fallback pricing", () => {
+  test("uses configured catalog keys and prices without lowercasing custom IDs", () => {
+    const providers = [
+      {
+        id: "CustomGateway",
+        name: "My Gateway",
+        models: {
+          MyModel: {
+            name: "Custom Model",
+            cost: { input: 3, output: 8, cache: { read: 0.5, write: 4 } },
+          },
+        },
+      },
+    ]
+    const message = {
+      ...assistantMessage("CustomGateway"),
+      modelID: "MyModel",
+      tokens: { input: 100_000, output: 20_000, reasoning: 5_000, cache: { read: 50_000, write: 10_000 } },
+    } as Message
+    const summary = calculateTrackedSession(usageRecords([message]), { usdCnyRate: 7 }, buildProviderEntries(providers))
+    expect(summary.turns).toBe(1)
+    expect(summary.costCny).toBe(3.955)
+    expect(summary.models[0]?.providerLabel).toBe("My Gateway")
+    expect(summary.models[0]?.modelLabel).toBe("Custom Model")
+  })
+
+  test("preserves configured context tiers and the legacy over-200K tier", () => {
+    const cost = { input: 1, output: 2, cache: { read: 0.5, write: 1.5 } }
+    const entries = buildProviderEntries([
+      {
+        id: "custom",
+        name: "Custom",
+        models: {
+          model: {
+            name: "Model",
+            cost: {
+              ...cost,
+              experimentalOver200K: { ...cost, input: 3 },
+              tiers: [{ ...cost, input: 5, tier: { type: "context", size: 500_000 } }],
+            },
+          },
+        },
+      },
+    ])
+    expect(entries[0]!.priceFor(0, 200_000, { usdCnyRate: 7 }).cacheMissInput).toBe(7)
+    expect(entries[0]!.priceFor(0, 200_001, { usdCnyRate: 7 }).cacheMissInput).toBe(21)
+    expect(entries[0]!.priceFor(0, 500_001, { usdCnyRate: 7 }).cacheMissInput).toBe(35)
+  })
+
   const modelInfo = (overrides: Partial<Parameters<typeof buildModelsDevEntries>[0][number]> = {}) => ({
     id: "acme-1",
     providerID: "acme",
@@ -464,7 +512,10 @@ describe("LLM CNY models.dev fallback pricing", () => {
   })
 
   test("builds entries for models not covered by presets", () => {
-    const covered = buildModelsDevEntries([modelInfo()], (providerID, modelID) => trackedModel(providerID, modelID) !== undefined)
+    const covered = buildModelsDevEntries(
+      [modelInfo()],
+      (providerID, modelID) => trackedModel(providerID, modelID) !== undefined,
+    )
     expect(covered).toHaveLength(1)
     expect(covered[0]!.modelID).toBe("acme-1")
     expect(covered[0]!.providerLabel).toBe("acme")
@@ -552,6 +603,31 @@ describe("LLM CNY cache hit rate", () => {
 
 describe("LLM CNY DeepSeek V4 peak pricing", () => {
   const beijing = (value: string) => Date.parse(`${value}+08:00`)
+
+  test("uses the new Flash prices at the UTC+8 switch and supports both legacy aliases", () => {
+    expect(DEEPSEEK_V41_PRICING_AT).toBe(Date.parse("2026-09-10T04:00:00Z"))
+    for (const id of ["deepseek-flash", "deepseek-v4-flash", "deepseek-v4-flash-vision-exp"] as const) {
+      expect(priceForModel(id, DEEPSEEK_V41_PRICING_AT - 1)).toEqual(flashPeakPrice)
+      expect(priceForModel(id, DEEPSEEK_V41_PRICING_AT)).toEqual(flashV41OffPeakPrice)
+      expect(priceForModel(id, beijing("2026-09-10T14:00:00"))).toEqual(flashV41PeakPrice)
+    }
+  })
+
+  test("uses off-peak rates all weekend in UTC+8, regardless of UTC calendar day", () => {
+    expect(isDeepseekPeakHour(Date.parse("2026-09-12T02:00:00Z"))).toBe(false)
+    expect(isDeepseekPeakHour(Date.parse("2026-09-13T07:00:00Z"))).toBe(false)
+    expect(isDeepseekPeakHour(Date.parse("2026-09-13T17:00:00Z"))).toBe(false)
+    expect(isDeepseekPeakHour(Date.parse("2026-09-14T01:00:00Z"))).toBe(true)
+    expect(priceForModel("deepseek-flash", beijing("2026-09-12T10:00:00"))).toEqual(flashV41OffPeakPrice)
+    expect(priceForModel("deepseek-v4-pro", beijing("2026-09-13T15:00:00"))).toEqual(proOffPeakPrice)
+  })
+
+  test("switches Pro to Flash billing at Beijing September 14 noon", () => {
+    expect(DEEPSEEK_PRO_FLASH_PRICING_AT).toBe(Date.parse("2026-09-14T04:00:00Z"))
+    expect(priceForModel("deepseek-v4-pro", DEEPSEEK_PRO_FLASH_PRICING_AT - 1)).toEqual(proPeakPrice)
+    expect(priceForModel("deepseek-v4-pro", DEEPSEEK_PRO_FLASH_PRICING_AT)).toEqual(flashV41OffPeakPrice)
+    expect(priceForModel("deepseek-v4-pro", beijing("2026-09-14T14:00:00"))).toEqual(flashV41PeakPrice)
+  })
 
   test("keeps launch prices before Beijing 2026-08-17 00:00, including peak clock hours", () => {
     expect(priceForModel("deepseek-v4-flash", beijing("2026-08-16T23:59:59"))).toEqual(flashPrice)

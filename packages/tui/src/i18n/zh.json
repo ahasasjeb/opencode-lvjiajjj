@@ -650,7 +650,7 @@
   "plugin.llmCny.tokens.outputReasoning": "输出 {{output}} · 推理 {{reasoning}}",
   "plugin.llmCny.tokens.cacheHitRate": "缓存命中率 {{percent}}",
   "plugin.llmCny.cacheWrite1h": "若 Claude 使用 1h 缓存写入：+{{cost}}（未计入总费用）",
-  "plugin.llmCny.activation": "使用 DeepSeek、moonshot China、Xiaomi MiMo、ZhipuAI、Alibaba Cloud、xAI、Anthropic、OpenAI API Key、ChatGPT OAuth 或 GitHub Copilot OAuth，模型返回一次消息后激活。",
+  "plugin.llmCny.activation": "模型回复后，按预设或配置中的价格计算 Token 费用，或显示受支持的订阅用量。",
   "plugin.llmCny.noUsage": "本会话暂无已支持模型用量",
   "plugin.llmCny.balance.title": "余额 · {{provider}}",
   "plugin.llmCny.balance.loading": "正在读取余额...",

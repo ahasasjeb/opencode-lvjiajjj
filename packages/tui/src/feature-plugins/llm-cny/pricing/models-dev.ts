@@ -1,4 +1,4 @@
-import type { ModelCost, ModelV2Info } from "@opencode-ai/sdk/v2"
+import type { Model, ModelCost, ModelV2Info, Provider } from "@opencode-ai/sdk/v2"
 import type { Price, PricingOptions } from "./types.js"
 import { TRACKED_PROVIDERS } from "./types.js"
 import { usdPrice } from "./utils.js"
@@ -11,6 +11,33 @@ export type ModelsDevPriceEntry = {
   modelID: string
   modelLabel: string
   priceFor: (time: number, inputTokens: number, options: PricingOptions) => Price
+}
+
+// The TUI provider catalog already merges models.dev with the user's configuration.
+// Use its model keys, not API aliases, to match the IDs stored in assistant messages.
+export function buildProviderEntries(
+  providers: readonly (Pick<Provider, "id" | "name"> & {
+    models: Record<string, Pick<Model, "name" | "cost">>
+  })[],
+  covered: (providerID: string, modelID: string) => boolean = () => false,
+) {
+  return providers.flatMap((provider) =>
+    buildModelsDevEntries(
+      Object.entries(provider.models).map(([id, model]) => ({
+        id,
+        providerID: provider.id,
+        name: model.name,
+        cost: [
+          model.cost,
+          ...(model.cost.experimentalOver200K
+            ? [{ ...model.cost.experimentalOver200K, tier: { type: "context" as const, size: 200_000 } }]
+            : []),
+          ...(model.cost.tiers ?? []),
+        ],
+      })),
+      covered,
+    ).map((entry) => ({ ...entry, providerLabel: provider.name || entry.providerLabel })),
+  )
 }
 
 // 选择与当前输入 token 数匹配的 models.dev 价格档位：

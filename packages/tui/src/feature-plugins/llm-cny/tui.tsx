@@ -1,6 +1,6 @@
 /** @jsxImportSource @opentui/solid */
 import type { TuiPlugin, TuiPluginApi, TuiPluginModule } from "@opencode-ai/plugin/tui"
-import type { Message, ModelV2Info } from "@opencode-ai/sdk/v2"
+import type { Message } from "@opencode-ai/sdk/v2"
 import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { fetchDisplayBalance } from "./balance.js"
 import { calculateCodexSession } from "./codex-pricing.js"
@@ -8,9 +8,10 @@ import { fetchCopilotUsage, type CopilotQuota } from "./copilot-usage.js"
 import { consumeCodexResetCredit, fetchCodexUsage, type CodexResetOutcome, type CodexUsage } from "./codex-usage.js"
 import { fetchUsdCnyRate } from "./exchange-rate.js"
 import { fetchKimiUsage, type KimiUsage } from "./kimi-usage.js"
-import { buildModelsDevEntries, calculateTrackedSession, supportsBalance, trackedModel, type BalanceProviderID } from "./pricing.js"
+import { calculateTrackedSession, supportsBalance, trackedModel, type BalanceProviderID } from "./pricing.js"
+import { buildProviderEntries } from "./pricing/models-dev.js"
 import { fetchXaiUsage, type XaiUsage } from "./xai-usage.js"
-import { ActivationPrompt, Divider, EmptyUsage, Header, ProviderBalance, Summary } from "./tui/components.js"
+import { ActivationPrompt, Divider, Header, ProviderBalance, Summary } from "./tui/components.js"
 import { CodexUsagePanel } from "./tui/codex-components.js"
 import { CopilotQuotaPanel } from "./tui/copilot-components.js"
 import { KimiUsagePanel } from "./tui/kimi-components.js"
@@ -86,7 +87,6 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
   const tokens = createMemo(() => providerTokens(props.api))
   const activeProviders = createMemo(() => activeTrackedProviders(costMessages()))
   const activeBalanceProviders = createMemo(() => activeProviders().filter(supportsBalance))
-  const hasTrackedUsage = createMemo(() => activeProviders().length > 0)
   const codexEnabled = createMemo(
     () => hasChatGPTOAuthProvider(props.api.state.provider) && hasChatGPTUsage(usageMessages()),
   )
@@ -95,18 +95,13 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
   )
   const kimiEnabled = createMemo(() => hasKimiForCodingUsage(usageMessages()))
   const kimiApiKey = createMemo(() => kimiForCodingApiKey(props.api))
-  const xaiEnabled = createMemo(
-    () => hasXaiOAuthProvider(props.api.state.provider) && hasXaiUsage(usageMessages()),
-  )
+  const xaiEnabled = createMemo(() => hasXaiOAuthProvider(props.api.state.provider) && hasXaiUsage(usageMessages()))
   const [xaiState, setXaiState] = createSignal<XaiState>({ status: "idle" })
   const xaiUsage = createMemo(() => {
     const state = xaiState()
     return state.status === "ready" ? state.usage : undefined
   })
   const xaiReady = createMemo(() => xaiUsage() !== undefined)
-  const activated = createMemo(
-    () => hasTrackedUsage() || codexEnabled() || copilotEnabled() || kimiEnabled() || xaiReady(),
-  )
   const completedTrackedReplies = createMemo(() => completedTrackedReplyKey(costMessages()))
   const childRefreshKey = createMemo(() =>
     childUsageRefreshKey({
@@ -117,43 +112,42 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     }),
   )
   const [usdCnyRate, setUsdCnyRate] = createSignal<number | undefined>()
-  const [modelsDev, setModelsDev] = createSignal<readonly ModelV2Info[]>([])
-  const modelsDevEntries = createMemo(() =>
-    buildModelsDevEntries(modelsDev(), (providerID, modelID) => trackedModel(providerID, modelID) !== undefined),
+  const catalogEntries = createMemo(() =>
+    buildProviderEntries(
+      props.api.state.provider,
+      (providerID, modelID) => trackedModel(providerID, modelID) !== undefined,
+    ),
   )
-  const hasModelsDevUsage = createMemo(() => {
+  const hasCatalogUsage = createMemo(() => {
     const records = usageRecords(costMessages())
-    return modelsDevEntries().some((entry) => records.some((item) => item.providerID === entry.providerID && item.modelID === entry.modelID))
+    return catalogEntries().some((entry) =>
+      records.some((item) => item.providerID === entry.providerID && item.modelID === entry.modelID),
+    )
   })
   const summary = createMemo(() =>
-    calculateTrackedSession(usageRecords(costMessages()), { usdCnyRate: usdCnyRate() }, modelsDevEntries()),
+    calculateTrackedSession(usageRecords(costMessages()), { usdCnyRate: usdCnyRate() }, catalogEntries()),
+  )
+  const hasTrackedUsage = createMemo(() => summary().turns > 0)
+  const activated = createMemo(
+    () => hasTrackedUsage() || codexEnabled() || copilotEnabled() || kimiEnabled() || xaiReady(),
   )
   const codexEstimate = createMemo(() => calculateCodexSession(usageRecords(usageMessages())))
   const codexDiscardedToolContext = createMemo(() =>
     hasChatGPTDiscardedToolContext(usageMessages(), (messageID) => props.api.state.part(messageID)),
   )
-  const needsUsdCnyRate = createMemo(() =>
-    hasModelsDevUsage() ||
-    activeProviders().some(
-      (item) =>
-        item.id === "openrouter" ||
-        item.id === "xai" ||
-        item.id === "anthropic" ||
-        item.id === "openai" ||
-        item.id === "google" ||
-        item.id === "google-vertex",
-    ),
+  const needsUsdCnyRate = createMemo(
+    () =>
+      hasCatalogUsage() ||
+      activeProviders().some(
+        (item) =>
+          item.id === "openrouter" ||
+          item.id === "xai" ||
+          item.id === "anthropic" ||
+          item.id === "openai" ||
+          item.id === "google" ||
+          item.id === "google-vertex",
+      ),
   )
-  const refreshModelsDev = async () => {
-    if (modelsDev().length > 0 || disposed) return
-    try {
-      const result = await props.api.client.v2.model.list()
-      if (disposed) return
-      setModelsDev(result.data?.data ?? [])
-    } catch (cause) {
-      console.error("llm-cny: failed to load models.dev prices", cause)
-    }
-  }
   const visible = createMemo(() => props.options.showWhenEmpty || activated())
   const [codexState, setCodexState] = createSignal<CodexState>({ status: "idle" })
   const [codexResetting, setCodexResetting] = createSignal(false)
@@ -467,10 +461,6 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
   })
 
   createEffect(() => {
-    if (activated()) void refreshModelsDev()
-  })
-
-  createEffect(() => {
     const current = completedTrackedReplies()
     if (current === previousCompletedTrackedReplies) return
     previousCompletedTrackedReplies = current
@@ -525,7 +515,6 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
     const interval = setInterval(() => {
       if (activated()) refreshActive()
       if (needsUsdCnyRate()) refreshUsdCnyRate()
-      void refreshModelsDev()
     }, props.options.balanceRefreshMs)
     onCleanup(() => clearInterval(interval))
   })
@@ -577,15 +566,13 @@ function View(props: { api: TuiPluginApi; options: Options; session_id: string }
         />
         <Show when={activated()} fallback={<ActivationPrompt theme={props.api.theme.current} t={t} />}>
           <Show when={hasTrackedUsage()}>
-            <Show when={summary().turns > 0} fallback={<EmptyUsage theme={props.api.theme.current} t={t} />}>
-              <Summary
-                theme={props.api.theme.current}
-                t={t}
-                locale={props.api.i18n.locale}
-                summary={summary()}
-                title={session()?.title}
-              />
-            </Show>
+            <Summary
+              theme={props.api.theme.current}
+              t={t}
+              locale={props.api.i18n.locale}
+              summary={summary()}
+              title={session()?.title}
+            />
             <Divider theme={props.api.theme.current} />
           </Show>
           <Show when={codexEnabled()}>

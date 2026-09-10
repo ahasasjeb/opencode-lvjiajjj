@@ -144,8 +144,8 @@ export function usageRecords(messages: ReadonlyArray<Message>) {
     if (item.role !== "assistant") return []
     return [
       {
-        providerID: item.providerID.toLowerCase(),
-        modelID: item.modelID.toLowerCase(),
+        providerID: item.providerID,
+        modelID: item.modelID,
         time: item.time,
         tokens: item.tokens,
       },

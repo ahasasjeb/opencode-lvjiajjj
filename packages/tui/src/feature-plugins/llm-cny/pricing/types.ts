@@ -1,4 +1,8 @@
-export type DeepseekModelID = "deepseek-v4-flash" | "deepseek-v4-pro"
+export type DeepseekModelID =
+  | "deepseek-flash"
+  | "deepseek-v4-flash"
+  | "deepseek-v4-flash-vision-exp"
+  | "deepseek-v4-pro"
 
 export type KimiChinaModelID = "kimi-k2.5" | "kimi-k2.6"
 
