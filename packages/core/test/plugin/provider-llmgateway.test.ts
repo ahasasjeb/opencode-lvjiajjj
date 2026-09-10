@@ -48,7 +48,7 @@ describe("LLMGatewayPlugin", () => {
         Existing: "value",
         "HTTP-Referer": "https://opencode.lzy1.fun",
         "X-Title": "lzy-opencode",
-        "X-Source": "lzy-opencode",
+        "X-Source": "opencode",
       })
       expect((yield* catalog.provider.get(ProviderV2.ID.openrouter))?.request.headers).toEqual({})
     }),

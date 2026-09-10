@@ -11,6 +11,9 @@ import { Permission } from "../../src/permission"
 import type { Provider } from "../../src/provider/provider"
 import { SystemPrompt } from "../../src/session/system"
 import PROMPT_BEAST_CN from "../../src/session/prompt/beast_cn.txt"
+import PROMPT_ASTRA from "../../src/session/prompt/gpt-astra.txt"
+import PROMPT_CODEX from "../../src/session/prompt/codex.txt"
+import PROMPT_GPT from "../../src/session/prompt/gpt.txt"
 import PROMPT_COZE from "../../src/session/prompt/coze.txt"
 import PROMPT_COZE_CN from "../../src/session/prompt/coze_cn.txt"
 import { MCP } from "../../src/mcp"
@@ -90,6 +93,14 @@ const it = testEffect(
 )
 
 describe("session.system", () => {
+  test("selects Astra for GPT-6 while preserving existing GPT and Codex prompts", () => {
+    for (const id of ["gpt-6", "gpt-6-astra", "openai/gpt-6-codex"]) {
+      expect(SystemPrompt.provider({ api: { id } } as Provider.Model)[0]).toBe(PROMPT_ASTRA)
+    }
+    expect(SystemPrompt.provider({ api: { id: "gpt-5.3-codex" } } as Provider.Model)[0]).toBe(PROMPT_CODEX)
+    expect(SystemPrompt.provider({ api: { id: "gpt-5.5" } } as Provider.Model)[0]).toBe(PROMPT_GPT)
+  })
+
   test("selects the Meta prompt for Muse Spark model IDs", () => {
     for (const id of ["meta/muse-spark-preview", "muse-spark-1.1", "muse-spark-1.2"]) {
       const prompt = SystemPrompt.provider({ api: { id } } as Provider.Model)[0]

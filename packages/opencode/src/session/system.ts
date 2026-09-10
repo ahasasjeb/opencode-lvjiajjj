@@ -12,6 +12,7 @@ import PROMPT_BEAST from "./prompt/beast.txt"
 import PROMPT_BEAST_CN from "./prompt/beast_cn.txt"
 import PROMPT_GEMINI from "./prompt/gemini.txt"
 import PROMPT_GPT from "./prompt/gpt.txt"
+import PROMPT_ASTRA from "./prompt/gpt-astra.txt"
 import PROMPT_META from "./prompt/meta.txt"
 
 import PROMPT_CODEX from "./prompt/codex.txt"
@@ -46,6 +47,7 @@ export function provider(model: Provider.Model) {
   if (model.api.id.includes("gpt-4") || model.api.id.includes("o1") || model.api.id.includes("o3"))
     return [PROMPT_BEAST]
   if (model.api.id.includes("gpt")) {
+    if (model.api.id.includes("gpt-6")) return [PROMPT_ASTRA]
     if (model.api.id.includes("codex")) {
       return [PROMPT_CODEX]
     }
