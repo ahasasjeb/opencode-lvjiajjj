@@ -1,0 +1,28 @@
+diff --git a/index.bun.js b/index.bun.js
+--- a/index.bun.js
++++ b/index.bun.js
+@@ -9236,7 +9236,9 @@ function parseMarkdownIncremental(newContent, prevState, trailingUnstable = 2) {
+       break;
+     }
+   }
+-  reuseCount = Math.max(0, reuseCount - trailingUnstable);
++  // Content can still change after streaming is disabled (including in one UI batch).
++  // Reparse the trailing tokens so an appended suffix extends its existing block.
++  reuseCount = Math.max(0, reuseCount - Math.max(2, trailingUnstable));
+   offset = 0;
+   for (let i = 0;i < reuseCount; i++) {
+     offset += prevState.tokens[i].raw.length;
+diff --git a/index.node.js b/index.node.js
+--- a/index.node.js
++++ b/index.node.js
+@@ -9235,7 +9235,9 @@ function parseMarkdownIncremental(newContent, prevState, trailingUnstable = 2) {
+       break;
+     }
+   }
+-  reuseCount = Math.max(0, reuseCount - trailingUnstable);
++  // Content can still change after streaming is disabled (including in one UI batch).
++  // Reparse the trailing tokens so an appended suffix extends its existing block.
++  reuseCount = Math.max(0, reuseCount - Math.max(2, trailingUnstable));
+   offset = 0;
+   for (let i = 0;i < reuseCount; i++) {
+     offset += prevState.tokens[i].raw.length;
