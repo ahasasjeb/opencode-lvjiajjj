@@ -93,6 +93,19 @@ const it = testEffect(
 )
 
 describe("session.system", () => {
+  it.instance("builds the environment before requesting a DeepSeek response", () =>
+    Effect.gen(function* () {
+      const prompt = yield* SystemPrompt.Service
+      const output = yield* prompt.environment({
+        providerID: "deepseek",
+        api: { id: "deepseek-flash" },
+      } as Provider.Model)
+
+      expect(output.join("\n")).toContain("deepseek/deepseek-flash")
+      expect(output.join("\n")).toContain("Working directory:")
+    }),
+  )
+
   test("selects Astra for GPT-6 while preserving existing GPT and Codex prompts", () => {
     for (const id of ["gpt-6", "gpt-6-astra", "openai/gpt-6-codex"]) {
       expect(SystemPrompt.provider({ api: { id } } as Provider.Model)[0]).toBe(PROMPT_ASTRA)
